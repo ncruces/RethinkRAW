@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang=en>
+
+<head>
+    <meta charset="utf-8">
+    <title>Rethink RAW: {{.Title}}</title>
+    <link href="/main.css" rel="stylesheet">
+</head>
+
+<body>
+    <form id="menu">
+        <div style="width: 100%">
+            <button class="fas" title="Parent directory" formaction="/gallery/{{.Parent}}"><i class="fas fa-arrow-up"></i></button>
+            <span>{{.Title}}</span>
+        </div>
+        {{range .Dirs}}
+        <button formaction="/gallery/{{.Path}}">{{.Name}}</button>
+        {{end}}
+    </form>
+    <div id="gallery">
+        {{range .Photos}}
+        <a href="/photo/{{.Path}}"><img title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}"></a>
+        {{end}}
+    </div>
+</body>
+
+</html>

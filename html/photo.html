@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang=en>
+
+<head>
+    <meta charset="utf-8">
+    <title>Rethink RAW: {{.Title}}</title>
+    <link href="/main.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+        img#preview {
+            display: block;
+            margin: auto;
+            max-width: 100%;
+            height: calc(100% - 52px);
+            object-fit: contain;
+        }
+        form#settings {
+            font-size: small;
+            padding-right: 1rem;
+            overflow: overlay;
+            flex-shrink: 0;
+            width: 15rem;
+        }
+        fieldset {
+            margin-bottom: 0.2rem;
+        }
+        label {
+            display: block;
+        }
+        label.inline {
+            display: inline;
+        }
+        select {
+            width: 100%;
+            margin-bottom: 0.3rem;
+        }
+        select.below {
+            margin-top: 0.3rem;
+            margin-bottom: initial;
+        }
+        output {
+            float: right;
+        }
+        input[type=range] {
+            display: block;
+            margin-top: 0;
+            width: 100%;
+        }
+        fieldset[disabled] {
+            color: #ccc;
+        }
+        div[class*="disabled"] {
+            color: #ccc;
+        }
+        div[class*="disabled"] output {
+            visibility: hidden;
+        }
+    </style>
+    <script>
+    /*window.onbeforeunload = function (event) {
+        return 'Do you want to leave this page? Changes you made may not be saved.';
+    }*/
+
+    function httpRequest(method, url, body) {
+        return new Promise((resolve, reject) => {
+            let xhr = new XMLHttpRequest();
+            xhr.open(method, url);
+            xhr.onload = () => {
+                if (200 <= xhr.status && xhr.status < 300) {
+                    resolve(xhr.response);
+                } else {
+                    reject({
+                        status: xhr.status,
+                        statusText: xhr.statusText
+                    });
+                }
+            };
+            xhr.onerror = () => reject({
+                status: xhr.status,
+                statusText: xhr.statusText
+            });
+            xhr.send(body);
+        });
+    }
+
+    async function loadSettings() {
+        let req = httpRequest('GET', '/photo/{{.Path}}?settings');
+        let settings = JSON.parse(await req);
+
+        let form = document.getElementById('settings');
+
+        if (settings.process == null || settings.process < 6.7) {
+            if (settings.process) window.alert('Process must be updated to a newer version.\nPrevious settings will not be faithfully reproduced.');
+            settings.process = 11;
+        }
+        if (settings.process < 11 && window.confirm('Process may be updated to a newer version.\nPrevious settings may not be faithfully reproduced.\n\nUpdate to the current process version?')) {
+            settings.process = 11;
+        }
+
+        form.orientation.value = settings.orientation;
+        form.process.value = settings.process;
+        form.profile.value = settings.profile;
+        form.lensProfile.checked = settings.lensProfile;
+        form.autoLateralCA.checked = settings.autoLateralCA;
+
+        treatmentChange(form.grayscale, settings.grayscale);
+        temperatureInput(form.temperature, settings.temperature);
+        whiteBalanceChange(form.whiteBalance, settings.whiteBalance);
+
+        let tone = 'Default';
+        for (let k of ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation']) {
+            if (settings[k] !== 0) tone = 'Custom';
+            numberInput(form[k], settings[k]);
+        }
+        for (let k of ['tint', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
+            numberInput(form[k], settings[k]);
+        }
+
+        if (settings.autoTone) tone = 'Auto';
+        toneChange(form.tone, tone);
+        updatePreview();
+
+        for (let n of form.querySelectorAll('fieldset')) {
+            n.disabled = false;
+        }
+    }
+
+    function getFormSettings() {
+        let form = document.getElementById('settings');
+
+        let query = 'autoTone=' + (form.tone.value === 'Auto');
+        for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
+            query += '&' + k + '=' + encodeURIComponent(form[k].value);
+        }
+        for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
+            query += '&' + k + '=' + encodeURIComponent(form[k][0].value);
+        }
+        for (let k of ['lensProfile', 'autoLateralCA']) {
+            query += '&' + k + '=' + encodeURIComponent(form[k].checked);
+        }
+
+        return query;
+    }
+
+    function updatePreview() {
+        let img = document.getElementById('preview');
+        img.src = '/photo/{{.Path}}?preview&' + getFormSettings();
+    };
+
+    function exportJpeg() {
+        window.location = '/photo/{{.Path}}?export&' + getFormSettings();
+    }
+
+    function orientationChange(b) {
+        const table = {
+            ccw: [8, 8, 5, 6, 7, 4, 1, 2, 3],
+            cw:  [6, 6, 7, 8, 5, 2, 3, 4, 1],
+            hz:  [2, 2, 1, 4, 3, 6, 5, 8, 7],
+            vt:  [4, 4, 3, 2, 1, 8, 7, 6, 5],
+        };
+        let form = document.getElementById('settings');
+        let orient = table[b][form.orientation.value]
+        if (orient === void 0) orient = table[b][0];
+        form.orientation.value = orient;
+    }
+
+    function treatmentChange(e, v) {
+        const profiles = [
+            ['Adobe Standard'],
+            ['Adobe Standard'],
+        ];
+
+        if (v !== void 0) e.value = v;
+        let color = e.value === 'false';
+        if (e.length === 2) e = e[0];
+
+        for (let n of e.form.querySelectorAll('div.color')) {
+            n.classList.toggle('disabled-color', !color);
+            disableInputs(n);
+        }
+        let profile = e.form.profile;
+        profile.innerHTML = '';
+        for (let o of profiles[+color]) {
+            profile.insertAdjacentHTML('beforeend', `<option>${o}</option>`);
+        }
+    }
+
+    function whiteBalanceChange(e, v) {
+        const presets = {
+            Daylight:   { temperature: 5500, tint: 10 },
+            Cloudy:     { temperature: 6500, tint: 10 },
+            Shade:      { temperature: 7500, tint: 10 },
+            Tungsten:   { temperature: 2850, tint:  0 },
+            Fluorescent:{ temperature: 3800, tint: 20 },
+            Flash:      { temperature: 5500, tint:  0 },
+        }
+
+        if (v !== void 0) e.value = v;
+
+        let temp = e.form.temperature;
+        let tint = e.form.tint;
+        let auto = false;
+        if (e.value in presets) {
+            let k = presets[e.value].temperature;
+            let t = presets[e.value].tint;
+            tint[0].value = t;
+            tint[1].value = t;
+            temp[0].value = k;
+            temp[1].value = Math.log(k);
+        } else if (e.value !== 'Custom') {
+            auto = true;
+        }
+        for (let n of e.form.querySelectorAll('div.manualWB')) {
+            n.classList.toggle('disabled-wb', auto);
+            disableInputs(n);
+        }
+    }
+
+    function toneChange(e, v) {
+        if (v !== void 0) e.value = v;
+
+        if (e.value === 'Default') {
+            for (let i of e.form.querySelectorAll('div.customTone input')) {
+                i.value = 0;
+                numberInput(i);
+            }
+        }
+        let auto = e.value === 'Auto';
+        for (let n of e.form.querySelectorAll('div.customTone')) {
+            n.classList.toggle('disabled-tone', auto);
+            disableInputs(n);
+        }
+    }
+
+    function disableInputs(n) {
+        let disabled = n.className.includes('disabled');
+        for (let i of n.querySelectorAll('input')) {
+            i.disabled = disabled;
+        }
+    }
+
+    function temperatureInput(e, v) {
+        if (e.length === 2) e = e[1];
+        if (v !== void 0) e.value = Math.log(v);
+
+        let n = Math.exp(Number(e.value));
+
+        let r = n < 4000 ? 50 :
+                n < 8000 ? 100 :
+                n < 20000 ? 200 :
+                n < 40000 ? 500 : 1000;
+
+        e.previousElementSibling.value = Math.round(n / r) * r;
+    }
+
+    function numberInput(e, v) {
+        if (e.length === 2) e = e[1];
+        if (v !== void 0) e.value = v;
+
+        let n = Number(e.value);
+        let s = n.toFixed(2 * (Number(e.step) < 1));
+        if (n > 0 && e.min < 0 && s !== '0') s = '+' + s;
+        e.previousElementSibling.value = s;
+    }
+
+    function customWhiteBalance(e) {
+        e.form.whiteBalance.value = 'Custom';
+    }
+
+    function customTone(e) {
+        e.form.tone.value = 'Custom';
+    }
+    </script>
+</head>
+<body onload="loadSettings()">
+    <div style="flex: auto; height: 100%; margin: 8px">
+        <div id="menu">
+            <div class="toolbar">
+                <button class="fas" type="button" title="Back" onclick="window.history.back()"><i class="fas fa-arrow-left"></i></button>
+                <button class="fas" type="button" title="Save" onclick="blur()"><i class="fas fas fa-save"></i></button>
+                <button class="fas" type="button" title="Export JPEG…" onclick="blur();exportJpeg()"><i class="fas fa-file-image"></i></button>
+                <button class="fas" type="button" title="Zoom" onclick="blur()"><i class="fas fa-search-plus"></i></button>
+                <button class="fas" type="button" title="Crop" onclick="blur()"><i class="fas fa-crop"></i></button>
+                <button class="fas" type="button" title="Rotate couterclockwise" onclick="blur();orientationChange('ccw');updatePreview()"><i class="fas fa-rotate-ccw"></i></button>
+                <button class="fas" type="button" title="Rotate clockwise" onclick="blur();orientationChange('cw');updatePreview()"><i class="fas fa-rotate-cw"></i></button>
+                <button class="fas" type="button" title="Flip horizontally" onclick="blur();orientationChange('hz');updatePreview()"><i class="fas fa-arrows-alt-h"></i></button>
+                <button class="fas" type="button" title="Flip vertically" onclick="blur();orientationChange('vt');updatePreview()"><i class="fas fa-arrows-alt-v"></i></button>
+                <button class="fas" type="button" title="Settings…" onclick="blur()"><i class="fas fa-cog"></i></button>
+            </div>
+        </div>
+        <img id="preview" src="/thumb/{{.Path}}">
+    </div>
+
+    <form id="settings">
+        <input type="hidden" name="orientation">
+        <input type="hidden" name="process">
+
+        <fieldset disabled>
+            <legend>Profile</legend>
+            Treatment:
+            <div style="float: right">
+                <label class="inline"><input type="radio" name="grayscale" value="false" onchange="treatmentChange(this);updatePreview()">Color</label>
+                <label class="inline"><input type="radio" name="grayscale" value="true" onchange="treatmentChange(this);updatePreview()">B&amp;W</label>
+            </div>
+            <select name="profile" class="below">
+                <option style="display:none">
+                <option>Adobe Standard</option>
+            </select>
+        </fieldset>
+
+        <fieldset disabled>
+            <legend>White Balance</legend>
+            <select name="whiteBalance" onchange="whiteBalanceChange(this);updatePreview()">
+                <option style="display:none">
+                <option>As Shot</option>
+                <option>Auto</option>
+                <option>Daylight</option>
+                <option>Cloudy</option>
+                <option>Shade</option>
+                <option>Tungsten</option>
+                <option>Fluorescent</option>
+                <option>Flash</option>
+                <option>Custom</option>
+            </select>
+            <div class="manualWB">
+                <label for="temperature">Temperature <output for="temperature" name="temperature"></output>
+                    <input id="temperature" type="range" value="8.612503" min="7.6009026" max="10.819778" step="0.0223533"
+                        oninput="temperatureInput(this);customWhiteBalance(this)" onchange="updatePreview()">
+                </label>
+        
+                <label for="tint">Tint <output for="tint" name="tint"></output>
+                    <input id="tint" type="range" value="0" min="-150" max="150" step="1" oninput="numberInput(this);customWhiteBalance(this)"
+                        onchange="updatePreview()">
+                </label>
+            </div>
+        </fieldset>
+        <fieldset disabled>
+            <legend>Tone</legend>
+            <select name="tone" onchange="toneChange(this);updatePreview()">
+                <option style="display:none">
+                <option>Auto</option>
+                <option>Default</option>
+                <option>Custom</option>
+            </select>
+            <div class="customTone">
+                <label for="exposure">Exposure <output for="exposure" name="exposure"></output>
+                    <input id="exposure" type="range" value="0" min="-5" max="5" step="0.05" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+                
+                <label for="contrast">Contrast <output for="contrast" name="contrast"></output>
+                    <input id="contrast" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+                
+                <label for="highlights">Highlights <output for="highlights" name="highlights"></output>
+                    <input id="highlights" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+                
+                <label for="shadows">Shadows <output for="shadows" name="shadows"></output>
+                    <input id="shadows" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+                
+                <label for="whites">Whites <output for="whites" name="whites"></output>
+                    <input id="whites" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+                
+                <label for="blacks">Blacks<output for="blacks" name="blacks"></output>
+                    <input id="blacks" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+            </div>
+        </fieldset>
+        
+        <fieldset disabled>
+            <legend>Presence</legend>
+        
+            <label for="clarity">Clarity <output for="clarity" name="clarity"></output>
+                <input id="clarity" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this)" onchange="updatePreview()">
+            </label>
+        
+            <label for="dehaze">Dehaze <output for="dehaze" name="dehaze"></output>
+                <input id="dehaze" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this)" onchange="updatePreview()">
+            </label>
+        
+            <div class="color customTone">
+                <label for="vibrance">Vibrance <output for="vibrance" name="vibrance"></output>
+                    <input id="vibrance" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+        
+                <label for="saturation">Saturation <output for="saturation" name="saturation"></output>
+                    <input id="saturation" type="range" value="0" min="-100" max="100" step="1" oninput="numberInput(this);customTone(this)"
+                        onchange="updatePreview()">
+                </label>
+            </div>
+        </fieldset>
+        
+        <fieldset disabled>
+            <legend>Detail</legend>
+        
+            <label for="sharpness">Sharpness <output for="sharpness" name="sharpness"></output>
+                <input id="sharpness" type="range" value="40" min="0" max="150" step="1" oninput="numberInput(this)" onchange="updatePreview()">
+            </label>
+        
+            <label for="luminanceNR">Luminance noise reduction <output for="luminanceNR" name="luminanceNR"></output>
+                <input id="luminanceNR" type="range" value="0" min="0" max="100" step="1" oninput="numberInput(this)" onchange="updatePreview()">
+            </label>
+        
+            <label for="colorNR">Color noise reduction <output for="colorNR" name="colorNR"></output>
+                <input id="colorNR" type="range" value="25" min="0" max="100" step="1" oninput="numberInput(this)" onchange="updatePreview()">
+            </label>
+        </fieldset>
+        
+        <fieldset disabled>
+            <legend>Lens Corrections</legend>
+            <label><input type="checkbox" name="lensProfile" onchange="updatePreview()">Enable Profile Corrections</label>
+            <label><input type="checkbox" name="autoLateralCA" onchange="updatePreview()">Remove Chromatic Aberration</label>
+        </fieldset>
+    </form>
+</body>
+
+</html>

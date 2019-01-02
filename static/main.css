@@ -1,0 +1,77 @@
+@import 'fontawesome/all.css';
+@import 'normalize.css';
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 8px;
+}
+
+#menu {
+    display: flex;
+    flex-flow: row wrap;
+    max-width: 960px;
+    margin-bottom: 8px;
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid black;
+    font-weight: bold;
+}
+
+#menu>* {
+    margin: 0.1rem;
+}
+
+#menu * {
+    vertical-align: middle;
+}
+
+#menu button {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#menu button.fas {
+    font-size: 0;
+    padding: 0.25rem;
+}
+
+#menu button.fas>i {
+    width: 1rem;
+    height: 1rem;
+    font-size: medium;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#gallery {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+#gallery a {
+    height: 192px;
+    margin: 0.1rem;
+}
+
+#gallery a>img {
+    height: 100%;
+    min-width: 108px;
+    max-width: 384px;
+    object-fit: cover;
+    background-color: lightgray;
+}
+
+.fa-rotate-cw {
+    transform: scaleX(-1) rotate(-45deg);
+}
+
+.fa-rotate-ccw {
+    transform: rotate(-45deg);
+}
+
+.fa-rotate-cw::before {
+    content: "\f2ea";
+}
+
+.fa-rotate-ccw::before {
+    content: "\f2ea";
+}

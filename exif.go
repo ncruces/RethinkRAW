@@ -1,0 +1,374 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"log"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+	"syscall"
+)
+
+var exiv2 = `.\utils\exiv2.exe`
+var exiftool = `.\utils\exiftool.exe`
+var xmpRegex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
+
+func getMeta(path string) ([]byte, error) {
+	cmd := exec.Command(exiftool, "-ignoreMinorErrors", "-fixBase", "-groupHeadings0:1", path)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	return cmd.Output()
+}
+
+func fixMeta(path, dest, name string) (err error) {
+	opts := []string{"-tagsFromFile", path, "-MakerNotes"}
+	if name != "" {
+		opts = append(opts, "-OriginalRawFileName-=orig.raw", "-OriginalRawFileName="+filepath.Base(name))
+	}
+	opts = append(opts, "-overwrite_original", dest)
+
+	log.Printf("exiftool %v\n", opts)
+	cmd := exec.Command(exiftool, opts...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	_, err = cmd.Output()
+	return err
+}
+
+type xmpSettings struct {
+	Orientation int `json:"orientation,omitempty"`
+
+	Process   float32 `json:"process,omitempty"`
+	Profile   string  `json:"profile,omitempty"`
+	Grayscale bool    `json:"grayscale"`
+
+	WhiteBalance string `json:"whiteBalance,omitempty"`
+	Temperature  int    `json:"temperature,omitempty"`
+	Tint         int    `json:"tint"`
+
+	AutoTone   bool    `json:"autoTone"`
+	Exposure   float32 `json:"exposure"`
+	Contrast   int     `json:"contrast"`
+	Highlights int     `json:"highlights"`
+	Shadows    int     `json:"shadows"`
+	Whites     int     `json:"whites"`
+	Blacks     int     `json:"blacks"`
+	Clarity    int     `json:"clarity"`
+	Dehaze     int     `json:"dehaze"`
+	Vibrance   int     `json:"vibrance"`
+	Saturation int     `json:"saturation"`
+
+	Sharpness   int `json:"sharpness"`
+	LuminanceNR int `json:"luminanceNR"`
+	ColorNR     int `json:"colorNR"`
+
+	LensProfile   bool `json:"lensProfile"`
+	AutoLateralCA bool `json:"autoLateralCA"`
+}
+
+func loadXmp(path string) (set xmpSettings, err error) {
+	log.Printf("exiv2 [-Pnv -gXmp.crs. -gExif.Image. %s]\n", path)
+	cmd := exec.Command(exiv2, "-Pnv", "-gExif.Image.", "-gXmp.crs.", path)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	out, err := cmd.Output()
+	if err != nil {
+		return
+	}
+
+	m := make(map[string][]byte)
+	for _, s := range xmpRegex.FindAllSubmatch(out, -1) {
+		m[string(s[1])] = bytes.TrimSpace(s[2])
+	}
+
+	// legacy with defaults (will be upgraded/overwritten)
+	shadows, brightness, contrast, clarity := 5, 50, 25, 0
+	loadBool(&set.AutoTone, m, "AutoExposure")
+	loadFloat32(&set.Exposure, m, "Exposure")
+	loadInt(&brightness, m, "Brightness")
+	loadInt(&contrast, m, "Contrast")
+	loadInt(&shadows, m, "Shadows")
+	loadInt(&clarity, m, "Clarity")
+	set.update(shadows, brightness, contrast, clarity)
+
+	// defaults (will be overwritten)
+	set.Process = 11.0
+	set.Profile = "Adobe Standard"
+	set.WhiteBalance = "As Shot"
+	set.Sharpness = 40
+	set.ColorNR = 25
+	set.LensProfile = true
+	set.AutoLateralCA = true
+
+	// orientation
+	loadInt(&set.Orientation, m, "Orientation")
+
+	// process/profile
+	loadFloat32(&set.Process, m, "ProcessVersion")
+	loadString(&set.Profile, m, "CameraProfile")
+	loadBool(&set.Grayscale, m, "ConvertToGrayscale")
+
+	// white balance
+	loadString(&set.WhiteBalance, m, "WhiteBalance")
+	loadInt(&set.Temperature, m, "Temperature")
+	loadInt(&set.Tint, m, "Tint")
+
+	// tone
+	loadBool(&set.AutoTone, m, "AutoTone")
+	loadFloat32(&set.Exposure, m, "Exposure2012")
+	loadInt(&set.Contrast, m, "Contrast2012")
+	loadInt(&set.Highlights, m, "Highlights2012")
+	loadInt(&set.Shadows, m, "Shadows2012")
+	loadInt(&set.Whites, m, "Whites2012")
+	loadInt(&set.Blacks, m, "Blacks2012")
+
+	// presence
+	loadInt(&set.Dehaze, m, "Dehaze")
+	loadInt(&set.Vibrance, m, "Vibrance")
+	loadInt(&set.Saturation, m, "Saturation")
+	loadInt(&set.Clarity, m, "Clarity2012")
+
+	// detail
+	loadInt(&set.Sharpness, m, "Sharpness")
+	loadInt(&set.LuminanceNR, m, "LuminanceSmoothing")
+	loadInt(&set.ColorNR, m, "ColorNoiseReduction")
+
+	// lens corrections
+	loadBool(&set.LensProfile, m, "LensProfileEnable")
+	loadBool(&set.AutoLateralCA, m, "AutoLateralCA")
+
+	return
+}
+
+func saveXmp(path string, set *xmpSettings) (err error) {
+	opts := []string{}
+
+	if !strings.HasSuffix(path, ".xmp") && !strings.HasSuffix(path, ".dng") {
+		opts = append(opts, "-f", "-eX")
+	}
+	if set != nil {
+		opts = append(opts, "-m-")
+	}
+
+	if len(opts) > 0 {
+		opts = append(opts, path)
+		log.Printf("exiv2 %v\n", opts)
+		cmd := exec.Command(exiv2, opts...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		if set != nil {
+			cmd.Stdin = set.buffer()
+		}
+		_, err = cmd.Output()
+	}
+
+	return err
+}
+
+func (xmp *xmpSettings) buffer() *bytes.Buffer {
+	buf := bytes.Buffer{}
+
+	// orientation
+	fmt.Fprintf(&buf, `
+		set Exif.Image.Orientation %[1]d
+		set Xmp.tiff.Orientation %[1]d
+		set Xmp.crs.ProcessVersion %.1f`,
+		xmp.Orientation, xmp.Process)
+
+	// profile
+	fmt.Fprintf(&buf, `
+		set Xmp.crs.ConvertToGrayscale %t`, xmp.Grayscale)
+	if xmp.Profile != "" {
+		fmt.Fprintf(&buf, `
+			set Xmp.crs.CameraProfile %s`,
+			xmp.Profile)
+	}
+
+	// white balance
+	switch xmp.WhiteBalance {
+	case "":
+		buf.WriteString(`
+			del Xmp.crs.WhiteBalance
+			del Xmp.crs.Temperature
+			del Xmp.crs.Tint`)
+	case "Custom":
+		fmt.Fprintf(&buf, `
+			set Xmp.crs.WhiteBalance Custom
+			set Xmp.crs.Temperature  %d
+			set Xmp.crs.Tint         %d`,
+			xmp.Temperature, xmp.Tint)
+	default:
+		fmt.Fprintf(&buf, `
+			set Xmp.crs.WhiteBalance %s
+			del Xmp.crs.Temperature
+			del Xmp.crs.Tint`,
+			xmp.WhiteBalance)
+	}
+
+	// tone
+	if xmp.AutoTone {
+		buf.WriteString(`
+			set Xmp.crs.AutoTone       True
+			set Xmp.crs.AutoExposure   True
+			set Xmp.crs.AutoContrast   True
+			set Xmp.crs.AutoShadows    True
+			set Xmp.crs.AutoBrightness True
+			del Xmp.crs.Exposure
+			del Xmp.crs.Contrast
+			del Xmp.crs.Shadows
+			del Xmp.crs.Brightness
+			`)
+	} else {
+		fmt.Fprintf(&buf, `
+			del Xmp.crs.AutoTone
+			del Xmp.crs.AutoExposure
+			del Xmp.crs.AutoContrast
+			del Xmp.crs.AutoShadows
+			del Xmp.crs.AutoBrightness
+			set Xmp.crs.Exposure       %+.2f
+			set Xmp.crs.Contrast       %+d
+			set Xmp.crs.Shadows        %d
+			set Xmp.crs.Brightness     %d
+			set Xmp.crs.Exposure2012   %+.2f
+			set Xmp.crs.Contrast2012   %+d
+			set Xmp.crs.Highlights2012 %+d
+			set Xmp.crs.Shadows2012    %+d
+			set Xmp.crs.Whites2012     %+d
+			set Xmp.crs.Blacks2012     %+d`,
+			xmp.oldExposure(), xmp.oldContrast(), xmp.oldShadows(), xmp.oldBrightness(),
+			xmp.Exposure, xmp.Contrast, xmp.Highlights, xmp.Shadows, xmp.Whites, xmp.Blacks)
+	}
+
+	// presence
+	fmt.Fprintf(&buf, `
+		set Xmp.crs.Clarity     %+d
+		set Xmp.crs.Dehaze      %+d
+		set Xmp.crs.Vibrance    %+d
+		set Xmp.crs.Saturation  %+d
+		set Xmp.crs.Clarity2012 %+d`,
+		xmp.oldClarity(), xmp.Dehaze, xmp.Vibrance, xmp.Saturation, xmp.Clarity)
+
+	// detail
+	fmt.Fprintf(&buf, `
+		set Xmp.crs.Sharpness           %d
+		set Xmp.crs.LuminanceSmoothing  %d
+		set Xmp.crs.ColorNoiseReduction %d`,
+		xmp.Sharpness, xmp.LuminanceNR, xmp.ColorNR)
+
+	// lens corrections
+	fmt.Fprintf(&buf, `
+		set Xmp.crs.AutoLateralCA     %d
+		set Xmp.crs.LensProfileEnable %d`,
+		btoi(xmp.AutoLateralCA), btoi(xmp.LensProfile))
+
+	return &buf
+}
+
+func (xmp *xmpSettings) update(shadows, brightness, contrast, clarity int) {
+	xmp.Exposure += float32(brightness-50) / 50
+	xmp.Contrast = 100 * (contrast - 25) / 75
+
+	if shadows <= 5 {
+		xmp.Blacks = 5 * (5 - shadows)
+	} else {
+		xmp.Blacks = 25 * (5 - shadows) / 95
+	}
+
+	if clarity > 0 {
+		xmp.Clarity = clarity / 2
+	} else {
+		xmp.Clarity = clarity
+	}
+}
+
+func (xmp *xmpSettings) oldExposure() float32 {
+	if xmp.Exposure > +4 {
+		return +4
+	}
+	if xmp.Exposure < -4 {
+		return -4
+	}
+	return xmp.Exposure
+}
+
+func (xmp *xmpSettings) oldContrast() int {
+	return 25 + 75*xmp.Contrast/100
+}
+
+func (xmp *xmpSettings) oldShadows() int {
+	if xmp.Blacks >= +25 {
+		return 0
+	}
+	if xmp.Blacks >= 0 {
+		return 5 - xmp.Blacks/5
+	}
+	if xmp.Blacks >= -25 {
+		return 5 - 95*xmp.Blacks/25
+	}
+	return 100
+}
+
+func (xmp *xmpSettings) oldBrightness() int {
+	if xmp.Exposure > +6 {
+		return 150
+	}
+	if xmp.Exposure > +4 {
+		return int(50 + 50*(xmp.Exposure-4))
+	}
+	if xmp.Exposure < -5 {
+		return 0
+	}
+	if xmp.Exposure < -4 {
+		return int(50 + 50*(xmp.Exposure+4))
+	}
+	return 50
+}
+
+func (xmp *xmpSettings) oldClarity() int {
+	if xmp.Clarity >= 50 {
+		return 100
+	}
+	if xmp.Clarity > 0 {
+		return 2 * xmp.Clarity
+	}
+	return xmp.Clarity
+}
+
+func loadString(dst *string, m map[string][]byte, key string) {
+	if v, ok := m[key]; ok {
+		*dst = string(v)
+	}
+}
+
+func loadInt(dst *int, m map[string][]byte, key string) {
+	if v, ok := m[key]; ok {
+		i, err := strconv.Atoi(string(v))
+		if err == nil {
+			*dst = i
+		}
+	}
+}
+
+func loadBool(dst *bool, m map[string][]byte, key string) {
+	if v, ok := m[key]; ok {
+		b, err := strconv.ParseBool(string(v))
+		if err == nil {
+			*dst = b
+		}
+	}
+}
+
+func loadFloat32(dst *float32, m map[string][]byte, key string) {
+	if v, ok := m[key]; ok {
+		f, err := strconv.ParseFloat(string(v), 32)
+		if err == nil {
+			*dst = float32(f)
+		}
+	}
+}
+
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
