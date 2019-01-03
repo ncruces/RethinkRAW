@@ -1,0 +1,66 @@
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+}
+
+img#preview {
+    display: block;
+    margin: auto;
+    max-width: 100%;
+    height: calc(100% - 52px);
+    object-fit: contain;
+}
+
+form#settings {
+    font-size: small;
+    padding-right: 1rem;
+    overflow: overlay;
+    flex-shrink: 0;
+    width: 15rem;
+}
+
+form#settings fieldset {
+    margin-bottom: 0.2rem;
+}
+
+form#settings label {
+    display: block;
+}
+
+form#settings label.inline {
+    display: inline;
+}
+
+form#settings select {
+    width: 100%;
+    margin-bottom: 0.3rem;
+}
+
+form#settings select.below {
+    margin-top: 0.3rem;
+    margin-bottom: initial;
+}
+
+form#settings output {
+    float: right;
+}
+
+form#settings input[type=range] {
+    display: block;
+    margin-top: 0;
+    width: 100%;
+}
+
+form#settings fieldset[disabled] {
+    color: #ccc;
+}
+
+form#settings div[class*="disabled"] {
+    color: #ccc;
+}
+
+form#settings div[class*="disabled"] output {
+    visibility: hidden;
+}
