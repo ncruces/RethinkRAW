@@ -1,16 +1,20 @@
 void function() {
 
 let form = document.getElementById('settings');
+let changed = false;
 
 document.body.onload = async() => {
     let settings = await jsonRequest('GET', `/photo/${template.Path}?settings`);
+    let processChanged = false;
 
     if (settings.process == null || settings.process < 6.7 || settings > 11) {
         if (settings.process) window.alert('This file was processed with an incompatible version of Camera Raw.\nPrevious edits will not be faithfully reproduced.');
         settings.process = 11;
+        processChanged = true;
     }
     if (settings.process < 11 && window.confirm('This file was processed with an older version of Camera Raw.\nPrevious edits may not be faithfully reproduced.\n\nUpdate to the current Camera Raw process version?')) {
         settings.process = 11;
+        processChanged = true;
     }
 
     form.orientation.value = settings.orientation;
@@ -26,40 +30,47 @@ document.body.onload = async() => {
     let tone = 'Default';
     for (let k of ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation']) {
         if (settings[k] !== 0) tone = 'Custom';
-        numberInput(form[k], settings[k]);
+        rangeInput(form[k], settings[k]);
     }
     for (let k of ['tint', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
-        numberInput(form[k], settings[k]);
+        rangeInput(form[k], settings[k]);
     }
 
     if (settings.autoTone) tone = 'Auto';
     toneChange(form.tone, tone);
+    changed = processChanged;
 
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }
 }
 
-/*window.onbeforeunload = function (event) {
-    return 'Do you want to leave this page? Changes you made may not be saved.';
-}*/
+window.onkeydown = window.onkeyup = function(evt) {
+    if (evt == null) evt = window.event;
+    for (let n of document.getElementsByClassName('shift-on')) n.hidden = !evt.shiftKey;
+    for (let n of document.getElementsByClassName('shift-off')) n.hidden = evt.shiftKey;
+}
 
-window.exportJpeg = function() {
-    window.location = `/photo/${template.Path}?export&` + formQuery();
+window.onbeforeunload = function() {
+    if (changed) return 'Do you want to leave this page? Changes you made may not be saved.';
 }
 
 window.valueChange = function() {
     let img = document.getElementById('preview');
+    let spin = document.getElementById('spinner');
     let done = true;
+    let query;
 
     function delayed() {
+        query = formQuery();
+        spin.hidden = false;
         img.onload = loaded;
-        img.src = `/photo/${template.Path}?preview&` + formQuery();
+        img.src = `/photo/${template.Path}?preview&` + query;
     }
 
     function loaded() {
-        let query = formQuery();
-        if (query === img.src) {
+        if (query === formQuery()) {
+            spin.hidden = true;
             done = true;
         } else {
             done = false;
@@ -68,6 +79,7 @@ window.valueChange = function() {
     }
 
     return () => {
+        changed = true;
         if (done) {
             done = false;
             setTimeout(delayed, 0);
@@ -152,7 +164,7 @@ window.toneChange = function(e, v) {
     if (e.value === 'Default') {
         for (let i of e.form.querySelectorAll('div.customTone input')) {
             i.value = 0;
-            numberInput(i);
+            rangeInput(i);
         }
     }
     let auto = e.value === 'Auto';
@@ -178,22 +190,145 @@ window.temperatureInput = function(e, v) {
     e.previousElementSibling.value = Math.round(n / r) * r;
 }
 
-window.numberInput = function(e, v) {
+window.rangeInput = function(e, v) {
     if (e.length === 2) e = e[1];
     if (v !== void 0) e.value = v;
 
     let n = Number(e.value);
-    let s = n.toFixed(2 * (Number(e.step) < 1));
+    let s = formatNumber(e.value, e.step);
     if (n > 0 && e.min < 0 && s !== '0') s = '+' + s;
     e.previousElementSibling.value = s;
+}
+
+window.numberChange = function(e) {
+    e.value = formatNumber(e.value, e.step);
 }
 
 window.setCustomWhiteBalance = () => form.whiteBalance.value = 'Custom';
 window.setCustomTone = () => form.tone.value = 'Custom';
 
+window.exportFile = function(state) {
+    switch (state) {
+        case 'dialog':
+            exportChange(document.getElementById('export-form'));
+            let dialog = document.getElementById('export-dialog');
+            dialog.onclose = () => dialog.returnValue && exportFile(dialog.returnValue);
+            dialog.showModal();
+            return;
+
+        case 'export':
+            break;
+    }
+    window.location = `/photo/${template.Path}?export&` + formQuery();
+    setTimeout(c => changed = c, 0, changed);
+    changed = false;
+}
+
+window.exportChange = function(form) {
+    let resample = form.resample.checked;
+
+    for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'pixels']) {
+        form[k].disabled = !resample;
+    }
+
+    if (resample) {
+        let dims = form.fit.value === 'Dimensions';
+        let pixels = form.fit.value === 'Pixel count';
+        let density = !pixels && form.dimunit.value !== 'pixels';
+
+        form.dimunit.disabled = pixels;
+        form.density.disabled = !density;
+        form.denunit.disabled = !density;
+        form.pixels.disabled = !pixels;
+
+        if (pixels) {
+            form.long.disabled = true;
+            form.short.disabled = true;
+            form.width.disabled = true;
+            form.height.disabled = true;
+        } else {
+            form.long.hidden = !dims;
+            form.short.hidden = !dims;
+            form.long.disabled = !dims;
+            form.short.disabled = !dims;
+            form.width.hidden = dims;
+            form.height.hidden = dims;
+            form.width.disabled = dims;
+            form.height.disabled = dims;
+        }
+    }
+
+    let newden = form.denunit.value;
+    let oldden = form.denunit.previousValue;
+    if (oldden && oldden !== newden) {
+        let min, max, val;
+        if (newden === 'pixels per cm') {
+            min = 28;
+            max = 240;
+            val = (form.density.value / 2.5) || 120;
+        } else {
+            min = 72;
+            max = 600;
+            val = (form.density.value * 2.5) || 300;
+        }
+        form.density.min = min;
+        form.density.max = max;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        form.density.value = Math.round(val);
+    }
+    form.denunit.previousValue = newden;
+
+    let newdim = form.dimunit.value;
+    let olddim = form.dimunit.previousValue;
+    if (olddim && olddim !== newdim) {
+        let mul = 1;
+        let ppi = Number(form.density.value) || 300;
+        if (newden === 'pixels per cm') ppi *= 2.5;
+        if (olddim === 'inches') mul = ppi;
+        if (olddim === 'cm') mul = ppi / 2.5;
+        if (newdim === 'inches') mul /= ppi;
+        if (newdim === 'cm') mul /= ppi / 2.5;
+
+        let min, max, step;
+        switch (newdim) {
+            case 'inches':
+                min = 1;
+                max = 40;
+                step = 0.1;
+                break;
+            case 'cm':
+                min = 2.5;
+                max = 100;
+                step = 0.1;
+                break;
+            default:
+                min = 80;
+                max = 5120;
+                step = 1;
+                break;
+        }
+
+        for (let k of ['long', 'short', 'width', 'height']) {
+            let e = form[k];
+            let x = e.value * mul;
+
+            e.min = min;
+            e.max = max;
+            e.step = step;
+            if (x) {
+                if (x < min) x = min;
+                if (x > max) x = max;
+                e.value = formatNumber(x, step);
+            }
+        }
+    }
+    form.dimunit.previousValue = newdim;
+}
+
 function disableInputs(n) {
     let disabled = n.className.includes('disabled');
-    for (let i of n.querySelectorAll('input')) {
+    for (let i of n.getElementsByTagName('input')) {
         i.disabled = disabled;
     }
 }
@@ -236,6 +371,31 @@ function jsonRequest(method, url, body) {
         });
         xhr.send(body);
     });
+}
+
+function formatNumber(value, step) {
+    step = Number(step);
+    if (!Number.isFinite(step)) return value.toString();
+
+    let fmt = step.toString();
+    if (fmt.indexOf('e') >= 0) return value.toString();
+
+    let val = Number(value);
+    let i = fmt.indexOf('.');
+    if (i < 0) return val.toFixed(0);
+    return val.toFixed(fmt.length - i - 1);
+}
+
+let passive = { passive: true };
+for (let d of document.querySelectorAll('dialog')) {
+    d.addEventListener('cancel', () => d.returnValue = '', passive);
+    for (let b of d.querySelectorAll('form button[type="cancel"]')) {
+        b.type = 'button';
+        b.addEventListener('click', () => {
+            d.dispatchEvent(new Event('cancel'));
+            d.close();
+        }, passive);
+    }
 }
 
 }()

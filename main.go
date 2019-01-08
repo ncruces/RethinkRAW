@@ -61,7 +61,7 @@ func main() {
 	}
 
 	// address
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := net.Listen("tcp", "[::1]:0")
 	if err != nil {
 		log.Fatal(err)
 	}

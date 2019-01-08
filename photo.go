@@ -9,7 +9,7 @@ import (
 )
 
 type photoData struct {
-	Title, Parent, Path string
+	Title, Parent, Name, Path string
 }
 
 func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
@@ -76,6 +76,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 
 	default:
 		data := photoData{
+			Name:   filepath.Base(path),
 			Title:  filepath.Clean(path),
 			Path:   filepath.ToSlash(filepath.Clean(path)),
 			Parent: filepath.ToSlash(filepath.Join(path, "..")),

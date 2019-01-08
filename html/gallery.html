@@ -11,8 +11,8 @@
 
 <body>
     <form id="menu">
-        <div style="width: 100%">
-            <button class="fas" title="Parent directory" formaction="/gallery/{{.Parent}}"><i class="fas fa-arrow-up"></i></button>
+        <div class="toolbar">
+            <button title="Parent directory" formaction="/gallery/{{.Parent}}"><i class="fas fa-arrow-up"></i></button>
             <span>{{.Title}}</span>
         </div>
         {{range .Dirs}}

@@ -6,6 +6,10 @@ body {
     margin: 8px;
 }
 
+input[type=checkbox] {
+    vertical-align: middle;
+}
+
 #menu {
     display: flex;
     flex-flow: row wrap;
@@ -29,17 +33,19 @@ body {
     cursor: pointer;
 }
 
-#menu button.fas {
+#menu .toolbar {
+    width: 100%;
+}
+
+#menu .toolbar>button {
     font-size: 0;
     padding: 0.25rem;
 }
 
-#menu button.fas>i {
+#menu .toolbar>button>* {
     width: 1rem;
     height: 1rem;
-    font-size: medium;
-    text-align: center;
-    vertical-align: middle;
+    font-size: 1rem;
 }
 
 #gallery {
@@ -57,7 +63,7 @@ body {
     min-width: 108px;
     max-width: 384px;
     object-fit: cover;
-    background-color: lightgray;
+    background-color: whitesmoke;
 }
 
 .fa-rotate-cw {
@@ -69,9 +75,9 @@ body {
 }
 
 .fa-rotate-cw::before {
-    content: "\f2ea";
+    content: '\f2ea';
 }
 
 .fa-rotate-ccw::before {
-    content: "\f2ea";
+    content: '\f2ea';
 }
