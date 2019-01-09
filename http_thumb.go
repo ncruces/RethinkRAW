@@ -4,14 +4,14 @@ import (
 	"net/http"
 )
 
-func thumbHandler(w http.ResponseWriter, r *http.Request) HttpResult {
+func thumbHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
 
-	if out, err := getThumb(path); err != nil {
+	if out, err := previewJPEG(path); err != nil {
 		return handleError(err)
 	} else {
 		w.Header().Add("Content-Type", "image/jpeg")
 		w.Write(out)
-		return HttpResult{}
+		return HTTPResult{}
 	}
 }

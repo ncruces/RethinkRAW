@@ -45,7 +45,7 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 		return
 	}
 
-	return getThumb(wk.Edit())
+	return previewJPEG(wk.Edit())
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte, err error) {
@@ -74,7 +74,7 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 		return
 	}
 
-	return getJpeg(wk.Edit())
+	return exportJPEG(wk.Edit())
 }
 
 type exportSettings struct {
@@ -141,7 +141,7 @@ func newWorkspace(path string) (wk workspace, err error) {
 	wk.base = filepath.Join(tempDir, hash) + string(filepath.Separator)
 	wk.ext = filepath.Ext(path)
 
-	err = os.MkdirAll(wk.base, 700)
+	err = os.MkdirAll(wk.base, 0700)
 	if err != nil {
 		return
 	}

@@ -12,7 +12,7 @@ type photoData struct {
 	Title, Parent, Name, Path string
 }
 
-func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
+func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
 	query := r.URL.Query()
 
@@ -28,7 +28,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 		} else {
 			w.Header().Add("Content-Type", "text/plain")
 			w.Write(out)
-			return HttpResult{}
+			return HTTPResult{}
 		}
 
 	case export:
@@ -48,7 +48,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 			w.Header().Add("Content-Disposition", "attachment")
 			w.Header().Add("Content-Type", "image/jpeg")
 			w.Write(out)
-			return HttpResult{}
+			return HTTPResult{}
 		}
 
 	case preview:
@@ -63,7 +63,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 		} else {
 			w.Header().Add("Content-Type", "image/jpeg")
 			w.Write(out)
-			return HttpResult{}
+			return HTTPResult{}
 		}
 
 	case settings:
@@ -76,7 +76,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 				return handleError(err)
 			}
 		}
-		return HttpResult{}
+		return HTTPResult{}
 
 	default:
 		data := photoData{
@@ -87,7 +87,6 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 		}
 
 		w.Header().Add("Content-Type", "text/html")
-		templates.ExecuteTemplate(w, "photo.html", data)
-		return HttpResult{}
+		return handleError(templates.ExecuteTemplate(w, "photo.html", data))
 	}
 }

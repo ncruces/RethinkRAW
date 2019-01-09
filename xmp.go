@@ -5,36 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
 )
 
-var exiv2 = `.\utils\exiv2.exe`
-var exiftool = `.\utils\exiftool.exe`
-var xmpRegex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
+const exiv2 = "./utils/exiv2"
 
-func getMeta(path string) ([]byte, error) {
-	cmd := exec.Command(exiftool, "-ignoreMinorErrors", "-fixBase", "-groupHeadings0:1", path)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	return cmd.Output()
-}
-
-func fixMeta(path, dest, name string) (err error) {
-	opts := []string{"-tagsFromFile", path, "-MakerNotes"}
-	if name != "" {
-		opts = append(opts, "-OriginalRawFileName-=orig.raw", "-OriginalRawFileName="+filepath.Base(name))
-	}
-	opts = append(opts, "-overwrite_original", dest)
-
-	log.Printf("exiftool %v\n", opts)
-	cmd := exec.Command(exiftool, opts...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	_, err = cmd.Output()
-	return err
-}
+var exiv2Regex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
 
 type xmpSettings struct {
 	Orientation int `json:"orientation,omitempty"`
@@ -77,7 +56,7 @@ func loadXmp(path string) (xmp xmpSettings, err error) {
 	}
 
 	m := make(map[string][]byte)
-	for _, s := range xmpRegex.FindAllSubmatch(out, -1) {
+	for _, s := range exiv2Regex.FindAllSubmatch(out, -1) {
 		m[string(s[1])] = bytes.TrimSpace(s[2])
 	}
 
@@ -164,6 +143,7 @@ func saveXmp(path string, xmp *xmpSettings) (err error) {
 	return err
 }
 
+// nolint: errcheck
 func (xmp *xmpSettings) buffer() *bytes.Buffer {
 	buf := bytes.Buffer{}
 

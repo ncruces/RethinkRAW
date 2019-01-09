@@ -51,7 +51,7 @@ var extensions = map[string]struct{}{
 	".CR3": {}, // Canon
 }
 
-func galleryHandler(w http.ResponseWriter, r *http.Request) HttpResult {
+func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
 
 	if files, err := ioutil.ReadDir(path); err != nil {
@@ -77,8 +77,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 			}
 		}
 		w.Header().Add("Content-Type", "text/html")
-		templates.ExecuteTemplate(w, "gallery.html", data)
-		return HttpResult{}
+		return handleError(templates.ExecuteTemplate(w, "gallery.html", data))
 	}
 }
 

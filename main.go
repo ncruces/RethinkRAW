@@ -14,7 +14,7 @@ import (
 )
 
 var chrome = `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
-var baseDir, tempDir, argument string
+var baseDir, tempDir string
 var server *http.Server
 var lock *os.File
 
@@ -26,7 +26,7 @@ func main() {
 		tempDir = filepath.Join(baseDir, "temp")
 	}
 
-	err := os.MkdirAll(tempDir, 700)
+	err := os.MkdirAll(tempDir, 0700)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -91,8 +91,8 @@ func setupChrome(url string) *exec.Cmd {
 
 	prefs := filepath.Join(dir, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(prefs), 700); err == nil {
-			ioutil.WriteFile(prefs, []byte(`{"download":{"prompt_for_download":true}}`), 600)
+		if err := os.MkdirAll(filepath.Dir(prefs), 0700); err == nil {
+			ioutil.WriteFile(prefs, []byte(`{"download":{"prompt_for_download":true}}`), 0600)
 		}
 	}
 

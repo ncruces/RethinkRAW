@@ -15,22 +15,24 @@ var templates *template.Template
 
 func setupServer() *http.Server {
 	templates = template.Must(template.ParseGlob("html/*.html"))
-	http.Handle("/gallery/", http.StripPrefix("/gallery/", HttpHandler(galleryHandler)))
-	http.Handle("/photo/", http.StripPrefix("/photo/", HttpHandler(photoHandler)))
-	http.Handle("/thumb/", http.StripPrefix("/thumb/", HttpHandler(thumbHandler)))
+	http.Handle("/gallery/", http.StripPrefix("/gallery/", HTTPHandler(galleryHandler)))
+	http.Handle("/photo/", http.StripPrefix("/photo/", HTTPHandler(photoHandler)))
+	http.Handle("/thumb/", http.StripPrefix("/thumb/", HTTPHandler(thumbHandler)))
 	http.Handle("/", http.FileServer(http.Dir(filepath.Join(baseDir, "/static"))))
 	return &http.Server{}
 }
 
-type HttpResult struct {
+// HTTPResult helps HTTPHandlers short circuit a result
+type HTTPResult struct {
 	Status   int
 	Message  string
 	Location string
 }
 
-type HttpHandler func(w http.ResponseWriter, r *http.Request) HttpResult
+// HTTPHandler is an http.Handler that returns an HTTPResult
+type HTTPHandler func(w http.ResponseWriter, r *http.Request) HTTPResult
 
-func (h HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 	defer cancel()
 
@@ -58,9 +60,13 @@ func (h HttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleError(err error) HttpResult {
+func handleError(err error) HTTPResult {
+	if err == nil {
+		return HTTPResult{}
+	}
+
 	if os.IsNotExist(err) {
-		return HttpResult{Status: http.StatusNotFound}
+		return HTTPResult{Status: http.StatusNotFound}
 	}
 
 	if err, ok := err.(*exec.ExitError); ok {
@@ -68,5 +74,5 @@ func handleError(err error) HttpResult {
 	}
 
 	log.Println(err)
-	return HttpResult{Status: http.StatusInternalServerError}
+	return HTTPResult{Status: http.StatusInternalServerError}
 }

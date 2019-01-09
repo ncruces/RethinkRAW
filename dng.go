@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var adobe = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+const dngconv = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 
 func toDng(input, output, dir string, preview, lossy bool) error {
 	opts := []string{}
@@ -20,8 +20,8 @@ func toDng(input, output, dir string, preview, lossy bool) error {
 	}
 	opts = append(opts, "-p2", "-fl", "-d", dir, "-o", output, input)
 
-	log.Printf("adobe %v\n", opts)
-	cmd := exec.Command(adobe, opts...)
+	log.Printf("dngconv %v\n", opts)
+	cmd := exec.Command(dngconv, opts...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	if _, err := cmd.Output(); err != nil {
 		return errors.WithMessagef(err, "DNG Converter: %v", opts)

@@ -12,8 +12,8 @@ import (
 	"syscall"
 )
 
-var dcraw = `.\utils\dcraw.exe`
-var jpegtran = `.\utils\jpegtran.exe`
+const dcraw = "./utils/dcraw"
+const jpegtran = "./utils/jpegtran"
 
 type constError string
 
@@ -21,7 +21,7 @@ func (e constError) Error() string { return string(e) }
 
 const unsupportedThumb = constError("unsupported thumbnail")
 
-func getJpeg(path string) ([]byte, error) {
+func exportJPEG(path string) ([]byte, error) {
 	log.Printf("dcraw [-e -c %s]\n", path)
 	cmd := exec.Command(dcraw, "-e", "-c", path)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -46,8 +46,8 @@ func getJpeg(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func getThumb(path string) ([]byte, error) {
-	data, err := getJpeg(path)
+func previewJPEG(path string) ([]byte, error) {
+	data, err := exportJPEG(path)
 	if err != nil {
 		return nil, err
 	}
