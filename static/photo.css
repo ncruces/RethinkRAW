@@ -9,7 +9,13 @@ form {
     font-size: small;
 }
 
-#container {
+#box1 {
+    flex: auto;
+    height: 100%;
+    margin: 8px;
+}
+
+#box2 {
     height: calc(100% - 52px);
     position: relative;
 }
@@ -22,7 +28,7 @@ form {
     color: whitesmoke;
 }
 
-img#preview {
+img#photo {
     width: 100%;
     height: 100%;
     object-fit: contain;

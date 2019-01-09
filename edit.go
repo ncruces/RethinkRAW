@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func getEditSettings(path string) (set xmpSettings, err error) {
+func loadEdit(path string) (xmp xmpSettings, err error) {
 	wk, err := newWorkspace(path)
 	if err != nil {
 		return
@@ -19,13 +19,13 @@ func getEditSettings(path string) (set xmpSettings, err error) {
 	return loadXmp(wk.OrigXmp())
 }
 
-func previewEdit(path string, set *xmpSettings) (thumb []byte, err error) {
+func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 	wk, err := newWorkspace(path)
 	if err != nil {
 		return
 	}
 
-	err = saveXmp(wk.LastXmp(), set)
+	err = saveXmp(wk.LastXmp(), xmp)
 	if err != nil {
 		return
 	}
@@ -48,13 +48,13 @@ func previewEdit(path string, set *xmpSettings) (thumb []byte, err error) {
 	return getThumb(wk.Edit())
 }
 
-func exportEdit(path string, set *xmpSettings) (thumb []byte, err error) {
+func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte, err error) {
 	wk, err := newWorkspace(path)
 	if err != nil {
 		return
 	}
 
-	err = saveXmp(wk.OrigXmp(), set)
+	err = saveXmp(wk.OrigXmp(), xmp)
 	if err != nil {
 		return
 	}
@@ -75,6 +75,20 @@ func exportEdit(path string, set *xmpSettings) (thumb []byte, err error) {
 	}
 
 	return getJpeg(wk.Edit())
+}
+
+type exportSettings struct {
+	Resample bool
+	Quality  int
+	Fit      string
+	Long     float32
+	Short    float32
+	Width    float32
+	Height   float32
+	DimUnit  string
+	Density  int
+	DenUnit  string
+	MPixels  float32
 }
 
 type workspace struct {

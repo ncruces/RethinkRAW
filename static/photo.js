@@ -45,32 +45,26 @@ document.body.onload = async() => {
     }
 }
 
-window.onkeydown = window.onkeyup = function(evt) {
-    if (evt == null) evt = window.event;
-    for (let n of document.getElementsByClassName('shift-on')) n.hidden = !evt.shiftKey;
-    for (let n of document.getElementsByClassName('shift-off')) n.hidden = evt.shiftKey;
-}
-
 window.onbeforeunload = function() {
     if (changed) return 'Do you want to leave this page? Changes you made may not be saved.';
 }
 
 window.valueChange = function() {
-    let img = document.getElementById('preview');
-    let spin = document.getElementById('spinner');
+    let spinner = document.getElementById('spinner');
+    let photo = document.getElementById('photo');
     let done = true;
     let query;
 
     function delayed() {
         query = formQuery();
-        spin.hidden = false;
-        img.onload = loaded;
-        img.src = `/photo/${template.Path}?preview&` + query;
+        spinner.hidden = false;
+        photo.onload = loaded;
+        photo.src = `/photo/${template.Path}?preview&` + query;
     }
 
     function loaded() {
         if (query === formQuery()) {
-            spin.hidden = true;
+            spinner.hidden = true;
             done = true;
         } else {
             done = false;
@@ -200,76 +194,40 @@ window.rangeInput = function(e, v) {
     e.previousElementSibling.value = s;
 }
 
-window.numberChange = function(e) {
-    e.value = formatNumber(e.value, e.step);
-}
-
 window.setCustomWhiteBalance = () => form.whiteBalance.value = 'Custom';
 window.setCustomTone = () => form.tone.value = 'Custom';
 
 window.exportFile = function(state) {
-    switch (state) {
-        case 'dialog':
-            exportChange(document.getElementById('export-form'));
-            let dialog = document.getElementById('export-dialog');
-            dialog.onclose = () => dialog.returnValue && exportFile(dialog.returnValue);
-            dialog.showModal();
-            return;
-
-        case 'export':
-            break;
+    if (state === 'dialog') {
+        exportChange(document.getElementById('export-form'));
+        let dialog = document.getElementById('export-dialog');
+        dialog.onclose = () => dialog.returnValue && exportFile(dialog.returnValue);
+        dialog.showModal();
+        return;
     }
-    window.location = `/photo/${template.Path}?export&` + formQuery();
+    let query = formQuery();
+    if (state === 'export') query += '&' + exportQuery();
+    window.location = `/photo/${template.Path}?export&` + query;
     setTimeout(c => changed = c, 0, changed);
     changed = false;
 }
 
-window.exportChange = function(form) {
-    let resample = form.resample.checked;
+window.exportChange = function(e) {
+    let form = e.tagName === 'FORM' ? e : e.form;
 
-    for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'pixels']) {
-        form[k].disabled = !resample;
-    }
-
-    if (resample) {
-        let dims = form.fit.value === 'Dimensions';
-        let pixels = form.fit.value === 'Pixel count';
-        let density = !pixels && form.dimunit.value !== 'pixels';
-
-        form.dimunit.disabled = pixels;
-        form.density.disabled = !density;
-        form.denunit.disabled = !density;
-        form.pixels.disabled = !pixels;
-
-        if (pixels) {
-            form.long.disabled = true;
-            form.short.disabled = true;
-            form.width.disabled = true;
-            form.height.disabled = true;
-        } else {
-            form.long.hidden = !dims;
-            form.short.hidden = !dims;
-            form.long.disabled = !dims;
-            form.short.disabled = !dims;
-            form.width.hidden = dims;
-            form.height.hidden = dims;
-            form.width.disabled = dims;
-            form.height.disabled = dims;
-        }
-    }
-
+    // density unit changed?
     let newden = form.denunit.value;
     let oldden = form.denunit.previousValue;
     if (oldden && oldden !== newden) {
         let min, max, val;
-        if (newden === 'pixels per cm') {
-            min = 28;
-            max = 240;
-            val = (form.density.value / 2.5) || 120;
-        } else {
+        if (newden === 'ppi') {
             min = 72;
             max = 600;
             val = (form.density.value * 2.5) || 300;
+        } else {
+            min = 28;
+            max = 240;
+            val = (form.density.value / 2.5) || 120;
         }
         form.density.min = min;
         form.density.max = max;
@@ -279,20 +237,21 @@ window.exportChange = function(form) {
     }
     form.denunit.previousValue = newden;
 
+    // dimension unit changed?
     let newdim = form.dimunit.value;
     let olddim = form.dimunit.previousValue;
     if (olddim && olddim !== newdim) {
         let mul = 1;
         let ppi = Number(form.density.value) || 300;
-        if (newden === 'pixels per cm') ppi *= 2.5;
-        if (olddim === 'inches') mul = ppi;
+        if (newden !== 'ppi') ppi *= 2.5;
+        if (olddim === 'in') mul = ppi;
         if (olddim === 'cm') mul = ppi / 2.5;
-        if (newdim === 'inches') mul /= ppi;
+        if (newdim === 'in') mul /= ppi;
         if (newdim === 'cm') mul /= ppi / 2.5;
 
         let min, max, step;
         switch (newdim) {
-            case 'inches':
+            case 'in':
                 min = 1;
                 max = 40;
                 step = 0.1;
@@ -319,11 +278,60 @@ window.exportChange = function(form) {
             if (x) {
                 if (x < min) x = min;
                 if (x > max) x = max;
-                e.value = formatNumber(x, step);
+                e.value = x;
             }
         }
     }
     form.dimunit.previousValue = newdim;
+
+    // disable/hide/format/require
+    let resample = form.resample.checked;
+    let dims = form.fit.value === 'dims';
+    let mpix = form.fit.value === 'mpix';
+    let dens = form.dimunit.value !== 'px' && !mpix;
+
+    for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
+        form[k].disabled = !resample;
+    }
+
+    if (resample) {
+        form.density.disabled = !dens;
+        form.denunit.disabled = !dens;
+        form.dimunit.disabled = mpix;
+        form.mpixels.disabled = !mpix;
+
+        if (mpix) {
+            form.long.disabled = true;
+            form.short.disabled = true;
+            form.width.disabled = true;
+            form.height.disabled = true;
+        } else {
+            form.long.disabled = !dims;
+            form.short.disabled = !dims;
+            form.width.disabled = dims;
+            form.height.disabled = dims;
+        }
+    }
+    if (!mpix) {
+        form.long.hidden = !dims;
+        form.short.hidden = !dims;
+        form.width.hidden = dims;
+        form.height.hidden = dims;
+    }
+
+    formatElement(form.long);
+    formatElement(form.short);
+    formatElement(form.width);
+    formatElement(form.height);
+    formatElement(form.mpixels);
+    form.long.required = form.short.value == '';
+    form.short.required = form.long.value == '';
+    form.width.required = form.height.value == '';
+    form.height.required = form.width.value == '';
+    form.density.required = true;
+    form.mpixels.required = true;
+
+    function formatElement(e) { if (e.value !== '') e.value = formatNumber(e.value, e.step); }
 }
 
 function disableInputs(n) {
@@ -334,19 +342,35 @@ function disableInputs(n) {
 }
 
 function formQuery() {
-    let query = 'autoTone=' + (form.tone.value === 'Auto');
+    let query = [];
+    
+    if (form.tone.value === 'Auto') query.push('autoTone=1');
 
     for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
-        query += '&' + k + '=' + encodeURIComponent(form[k].value);
+        query.push(k + '=' + encodeURIComponent(form[k].value));
     }
     for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
-        query += '&' + k + '=' + encodeURIComponent(form[k][0].value);
+        if (form[k][0].value == 0) continue;
+        query.push(k + '=' + encodeURIComponent(form[k][0].value));
     }
     for (let k of ['lensProfile', 'autoLateralCA']) {
-        query += '&' + k + '=' + encodeURIComponent(form[k].checked);
+        if (form[k].checked) query.push(k + '=1');
     }
 
-    return query;
+    return query.join('&');
+}
+
+function exportQuery() {
+    let form = document.getElementById('export-form')
+    let resample = form.resample.checked;
+    if (!resample) return '';
+
+    let query = ['resample=1'];
+    for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
+        query.push(k + '=' + encodeURIComponent(form[k].value));
+    }
+
+    return query.join('&');
 }
 
 function jsonRequest(method, url, body) {
@@ -387,9 +411,19 @@ function formatNumber(value, step) {
 }
 
 let passive = { passive: true };
+
+function keyboardEventListener(evt) {
+    if (evt == null) evt = window.event;
+    for (let n of document.getElementsByClassName('shift-on')) n.hidden = !evt.shiftKey;
+    for (let n of document.getElementsByClassName('shift-off')) n.hidden = evt.shiftKey;
+}
+window.addEventListener('keydown', keyboardEventListener, passive);
+window.addEventListener('keyup', keyboardEventListener, passive);
+keyboardEventListener({});
+
 for (let d of document.querySelectorAll('dialog')) {
     d.addEventListener('cancel', () => d.returnValue = '', passive);
-    for (let b of d.querySelectorAll('form button[type="cancel"]')) {
+    for (let b of d.querySelectorAll('form button[type=cancel]')) {
         b.type = 'button';
         b.addEventListener('click', () => {
             d.dispatchEvent(new Event('cancel'));

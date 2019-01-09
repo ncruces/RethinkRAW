@@ -12,49 +12,49 @@
     <script src="/photo.js" defer></script>
 </head>
 <body>
-    <div style="flex: auto; height: 100%; margin: 8px">
-        <div id="menu">
+    <div id=box1>
+        <div id=menu>
             <div class="toolbar">
-                <button type="button" title="Back" onclick="window.history.back()"><i class="fas fa-arrow-left"></i></button>
-                <button type="button" title="Save" disabled><i class="fas fas fa-save"></i></button>
-                <button type="button" class="shift-off" title="Export JPEG (shift-click for options)…" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
-                <button type="button" class="shift-on" title="Export…" hidden onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
-                <button type="button" title="Zoom" disabled><i class="fas fa-search-plus"></i></button>
-                <button type="button" title="Crop" disabled><i class="fas fa-crop"></i></button>
-                <button type="button" class="shift-off" title="Rotate couterclockwise (shift-click to flip horizontally)" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
-                <button type="button" class="shift-off" title="Rotate clockwise (shift-click to flip vertically)" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
-                <button type="button" class="shift-on" title="Flip horizontally" hidden onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>
-                <button type="button" class="shift-on" title="Flip vertically" hidden onclick="orientationChange('vt')"><i class="fas fa-arrows-alt-v"></i></button>
-                <button type="button" title="Settings…" disabled><i class="fas fa-cog"></i></button>
+                <button type=button title="Back" onclick="window.history.back()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="Save" disabled><i class="fas fas fa-save"></i></button>
+                <button type=button title="Export JPEG (shift-click for options)…" class="shift-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
+                <button type=button title="Export…" class="shift-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
+                <button type=button title="Zoom" disabled><i class="fas fa-search-plus"></i></button>
+                <button type=button title="Crop" disabled><i class="fas fa-crop"></i></button>
+                <button type=button title="Rotate couterclockwise (shift-click to flip horizontally)" class="shift-off" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
+                <button type=button title="Rotate clockwise (shift-click to flip vertically)" class="shift-off" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
+                <button type=button title="Flip horizontally" class="shift-on" onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>
+                <button type=button title="Flip vertically" class="shift-on" onclick="orientationChange('vt')"><i class="fas fa-arrows-alt-v"></i></button>
+                <button type=button title="Settings…" disabled><i class="fas fa-cog"></i></button>
             </div>
         </div>
-        <div id="container">
-            <img id="preview" alt="{{.Name}}" src="/thumb/{{.Path}}">
-            <i id="spinner" class="fas fa-spinner fa-spin"></i>
+        <div id=box2>
+            <img id=photo alt="{{.Name}}" src="/thumb/{{.Path}}">
+            <i id=spinner class="fas fa-spinner fa-spin"></i>
         </div>
     </div>
 
-    <form id="settings">
-        <input type="hidden" name="orientation">
-        <input type="hidden" name="process">
+    <form id=settings>
+        <input type=hidden name=orientation>
+        <input type=hidden name=process>
 
         <fieldset disabled>
             <legend>Profile</legend>
             Treatment:
             <div style="float:right">
-                <label class="inline"><input type="radio" name="grayscale" value="false" onchange="treatmentChange(this)">Color</label>
-                <label class="inline"><input type="radio" name="grayscale" value="true" onchange="treatmentChange(this)">B&amp;W</label>
+                <label class="inline"><input type=radio name=grayscale value="false" onchange="treatmentChange(this)">Color</label>
+                <label class="inline"><input type=radio name=grayscale value="true" onchange="treatmentChange(this)">B&amp;W</label>
             </div>
-            <select name="profile" class="below">
-                <option style="display:none">
+            <select name=profile class="below">
+                <option hidden>
                 <option>Adobe Standard</option>
             </select>
         </fieldset>
 
         <fieldset disabled>
             <legend>White Balance</legend>
-            <select name="whiteBalance" onchange="whiteBalanceChange(this)">
-                <option style="display:none">
+            <select name=whiteBalance onchange="whiteBalanceChange(this)">
+                <option hidden>
                 <option>As Shot</option>
                 <option>Auto</option>
                 <option>Daylight</option>
@@ -66,13 +66,13 @@
                 <option>Custom</option>
             </select>
             <div class="manualWB">
-                <label for="temperature">Temperature <output for="temperature" name="temperature"></output>
-                    <input type="range" id="temperature" value="8.612503" min="7.6009026" max="10.819778" step="0.0223533"
+                <label for=temperature>Temperature <output for=temperature name=temperature></output>
+                    <input type=range id=temperature value="8.612503" min="7.6009026" max="10.819778" step="0.0223533"
                         oninput="temperatureInput(this);setCustomWhiteBalance()" onchange="valueChange()">
                 </label>
         
-                <label for="tint">Tint <output for="tint" name="tint"></output>
-                    <input type="range" id="tint" value="0" min="-150" max="150" step="1"
+                <label for=tint>Tint <output for=tint name=tint></output>
+                    <input type=range id=tint value="0" min="-150" max="150" step="1"
                         oninput="rangeInput(this);setCustomWhiteBalance()" onchange="valueChange()">
                 </label>
             </div>
@@ -80,40 +80,40 @@
 
         <fieldset disabled>
             <legend>Tone</legend>
-            <select name="tone" onchange="toneChange(this)">
-                <option style="display:none">
+            <select name=tone onchange="toneChange(this)">
+                <option hidden>
                 <option>Auto</option>
                 <option>Default</option>
                 <option>Custom</option>
             </select>
             <div class="customTone">
-                <label for="exposure">Exposure <output for="exposure" name="exposure"></output>
-                    <input type="range" id="exposure" value="0" min="-5" max="5" step="0.05"
+                <label for=exposure>Exposure <output for=exposure name=exposure></output>
+                    <input type=range id=exposure value="0" min="-5" max="5" step="0.05"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
                 
-                <label for="contrast">Contrast <output for="contrast" name="contrast"></output>
-                    <input type="range" id="contrast" value="0" min="-100" max="100" step="1"
+                <label for=contrast>Contrast <output for=contrast name=contrast></output>
+                    <input type=range id=contrast value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
                 
-                <label for="highlights">Highlights <output for="highlights" name="highlights"></output>
-                    <input type="range" id="highlights" value="0" min="-100" max="100" step="1"
+                <label for=highlights>Highlights <output for=highlights name=highlights></output>
+                    <input type=range id=highlights value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
                 
-                <label for="shadows">Shadows <output for="shadows" name="shadows"></output>
-                    <input type="range" id="shadows" value="0" min="-100" max="100" step="1"
+                <label for=shadows>Shadows <output for=shadows name=shadows></output>
+                    <input type=range id=shadows value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
                 
-                <label for="whites">Whites <output for="whites" name="whites"></output>
-                    <input type="range" id="whites" value="0" min="-100" max="100" step="1"
+                <label for=whites>Whites <output for=whites name=whites></output>
+                    <input type=range id=whites value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
                 
-                <label for="blacks">Blacks<output for="blacks" name="blacks"></output>
-                    <input type="range" id="blacks" value="0" min="-100" max="100" step="1"
+                <label for=blacks>Blacks<output for=blacks name=blacks></output>
+                    <input type=range id=blacks value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
             </div>
@@ -122,24 +122,24 @@
         <fieldset disabled>
             <legend>Presence</legend>
         
-            <label for="clarity">Clarity <output for="clarity" name="clarity"></output>
-                <input type="range" id="clarity" value="0" min="-100" max="100" step="1"
+            <label for=clarity>Clarity <output for=clarity name=clarity></output>
+                <input type=range id=clarity value="0" min="-100" max="100" step="1"
                     oninput="rangeInput(this)" onchange="valueChange()">
             </label>
         
-            <label for="dehaze">Dehaze <output for="dehaze" name="dehaze"></output>
-                <input type="range" id="dehaze" value="0" min="-100" max="100" step="1"
+            <label for=dehaze>Dehaze <output for=dehaze name=dehaze></output>
+                <input type=range id=dehaze value="0" min="-100" max="100" step="1"
                     oninput="rangeInput(this)" onchange="valueChange()">
             </label>
         
             <div class="color customTone">
-                <label for="vibrance">Vibrance <output for="vibrance" name="vibrance"></output>
-                    <input type="range" id="vibrance" value="0" min="-100" max="100" step="1"
+                <label for=vibrance>Vibrance <output for=vibrance name=vibrance></output>
+                    <input type=range id=vibrance value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
         
-                <label for="saturation">Saturation <output for="saturation" name="saturation"></output>
-                    <input type="range" id="saturation" value="0" min="-100" max="100" step="1"
+                <label for=saturation>Saturation <output for=saturation name=saturation></output>
+                    <input type=range id=saturation value="0" min="-100" max="100" step="1"
                         oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 </label>
             </div>
@@ -148,42 +148,42 @@
         <fieldset disabled>
             <legend>Detail</legend>
         
-            <label for="sharpness">Sharpness <output for="sharpness" name="sharpness"></output>
-                <input type="range" id="sharpness" value="40" min="0" max="150" step="1"
+            <label for=sharpness>Sharpness <output for=sharpness name=sharpness></output>
+                <input type=range id=sharpness value="40" min="0" max="150" step="1"
                     oninput="rangeInput(this)" onchange="valueChange()">
             </label>
         
-            <label for="luminanceNR">Luminance noise reduction <output for="luminanceNR" name="luminanceNR"></output>
-                <input type="range" id="luminanceNR" value="0" min="0" max="100" step="1"
+            <label for=luminanceNR>Luminance noise reduction <output for=luminanceNR name=luminanceNR></output>
+                <input type=range id=luminanceNR value="0" min="0" max="100" step="1"
                     oninput="rangeInput(this)" onchange="valueChange()">
             </label>
         
-            <label for="colorNR">Color noise reduction <output for="colorNR" name="colorNR"></output>
-                <input type="range" id="colorNR" value="25" min="0" max="100" step="1"
+            <label for=colorNR>Color noise reduction <output for=colorNR name=colorNR></output>
+                <input type=range id=colorNR value="25" min="0" max="100" step="1"
                     oninput="rangeInput(this)" onchange="valueChange()">
             </label>
         </fieldset>
         
         <fieldset disabled>
             <legend>Lens Corrections</legend>
-            <label><input type="checkbox" name="lensProfile" onchange="valueChange()"> Enable Profile Corrections</label>
-            <label><input type="checkbox" name="autoLateralCA" onchange="valueChange()"> Remove Chromatic Aberration</label>
+            <label><input type=checkbox name=lensProfile onchange="valueChange()"> Enable Profile Corrections</label>
+            <label><input type=checkbox name=autoLateralCA onchange="valueChange()"> Remove Chromatic Aberration</label>
         </fieldset>
     </form>
 
     <dialog id="export-dialog">
         <form id="export-form" method="dialog">
             <label style="grid-area: 1/1/auto/span 4">Image format:</label>
-            <select style="grid-area: 1/5/auto/span 2" name="format">
-                <option selected>JPEG</option>
+            <select style="grid-area: 1/5/auto/span 2" name=format>
+                <option>JPEG</option>
                 <option>DNG</option>
             </select>
     
-            <label style="grid-area: 2/1/auto/span 4" for="resample">Export for web/print:</label>
-            <input style="grid-area: 2/5/auto/span 1" type="checkbox" id="resample" name="resample" onchange="exportChange(this.form)">
+            <label style="grid-area: 2/1/auto/span 4" for=resample>Export for web/print:</label>
+            <input style="grid-area: 2/5/auto/span 1" type=checkbox id=resample name=resample onchange="exportChange(this)">
     
-            <label style="grid-area: 3/1/auto/span 4" for="quality">Quality:</label>
-            <select style="grid-area: 3/5/auto/span 2" id="quality" name="quality">
+            <label style="grid-area: 3/1/auto/span 4" for=quality>Quality:</label>
+            <select style="grid-area: 3/5/auto/span 2" id=quality name=quality>
                 <option>0</option>
                 <option>1</option>
                 <option>2</option>
@@ -199,35 +199,34 @@
                 <option>12</option>
             </select>
     
-            <label style="grid-area: 4/1/auto/span 4" id="fit">Resize to fit:</label>
-            <select style="grid-area: 4/5/auto/span 4" id="fit" name="fit" onchange="exportChange(this.form)">
-                <option selected>Dimensions</option>
-                <option>Width & Height</option>
-                <option>Pixel count</option>
+            <label style="grid-area: 4/1/auto/span 4" id=fit>Resize to fit:</label>
+            <select style="grid-area: 4/5/auto/span 4" id=fit name=fit onchange="exportChange(this)">
+                <option value=dims>Dimensions</option>
+                <option value=size>Width & Height</option>
+                <option value=mpix>Pixel count</option>
             </select>
     
-            <input style="grid-area: 5/1/auto/span 2" type="number" name="long" placeholder="long" min="80" max="5120" onchange="numberChange(this)">
-            <input style="grid-area: 5/3/auto/span 2" type="number" name="short" placeholder="short" min="80" max="5120" onchange="numberChange(this)">
-            <input style="grid-area: 5/1/auto/span 2" type="number" name="width" placeholder="width" min="80" max="5120" onchange="numberChange(this)">
-            <input style="grid-area: 5/3/auto/span 2" type="number" name="height" placeholder="height" min="80" max="5120" onchange="numberChange(this)">
-            <select style="grid-area: 5/5/auto/span 4" name="dimunit" onchange="exportChange(this.form)">
-                <option selected>pixels</option>
-                <option>inches</option>
-                <option>cm</option>
+            <input style="grid-area: 5/1/auto/span 2" type=number name=long placeholder="long" min="80" max="5120" onchange="exportChange(this)">
+            <input style="grid-area: 5/3/auto/span 2" type=number name=short placeholder="short" min="80" max="5120" onchange="exportChange(this)">
+            <input style="grid-area: 5/1/auto/span 2" type=number name=width placeholder="width" min="80" max="5120" onchange="exportChange(this)">
+            <input style="grid-area: 5/3/auto/span 2" type=number name=height placeholder="height" min="80" max="5120" onchange="exportChange(this)">
+            <select style="grid-area: 5/5/auto/span 4" name=dimunit onchange="exportChange(this)">
+                <option value="px">pixels</option>
+                <option value="in">inches</option>
+                <option value="cm">cm</option>
             </select>
     
-            <input style="grid-area: 6/3/auto/span 2" type="number" name="density" value="300" min="72" max="600" required onchange="numberChange(this)">
-            <select style="grid-area: 6/5/auto/span 4" name="denunit" onchange="exportChange(this.form)">
-                <option>pixels per inch</option>
-                <option>pixels per cm</option>
+            <input style="grid-area: 6/3/auto/span 2" type=number name=density value="300" min="72" max="600" onchange="exportChange(this)">
+            <select style="grid-area: 6/5/auto/span 4" name=denunit onchange="exportChange(this)">
+                <option value="ppi">pixels per inch</option>
+                <option value="ppcm">pixels per cm</option>
             </select>
     
-            <input style="grid-area: 7/3/auto/span 2" type="number" name="pixels" value="2.0" min="1" max="20" step="0.5"
-                required onchange="numberChange(this)">
+            <input style="grid-area: 7/3/auto/span 2" type=number name=mpixels value="2.0" min="1" max="20" step="0.5" onchange="exportChange(this)">
             <span style="grid-area: 7/5/auto/span 4">megapixels</span>
     
             <button style="grid-area: 8/3/auto/span 3" value="export">Export…</button>
-            <button style="grid-area: 8/6/auto/span 3" type="cancel">Cancel</button>
+            <button style="grid-area: 8/6/auto/span 3" type=cancel>Cancel</button>
         </form>
     </dialog>
 </body>

@@ -67,7 +67,7 @@ type xmpSettings struct {
 	AutoLateralCA bool `json:"autoLateralCA"`
 }
 
-func loadXmp(path string) (set xmpSettings, err error) {
+func loadXmp(path string) (xmp xmpSettings, err error) {
 	log.Printf("exiv2 [-Pnv -gXmp.crs. -gExif.Image. %s]\n", path)
 	cmd := exec.Command(exiv2, "-Pnv", "-gExif.Image.", "-gXmp.crs.", path)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -83,70 +83,70 @@ func loadXmp(path string) (set xmpSettings, err error) {
 
 	// legacy with defaults (will be upgraded/overwritten)
 	shadows, brightness, contrast, clarity := 5, 50, 25, 0
-	loadBool(&set.AutoTone, m, "AutoExposure")
-	loadFloat32(&set.Exposure, m, "Exposure")
+	loadBool(&xmp.AutoTone, m, "AutoExposure")
+	loadFloat32(&xmp.Exposure, m, "Exposure")
 	loadInt(&brightness, m, "Brightness")
 	loadInt(&contrast, m, "Contrast")
 	loadInt(&shadows, m, "Shadows")
 	loadInt(&clarity, m, "Clarity")
-	set.update(shadows, brightness, contrast, clarity)
+	xmp.update(shadows, brightness, contrast, clarity)
 
 	// defaults (will be overwritten)
-	set.Process = 11.0
-	set.Profile = "Adobe Standard"
-	set.WhiteBalance = "As Shot"
-	set.Sharpness = 40
-	set.ColorNR = 25
-	set.LensProfile = true
-	set.AutoLateralCA = true
+	xmp.Process = 11.0
+	xmp.Profile = "Adobe Standard"
+	xmp.WhiteBalance = "As Shot"
+	xmp.Sharpness = 40
+	xmp.ColorNR = 25
+	xmp.LensProfile = true
+	xmp.AutoLateralCA = true
 
 	// orientation
-	loadInt(&set.Orientation, m, "Orientation")
+	loadInt(&xmp.Orientation, m, "Orientation")
 
 	// process/profile
-	loadFloat32(&set.Process, m, "ProcessVersion")
-	loadString(&set.Profile, m, "CameraProfile")
-	loadBool(&set.Grayscale, m, "ConvertToGrayscale")
+	loadFloat32(&xmp.Process, m, "ProcessVersion")
+	loadString(&xmp.Profile, m, "CameraProfile")
+	loadBool(&xmp.Grayscale, m, "ConvertToGrayscale")
 
 	// white balance
-	loadString(&set.WhiteBalance, m, "WhiteBalance")
-	loadInt(&set.Temperature, m, "Temperature")
-	loadInt(&set.Tint, m, "Tint")
+	loadString(&xmp.WhiteBalance, m, "WhiteBalance")
+	loadInt(&xmp.Temperature, m, "Temperature")
+	loadInt(&xmp.Tint, m, "Tint")
 
 	// tone
-	loadBool(&set.AutoTone, m, "AutoTone")
-	loadFloat32(&set.Exposure, m, "Exposure2012")
-	loadInt(&set.Contrast, m, "Contrast2012")
-	loadInt(&set.Highlights, m, "Highlights2012")
-	loadInt(&set.Shadows, m, "Shadows2012")
-	loadInt(&set.Whites, m, "Whites2012")
-	loadInt(&set.Blacks, m, "Blacks2012")
+	loadBool(&xmp.AutoTone, m, "AutoTone")
+	loadFloat32(&xmp.Exposure, m, "Exposure2012")
+	loadInt(&xmp.Contrast, m, "Contrast2012")
+	loadInt(&xmp.Highlights, m, "Highlights2012")
+	loadInt(&xmp.Shadows, m, "Shadows2012")
+	loadInt(&xmp.Whites, m, "Whites2012")
+	loadInt(&xmp.Blacks, m, "Blacks2012")
 
 	// presence
-	loadInt(&set.Dehaze, m, "Dehaze")
-	loadInt(&set.Vibrance, m, "Vibrance")
-	loadInt(&set.Saturation, m, "Saturation")
-	loadInt(&set.Clarity, m, "Clarity2012")
+	loadInt(&xmp.Dehaze, m, "Dehaze")
+	loadInt(&xmp.Vibrance, m, "Vibrance")
+	loadInt(&xmp.Saturation, m, "Saturation")
+	loadInt(&xmp.Clarity, m, "Clarity2012")
 
 	// detail
-	loadInt(&set.Sharpness, m, "Sharpness")
-	loadInt(&set.LuminanceNR, m, "LuminanceSmoothing")
-	loadInt(&set.ColorNR, m, "ColorNoiseReduction")
+	loadInt(&xmp.Sharpness, m, "Sharpness")
+	loadInt(&xmp.LuminanceNR, m, "LuminanceSmoothing")
+	loadInt(&xmp.ColorNR, m, "ColorNoiseReduction")
 
 	// lens corrections
-	loadBool(&set.LensProfile, m, "LensProfileEnable")
-	loadBool(&set.AutoLateralCA, m, "AutoLateralCA")
+	loadBool(&xmp.LensProfile, m, "LensProfileEnable")
+	loadBool(&xmp.AutoLateralCA, m, "AutoLateralCA")
 
 	return
 }
 
-func saveXmp(path string, set *xmpSettings) (err error) {
+func saveXmp(path string, xmp *xmpSettings) (err error) {
 	opts := []string{}
 
 	if !strings.HasSuffix(path, ".xmp") && !strings.HasSuffix(path, ".dng") {
 		opts = append(opts, "-f", "-eX")
 	}
-	if set != nil {
+	if xmp != nil {
 		opts = append(opts, "-m-")
 	}
 
@@ -155,8 +155,8 @@ func saveXmp(path string, set *xmpSettings) (err error) {
 		log.Printf("exiv2 %v\n", opts)
 		cmd := exec.Command(exiv2, opts...)
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-		if set != nil {
-			cmd.Stdin = set.buffer()
+		if xmp != nil {
+			cmd.Stdin = xmp.buffer()
 		}
 		_, err = cmd.Output()
 	}

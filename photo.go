@@ -32,13 +32,17 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 		}
 
 	case export:
-		var set xmpSettings
+		var xmp xmpSettings
+		var exp exportSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
-		if err := dec.Decode(&set, query); err != nil {
+		if err := dec.Decode(&xmp, query); err != nil {
 			return handleError(err)
 		}
-		if out, err := exportEdit(path, &set); err != nil {
+		if err := dec.Decode(&exp, query); err != nil {
+			return handleError(err)
+		}
+		if out, err := exportEdit(path, &xmp, &exp); err != nil {
 			return handleError(err)
 		} else {
 			w.Header().Add("Content-Disposition", "attachment")
@@ -48,13 +52,13 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 		}
 
 	case preview:
-		var set xmpSettings
+		var xmp xmpSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
-		if err := dec.Decode(&set, query); err != nil {
+		if err := dec.Decode(&xmp, query); err != nil {
 			return handleError(err)
 		}
-		if out, err := previewEdit(path, &set); err != nil {
+		if out, err := previewEdit(path, &xmp); err != nil {
 			return handleError(err)
 		} else {
 			w.Header().Add("Content-Type", "image/jpeg")
@@ -63,12 +67,12 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HttpResult {
 		}
 
 	case settings:
-		if set, err := getEditSettings(path); err != nil {
+		if xmp, err := loadEdit(path); err != nil {
 			return handleError(err)
 		} else {
 			w.Header().Add("Content-Type", "application/json")
 			enc := json.NewEncoder(w)
-			if err := enc.Encode(set); err != nil {
+			if err := enc.Encode(xmp); err != nil {
 				return handleError(err)
 			}
 		}

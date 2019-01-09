@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <form id="menu">
+    <form id=menu>
         <div class="toolbar">
             <button title="Parent directory" formaction="/gallery/{{.Parent}}"><i class="fas fa-arrow-up"></i></button>
             <span>{{.Title}}</span>
@@ -19,7 +19,7 @@
         <button formaction="/gallery/{{.Path}}">{{.Name}}</button>
         {{end}}
     </form>
-    <div id="gallery">
+    <div id=gallery>
         {{range .Photos}}
         <a href="/photo/{{.Path}}"><img title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}"></a>
         {{end}}
