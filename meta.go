@@ -10,6 +10,7 @@ import (
 const exiftool = "./utils/exiftool"
 
 func getMeta(path string) ([]byte, error) {
+	log.Printf("exiftool [-ignoreMinorErrors -fixBase -groupHeadings0:1 %s]\n", path)
 	cmd := exec.Command(exiftool, "-ignoreMinorErrors", "-fixBase", "-groupHeadings0:1", path)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	return cmd.Output()

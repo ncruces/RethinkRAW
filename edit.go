@@ -1,9 +1,9 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/base64"
+	"image"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,26 +69,86 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 		return
 	}
 
-	err = os.Rename(wk.Temp(), wk.Edit())
+	data, err = exportJPEG(wk.Temp(), exp)
 	if err != nil {
 		return
 	}
 
-	return exportJPEG(wk.Edit())
+	err = os.Remove(wk.Temp())
+	return
 }
 
 type exportSettings struct {
 	Resample bool
 	Quality  int
 	Fit      string
-	Long     float32
-	Short    float32
-	Width    float32
-	Height   float32
+	Long     float64
+	Short    float64
+	Width    float64
+	Height   float64
 	DimUnit  string
 	Density  int
 	DenUnit  string
-	MPixels  float32
+	MPixels  float64
+}
+
+func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
+	if ex.Fit == "mpix" {
+		mul := math.Sqrt(1e6 * ex.MPixels / float64(size.X*size.Y))
+		if size.X > size.Y {
+			fit.X = MaxInt
+			fit.Y = int(mul * float64(size.Y))
+		} else {
+			fit.X = int(mul * float64(size.X))
+			fit.Y = MaxInt
+		}
+	} else {
+		mul := 1.0
+
+		if ex.DimUnit != "px" {
+			density := float64(ex.Density)
+			if ex.DimUnit == "in" {
+				if ex.DenUnit == "ppi" {
+					mul = density
+				} else {
+					mul = density * 2.54
+				}
+			} else {
+				if ex.DenUnit == "ppi" {
+					mul = density / 2.54
+				} else {
+					mul = density
+				}
+			}
+		}
+
+		round := func(x float64) int {
+			i := int(x + 0.5)
+			if i > 0 {
+				return i
+			}
+			return MaxInt
+		}
+
+		if ex.Fit == "dims" {
+			long, short := ex.Long, ex.Short
+			if 0 < long && long < short {
+				long, short = short, long
+			}
+
+			if size.X > size.Y {
+				fit.X = round(mul * long)
+				fit.Y = round(mul * short)
+			} else {
+				fit.X = round(mul * long)
+				fit.Y = round(mul * short)
+			}
+		} else {
+			fit.X = round(mul * ex.Width)
+			fit.Y = round(mul * ex.Height)
+		}
+	}
+	return
 }
 
 type workspace struct {
@@ -136,7 +196,7 @@ func (wk *workspace) LastXmp() string {
 
 func newWorkspace(path string) (wk workspace, err error) {
 	path = filepath.Clean(path)
-	hash := hash(filepath.ToSlash(path))
+	hash := md5sum(filepath.ToSlash(path))
 
 	wk.base = filepath.Join(tempDir, hash) + string(filepath.Separator)
 	wk.ext = filepath.Ext(path)
@@ -175,11 +235,6 @@ func newWorkspace(path string) (wk workspace, err error) {
 		wk.hasXmp = true
 	}
 	return
-}
-
-func hash(data string) string {
-	h := md5.Sum([]byte(data))
-	return base64.URLEncoding.EncodeToString(h[:15])
 }
 
 func copyFile(src, dst string) (err error) {

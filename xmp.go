@@ -345,10 +345,3 @@ func loadFloat32(dst *float32, m map[string][]byte, key string) {
 		}
 	}
 }
-
-func btoi(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}

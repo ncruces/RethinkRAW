@@ -254,12 +254,12 @@ window.exportChange = function(e) {
             case 'in':
                 min = 1;
                 max = 40;
-                step = 0.1;
+                step = 0.01;
                 break;
             case 'cm':
                 min = 2.5;
                 max = 100;
-                step = 0.1;
+                step = 0.01;
                 break;
             default:
                 min = 80;

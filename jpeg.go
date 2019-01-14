@@ -3,13 +3,16 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
 	"log"
 	"os/exec"
 	"syscall"
+
+	"./rotateflip"
+
+	"github.com/nfnt/resize"
 )
 
 const dcraw = "./utils/dcraw"
@@ -19,45 +22,45 @@ type constError string
 
 func (e constError) Error() string { return string(e) }
 
+const notJPEG = constError("not a JPEG file")
+const invalidJPEG = constError("not a valid JPEG file")
 const unsupportedThumb = constError("unsupported thumbnail")
 
-func exportJPEG(path string) ([]byte, error) {
+func extractThumb(path string) ([]byte, error) {
 	log.Printf("dcraw [-e -c %s]\n", path)
 	cmd := exec.Command(dcraw, "-e", "-c", path)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	out, err := cmd.Output()
-	if err != nil {
-		return nil, err
+	if out, err := cmd.Output(); err != nil || len(out) > 2 {
+		return out, err
 	}
-	if len(out) > 2 && out[0] == '\xff' && out[1] == '\xd8' {
-		return out, nil
-	}
-
-	img, err := pnmDecodeThumb(out)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := bytes.Buffer{}
-	if err := jpeg.Encode(&buf, img, nil); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
+	return nil, unsupportedThumb
 }
 
 func previewJPEG(path string) ([]byte, error) {
-	data, err := exportJPEG(path)
+	data, err := extractThumb(path)
 	if err != nil {
 		return nil, err
+	}
+
+	if data[0] != '\xff' || data[1] != '\xd8' {
+		img, err := pnmDecodeThumb(data)
+		if err != nil {
+			return nil, err
+		}
+
+		buf := bytes.Buffer{}
+		if err := jpeg.Encode(&buf, img, nil); err != nil {
+			return nil, err
+		}
+		return buf.Bytes(), nil
 	}
 
 	exif := exifOrientation(data)
 	switch {
 	case exif == -1:
-		return nil, errors.New("not a JPEG file")
+		return nil, notJPEG
 	case exif < 0 || exif > 9:
-		return nil, errors.New("not a valid JPEG file")
+		return nil, invalidJPEG
 	case exif < 2 || exif == 9:
 		return data, nil
 	}
@@ -79,6 +82,39 @@ func previewJPEG(path string) ([]byte, error) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Stdin = bytes.NewReader(data)
 	return cmd.Output()
+}
+
+func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
+	data, err := extractThumb(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if data[0] != '\xff' || data[1] != '\xd8' {
+		return nil, notJPEG
+	}
+
+	if settings.Resample {
+		img, err := jpeg.Decode(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+
+		rft := rotateflip.Orientation(exifOrientation(data)).Type()
+		img = rotateflip.Image(img, rft)
+		fit := settings.FitImage(img.Bounds().Size())
+		img = resize.Thumbnail(uint(fit.X), uint(fit.Y), img, resize.Lanczos2)
+
+		buf := bytes.Buffer{}
+		opt := jpeg.Options{Quality: [13]int{46, 52, 63, 66, 71, 75, 78, 81, 84, 88, 92, 96, 98}[settings.Quality]}
+		if err := jpeg.Encode(&buf, img, &opt); err != nil {
+			return nil, err
+		}
+
+		return append(jfifHeader(settings), buf.Bytes()[2:]...), nil
+	}
+
+	return data, err
 }
 
 func exifOrientation(data []byte) int {
@@ -162,6 +198,22 @@ func exifOrientation(data []byte) int {
 		}
 	}
 	return -2
+}
+
+func jfifHeader(settings *exportSettings) []byte {
+	if settings.DimUnit == "px" {
+		return []byte{'\xff', '\xd8'}
+	}
+
+	data := [20]byte{'\xff', '\xd8', '\xff', '\xe0', 0, 16, 'J', 'F', 'I', 'F', 0, 1, 2}
+	binary.BigEndian.PutUint16(data[14:], uint16(settings.Density))
+	binary.BigEndian.PutUint16(data[16:], uint16(settings.Density))
+	if settings.DenUnit == "ppi" {
+		data[13] = 1
+	} else {
+		data[13] = 2
+	}
+	return data[:]
 }
 
 func pnmDecodeThumb(data []byte) (image.Image, error) {
