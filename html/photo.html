@@ -173,60 +173,83 @@
 
     <dialog id="export-dialog">
         <form id="export-form" method="dialog">
-            <label style="grid-area: 1/1/auto/span 4">Image format:</label>
-            <select style="grid-area: 1/5/auto/span 2" name=format>
-                <option>JPEG</option>
-                <option>DNG</option>
-            </select>
+            <div>
+                <label style="grid-column: auto/span 4">Image format:</label>
+                <select style="grid-column: auto/span 2" name=format onchange="exportChange(this)">
+                    <option>JPEG</option>
+                    <option>DNG</option>
+                </select>
+            </div>
+            <div id="export-jpeg">
+                <label style="grid-area: 1/1/auto/span 4" for=resample>Export for web/print:</label>
+                <input style="grid-area: 1/5/auto/span 1" type=checkbox id=resample name=resample onchange="exportChange(this)">
+        
+                <label style="grid-area: 2/1/auto/span 4" for=quality>Quality:</label>
+                <select style="grid-area: 2/5/auto/span 2" id=quality name=quality>
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option selected>10</option>
+                    <option>11</option>
+                    <option>12</option>
+                </select>
+        
+                <label style="grid-area: 3/1/auto/span 4" id=fit>Resize to fit:</label>
+                <select style="grid-area: 3/5/auto/span 4" id=fit name=fit onchange="exportChange(this)">
+                    <option value=dims>Dimensions</option>
+                    <option value=size>Width & Height</option>
+                    <option value=mpix>Pixel count</option>
+                </select>
+        
+                <input style="grid-area: 4/1/auto/span 2" type=number name=long placeholder="long" min="80" max="5120" onchange="exportChange(this)">
+                <input style="grid-area: 4/3/auto/span 2" type=number name=short placeholder="short" min="80" max="5120" onchange="exportChange(this)">
+                <input style="grid-area: 4/1/auto/span 2" type=number name=width placeholder="width" min="80" max="5120" onchange="exportChange(this)">
+                <input style="grid-area: 4/3/auto/span 2" type=number name=height placeholder="height" min="80" max="5120" onchange="exportChange(this)">
+                <select style="grid-area: 4/5/auto/span 4" name=dimunit onchange="exportChange(this)">
+                    <option value="px">pixels</option>
+                    <option value="in">inches</option>
+                    <option value="cm">cm</option>
+                </select>
+        
+                <input style="grid-area: 5/3/auto/span 2" type=number name=density value="300" min="72" max="600" onchange="exportChange(this)">
+                <select style="grid-area: 5/5/auto/span 4" name=denunit onchange="exportChange(this)">
+                    <option value="ppi">pixels per inch</option>
+                    <option value="ppc">pixels per cm</option>
+                </select>
+        
+                <input style="grid-area: 6/3/auto/span 2" type=number name=mpixels value="2.0" min="1" max="20" step="0.5" onchange="exportChange(this)">
+                <span style="grid-area: 6/5/auto/span 4">megapixels</span>
+            </div>
+
+            <div id="export-dng">
+                <label style="grid-area: 1/1/auto/span 4" for=preview>JPEG preview:</label>
+                <select style="grid-area: 1/5/auto/span 4" id=preview name=preview>
+                    <option value="p0">None</option>
+                    <option value="p1" selected>Medium size</option>
+                    <option value="p2">Full size</option>
+                </select>
+
+                <label style="grid-area: 2/1/auto/span 4" for=lossy>Use lossy compression:</label>
+                <input style="grid-area: 2/5/auto/span 1" type=checkbox id=lossy name=lossy>
+
+                <label style="grid-area: 3/1/auto/span 4" for=fastload>Embed fast load data:</label>
+                <input style="grid-area: 3/5/auto/span 1" type=checkbox id=fastload name=fastload>
+
+                <label style="grid-area: 4/1/auto/span 4" for=embed>Embed original raw file:</label>
+                <input style="grid-area: 4/5/auto/span 1" type=checkbox id=embed name=embed>
+            </div>
     
-            <label style="grid-area: 2/1/auto/span 4" for=resample>Export for web/print:</label>
-            <input style="grid-area: 2/5/auto/span 1" type=checkbox id=resample name=resample onchange="exportChange(this)">
-    
-            <label style="grid-area: 3/1/auto/span 4" for=quality>Quality:</label>
-            <select style="grid-area: 3/5/auto/span 2" id=quality name=quality>
-                <option>0</option>
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>6</option>
-                <option>7</option>
-                <option>8</option>
-                <option>9</option>
-                <option selected>10</option>
-                <option>11</option>
-                <option>12</option>
-            </select>
-    
-            <label style="grid-area: 4/1/auto/span 4" id=fit>Resize to fit:</label>
-            <select style="grid-area: 4/5/auto/span 4" id=fit name=fit onchange="exportChange(this)">
-                <option value=dims>Dimensions</option>
-                <option value=size>Width & Height</option>
-                <option value=mpix>Pixel count</option>
-            </select>
-    
-            <input style="grid-area: 5/1/auto/span 2" type=number name=long placeholder="long" min="80" max="5120" onchange="exportChange(this)">
-            <input style="grid-area: 5/3/auto/span 2" type=number name=short placeholder="short" min="80" max="5120" onchange="exportChange(this)">
-            <input style="grid-area: 5/1/auto/span 2" type=number name=width placeholder="width" min="80" max="5120" onchange="exportChange(this)">
-            <input style="grid-area: 5/3/auto/span 2" type=number name=height placeholder="height" min="80" max="5120" onchange="exportChange(this)">
-            <select style="grid-area: 5/5/auto/span 4" name=dimunit onchange="exportChange(this)">
-                <option value="px">pixels</option>
-                <option value="in">inches</option>
-                <option value="cm">cm</option>
-            </select>
-    
-            <input style="grid-area: 6/3/auto/span 2" type=number name=density value="300" min="72" max="600" onchange="exportChange(this)">
-            <select style="grid-area: 6/5/auto/span 4" name=denunit onchange="exportChange(this)">
-                <option value="ppi">pixels per inch</option>
-                <option value="ppc">pixels per cm</option>
-            </select>
-    
-            <input style="grid-area: 7/3/auto/span 2" type=number name=mpixels value="2.0" min="1" max="20" step="0.5" onchange="exportChange(this)">
-            <span style="grid-area: 7/5/auto/span 4">megapixels</span>
-    
-            <button style="grid-area: 8/3/auto/span 3" value="export">Export…</button>
-            <button style="grid-area: 8/6/auto/span 3" type=cancel>Cancel</button>
+            <div>
+                <button style="grid-column: 3/span 3" value="export">Export…</button>
+                <button style="grid-column: 6/span 3" type=cancel>Cancel</button>
+            </div>
         </form>
     </dialog>
 </body>

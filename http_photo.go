@@ -45,8 +45,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if out, err := exportEdit(path, &xmp, &exp); err != nil {
 			return handleError(err)
 		} else {
-			w.Header().Add("Content-Disposition", "attachment")
-			w.Header().Add("Content-Type", "image/jpeg")
+			exportHeaders(path, &exp, w.Header())
 			w.Write(out)
 			return HTTPResult{}
 		}

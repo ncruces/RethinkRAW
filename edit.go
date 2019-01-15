@@ -3,7 +3,9 @@ package main
 import (
 	"image"
 	"io"
+	"io/ioutil"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +37,7 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 		return
 	}
 
-	err = toDng(wk.Last(), filepath.Base(wk.Temp()), filepath.Dir(wk.Temp()), true, true)
+	err = toDng(wk.Last(), wk.Temp(), nil)
 	if err != nil {
 		return
 	}
@@ -64,21 +66,44 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 		return
 	}
 
-	err = toDng(wk.Orig(), filepath.Base(wk.Temp()), filepath.Dir(wk.Temp()), false, false)
+	err = toDng(wk.Orig(), wk.Temp(), exp)
 	if err != nil {
 		return
 	}
 
-	data, err = exportJPEG(wk.Temp(), exp)
-	if err != nil {
-		return
+	if exp.Dng {
+		return ioutil.ReadFile(wk.Temp())
+	} else {
+		return exportJPEG(wk.Temp(), exp)
+	}
+}
+
+func exportHeaders(path string, exp *exportSettings, headers http.Header) {
+	var name, mime string
+
+	name = filename(strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)))
+	if name == "" {
+		name = "photo"
+	}
+	if exp.Dng {
+		mime = "image/x-adobe-dng"
+		name += ".dng"
+	} else {
+		mime = "image/jpeg"
+		name += ".jpg"
 	}
 
-	err = os.Remove(wk.Temp())
-	return
+	headers.Add("Content-Disposition", `attachment; filename="`+name+`"`)
+	headers.Add("Content-Type", mime)
 }
 
 type exportSettings struct {
+	Dng      bool
+	Preview  string
+	FastLoad bool
+	Embed    bool
+	Lossy    bool
+
 	Resample bool
 	Quality  int
 	Fit      string

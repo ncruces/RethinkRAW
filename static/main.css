@@ -6,8 +6,8 @@ body {
     margin: 8px;
 }
 
-input[type=checkbox] {
-    vertical-align: middle;
+[hidden] {
+    display: none !important;
 }
 
 #menu {

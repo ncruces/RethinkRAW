@@ -1,9 +1,9 @@
-void function() {
+void function () {
 
 let form = document.getElementById('settings');
 let changed = false;
 
-document.body.onload = async() => {
+document.body.onload = async () => {
     let settings = await jsonRequest('GET', `/photo/${template.Path}?settings`);
     let processChanged = false;
 
@@ -45,11 +45,11 @@ document.body.onload = async() => {
     }
 }
 
-window.onbeforeunload = function() {
+window.onbeforeunload = function () {
     if (changed) return 'Do you want to leave this page? Changes you made may not be saved.';
 }
 
-window.valueChange = function() {
+window.valueChange = function () {
     let spinner = document.getElementById('spinner');
     let photo = document.getElementById('photo');
     let done = true;
@@ -81,7 +81,7 @@ window.valueChange = function() {
     };
 }();
 
-window.orientationChange = function(op) {
+window.orientationChange = function (op) {
     const table = {
         ccw: [8, 8, 5, 6, 7, 4, 1, 2, 3],
         cw:  [6, 6, 7, 8, 5, 2, 3, 4, 1],
@@ -96,7 +96,7 @@ window.orientationChange = function(op) {
     valueChange();
 }
 
-window.treatmentChange = function(e, v) {
+window.treatmentChange = function (e, v) {
     const profiles = [
         ['Adobe Standard'],
         ['Adobe Standard'],
@@ -119,7 +119,7 @@ window.treatmentChange = function(e, v) {
     valueChange();
 }
 
-window.whiteBalanceChange = function(e, v) {
+window.whiteBalanceChange = function (e, v) {
     const presets = {
         Daylight:   { temperature: 5500, tint: 10 },
         Cloudy:     { temperature: 6500, tint: 10 },
@@ -152,7 +152,7 @@ window.whiteBalanceChange = function(e, v) {
     valueChange();
 }
 
-window.toneChange = function(e, v) {
+window.toneChange = function (e, v) {
     if (v !== void 0) e.value = v;
 
     if (e.value === 'Default') {
@@ -170,7 +170,7 @@ window.toneChange = function(e, v) {
     valueChange();
 }
 
-window.temperatureInput = function(e, v) {
+window.temperatureInput = function (e, v) {
     if (e.length === 2) e = e[1];
     if (v !== void 0) e.value = Math.log(v);
 
@@ -184,7 +184,7 @@ window.temperatureInput = function(e, v) {
     e.previousElementSibling.value = Math.round(n / r) * r;
 }
 
-window.rangeInput = function(e, v) {
+window.rangeInput = function (e, v) {
     if (e.length === 2) e = e[1];
     if (v !== void 0) e.value = v;
 
@@ -197,7 +197,7 @@ window.rangeInput = function(e, v) {
 window.setCustomWhiteBalance = () => form.whiteBalance.value = 'Custom';
 window.setCustomTone = () => form.tone.value = 'Custom';
 
-window.exportFile = function(state) {
+window.exportFile = function (state) {
     if (state === 'dialog') {
         exportChange(document.getElementById('export-form'));
         let dialog = document.getElementById('export-dialog');
@@ -212,8 +212,11 @@ window.exportFile = function(state) {
     changed = false;
 }
 
-window.exportChange = function(e) {
+window.exportChange = function (e) {
     let form = e.tagName === 'FORM' ? e : e.form;
+
+    document.getElementById('export-dng').hidden = form.format.value !== 'DNG';
+    document.getElementById('export-jpeg').hidden = form.format.value !== 'JPEG';
 
     // density unit changed?
     let newden = form.denunit.value;
@@ -343,7 +346,7 @@ function disableInputs(n) {
 
 function formQuery() {
     let query = [];
-    
+
     if (form.tone.value === 'Auto') query.push('autoTone=1');
 
     for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
@@ -362,12 +365,22 @@ function formQuery() {
 
 function exportQuery() {
     let form = document.getElementById('export-form')
-    let resample = form.resample.checked;
-    if (!resample) return '';
+    let query = [];
 
-    let query = ['resample=1'];
-    for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
-        query.push(k + '=' + encodeURIComponent(form[k].value));
+    if (form.format.value === 'DNG') {
+        query.push('dng=1');
+        query.push('preview=' + encodeURIComponent(form.preview.value));
+        for (let k of ['fastload', 'embed', 'lossy']) {
+            if (form[k].checked) query.push(k + '=1');
+        }
+    } else {
+        let resample = form.resample.checked;
+        if (!resample) return '';
+
+        query.push('resample=1');
+        for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
+            query.push(k + '=' + encodeURIComponent(form[k].value));
+        }
     }
 
     return query.join('&');

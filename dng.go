@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -10,15 +12,34 @@ import (
 
 const dngconv = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 
-func toDng(input, output, dir string, preview, lossy bool) error {
+func toDng(input, output string, exp *exportSettings) error {
+	err := os.RemoveAll(output)
+	if err != nil {
+		return err
+	}
+
+	dir := filepath.Dir(output)
+	output = filepath.Base(output)
+
 	opts := []string{}
 	switch {
-	case preview:
-		opts = append(opts, "-side", "1920", "-lossy")
-	case lossy:
-		opts = append(opts, "-lossy")
+	case exp == nil:
+		opts = append(opts, "-p2", "-side", "1920")
+	case exp.Dng:
+		opts = append(opts, "-"+exp.Preview)
+		if exp.FastLoad {
+			opts = append(opts, "-fl")
+		}
+		if exp.Embed {
+			opts = append(opts, "-e")
+		}
+		if exp.Lossy {
+			opts = append(opts, "-lossy")
+		}
+	default:
+		opts = append(opts, "-p2")
 	}
-	opts = append(opts, "-p2", "-fl", "-d", dir, "-o", output, input)
+	opts = append(opts, "-d", dir, "-o", output, input)
 
 	log.Printf("dngconv %v\n", opts)
 	cmd := exec.Command(dngconv, opts...)
