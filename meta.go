@@ -2,30 +2,39 @@ package main
 
 import (
 	"log"
-	"os/exec"
+	"os"
 	"path/filepath"
-	"syscall"
+
+	pkg "github.com/ncruces/go-exiftool"
 )
 
 const exiftool = "./utils/exiftool"
 
-func getMeta(path string) ([]byte, error) {
-	log.Printf("exiftool [-ignoreMinorErrors -fixBase -groupHeadings0:1 %s]\n", path)
-	cmd := exec.Command(exiftool, "-ignoreMinorErrors", "-fixBase", "-groupHeadings0:1", path)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	return cmd.Output()
+var exifserver *pkg.Stayopen
+
+func setupExifTool() *pkg.Stayopen {
+	var err error
+	os.Setenv("PAR_GLOBAL_TEMP", filepath.Join(dataDir, "exiftool"))
+	exifserver, err = pkg.NewStayOpen(exiftool)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return exifserver
 }
 
-func fixMeta(path, dest, name string) (err error) {
-	opts := []string{"-tagsFromFile", path, "-MakerNotes"}
+func getMeta(path string) ([]byte, error) {
+	log.Printf("exiftool [-ignoreMinorErrors -fixBase -groupHeadings0:1 %s]\n", path)
+	return exifserver.ExtractFlags(path, "-ignoreMinorErrors", "-fixBase", "-groupHeadings0:1")
+}
+
+func copyMeta(orig, dest, name string) (err error) {
+	opts := []string{"-tagsFromFile", orig, "-MakerNotes"}
 	if name != "" {
-		opts = append(opts, "-OriginalRawFileName-=orig.raw", "-OriginalRawFileName="+filepath.Base(name))
+		opts = append(opts, "-OriginalRawFileName-="+filepath.Base(orig), "-OriginalRawFileName="+filepath.Base(name))
 	}
 	opts = append(opts, "-overwrite_original", dest)
 
 	log.Printf("exiftool %v\n", opts)
-	cmd := exec.Command(exiftool, opts...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	_, err = cmd.Output()
+	_, err = exifserver.ExtractFlags("", opts...)
 	return err
 }

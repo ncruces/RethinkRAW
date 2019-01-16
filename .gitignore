@@ -14,7 +14,7 @@
 *.out
 
 ## Project
-/temp
+/data
 /stuff
 /samples
 !/utils/*.*

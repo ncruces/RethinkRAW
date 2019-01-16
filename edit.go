@@ -18,9 +18,9 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	if err != nil {
 		return
 	}
-	defer wk.Close()
+	defer wk.close()
 
-	return loadXmp(wk.OrigXmp())
+	return loadXmp(wk.origXmp())
 }
 
 func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
@@ -28,29 +28,29 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 	if err != nil {
 		return
 	}
-	defer wk.Close()
+	defer wk.close()
 
-	err = saveXmp(wk.LastXmp(), xmp)
+	err = saveXmp(wk.lastXmp(), xmp)
 	if err != nil {
 		return
 	}
 
-	err = os.RemoveAll(wk.Temp())
+	err = os.RemoveAll(wk.temp())
 	if err != nil {
 		return
 	}
 
-	err = toDng(wk.Last(), wk.Temp(), nil)
+	err = toDng(wk.last(), wk.temp(), nil)
 	if err != nil {
 		return
 	}
 
-	err = os.Rename(wk.Temp(), wk.Edit())
+	err = os.Rename(wk.temp(), wk.edit())
 	if err != nil {
 		return
 	}
 
-	return previewJPEG(wk.Edit())
+	return previewJPEG(wk.edit())
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte, err error) {
@@ -58,27 +58,32 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	if err != nil {
 		return
 	}
-	defer wk.Close()
+	defer wk.close()
 
-	err = saveXmp(wk.OrigXmp(), xmp)
+	err = saveXmp(wk.origXmp(), xmp)
 	if err != nil {
 		return
 	}
 
-	err = os.RemoveAll(wk.Temp())
+	err = os.RemoveAll(wk.temp())
 	if err != nil {
 		return
 	}
 
-	err = toDng(wk.Orig(), wk.Temp(), exp)
+	err = toDng(wk.orig(), wk.temp(), exp)
 	if err != nil {
 		return
 	}
 
 	if exp.Dng {
-		return ioutil.ReadFile(wk.Temp())
+		err = copyMeta(wk.orig(), wk.temp(), path)
+		if err != nil {
+			return
+		}
+
+		return ioutil.ReadFile(wk.temp())
 	} else {
-		return exportJPEG(wk.Temp(), exp)
+		return exportJPEG(wk.temp(), exp)
 	}
 }
 
@@ -189,44 +194,10 @@ type workspace struct {
 	mutex   sync.Mutex
 }
 
-func (wk *workspace) Orig() string {
-	return wk.base + "orig" + wk.ext
-}
-
-func (wk *workspace) Edit() string {
-	return wk.base + "edit.dng"
-}
-
-func (wk *workspace) Temp() string {
-	return wk.base + "temp.dng"
-}
-
-func (wk *workspace) OrigXmp() string {
-	if wk.hasXmp {
-		return wk.base + "orig.xmp"
-	} else {
-		return wk.base + "orig" + wk.ext
-	}
-}
-
-func (wk *workspace) Last() string {
-	if wk.hasEdit {
-		return wk.Edit()
-	} else {
-		return wk.Orig()
-	}
-}
-
-func (wk *workspace) LastXmp() string {
-	if wk.hasEdit {
-		return wk.Edit()
-	} else {
-		return wk.OrigXmp()
-	}
-}
-
 var workspaces = make(map[string]*workspace)
 var workspacesMutex sync.Mutex
+
+const maxWorkspaces = 5
 
 func openWorkspace(path string) (wk *workspace, err error) {
 	workspacesMutex.Lock()
@@ -239,7 +210,7 @@ func openWorkspace(path string) (wk *workspace, err error) {
 	if !ok {
 		wk = &workspace{hash: hash}
 		wk.ext = filepath.Ext(path)
-		wk.base = filepath.Join(tempDir, "work", hash) + string(filepath.Separator)
+		wk.base = filepath.Join(tempDir, hash) + string(filepath.Separator)
 	}
 
 	err = os.MkdirAll(wk.base, 0700)
@@ -281,11 +252,11 @@ func openWorkspace(path string) (wk *workspace, err error) {
 	return
 }
 
-func (wk *workspace) Close() {
+func (wk *workspace) close() {
 	workspacesMutex.Lock()
 	defer workspacesMutex.Unlock()
 
-	if len(workspaces) >= 2 {
+	if len(workspaces) >= maxWorkspaces {
 		for k, w := range workspaces {
 			delete(workspaces, k)
 			os.RemoveAll(w.base)
@@ -295,6 +266,42 @@ func (wk *workspace) Close() {
 
 	workspaces[wk.hash] = wk
 	wk.mutex.Unlock()
+}
+
+func (wk *workspace) orig() string {
+	return wk.base + "orig" + wk.ext
+}
+
+func (wk *workspace) edit() string {
+	return wk.base + "edit.dng"
+}
+
+func (wk *workspace) temp() string {
+	return wk.base + "temp.dng"
+}
+
+func (wk *workspace) origXmp() string {
+	if wk.hasXmp {
+		return wk.base + "orig.xmp"
+	} else {
+		return wk.base + "orig" + wk.ext
+	}
+}
+
+func (wk *workspace) last() string {
+	if wk.hasEdit {
+		return wk.edit()
+	} else {
+		return wk.orig()
+	}
+}
+
+func (wk *workspace) lastXmp() string {
+	if wk.hasEdit {
+		return wk.edit()
+	} else {
+		return wk.origXmp()
+	}
 }
 
 func copyFile(src, dst string) (err error) {

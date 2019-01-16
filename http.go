@@ -13,7 +13,7 @@ import (
 
 var templates *template.Template
 
-func setupServer() *http.Server {
+func setupHTTP() *http.Server {
 	templates = template.Must(template.ParseGlob("html/*.html"))
 	http.Handle("/gallery/", http.StripPrefix("/gallery/", HTTPHandler(galleryHandler)))
 	http.Handle("/photo/", http.StripPrefix("/photo/", HTTPHandler(photoHandler)))

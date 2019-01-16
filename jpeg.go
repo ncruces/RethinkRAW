@@ -8,7 +8,6 @@ import (
 	"image/jpeg"
 	"log"
 	"os/exec"
-	"syscall"
 
 	"./rotateflip"
 
@@ -29,7 +28,6 @@ const unsupportedThumb = constError("unsupported thumbnail")
 func extractThumb(path string) ([]byte, error) {
 	log.Printf("dcraw [-e -c %s]\n", path)
 	cmd := exec.Command(dcraw, "-e", "-c", path)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	if out, err := cmd.Output(); err != nil || len(out) > 2 {
 		return out, err
 	}
@@ -79,7 +77,6 @@ func previewJPEG(path string) ([]byte, error) {
 
 	log.Printf("jpegtran %v\n", opts)
 	cmd := exec.Command(jpegtran, opts...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Stdin = bytes.NewReader(data)
 	return cmd.Output()
 }

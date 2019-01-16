@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 )
 
 const exiv2 = "./utils/exiv2"
@@ -49,7 +48,6 @@ type xmpSettings struct {
 func loadXmp(path string) (xmp xmpSettings, err error) {
 	log.Printf("exiv2 [-Pnv -gXmp.crs. -gExif.Image. %s]\n", path)
 	cmd := exec.Command(exiv2, "-Pnv", "-gExif.Image.", "-gXmp.crs.", path)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	out, err := cmd.Output()
 	if err != nil {
 		return
@@ -133,7 +131,6 @@ func saveXmp(path string, xmp *xmpSettings) (err error) {
 		opts = append(opts, path)
 		log.Printf("exiv2 %v\n", opts)
 		cmd := exec.Command(exiv2, opts...)
-		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 		if xmp != nil {
 			cmd.Stdin = xmp.buffer()
 		}

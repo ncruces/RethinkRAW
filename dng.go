@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 
 	"github.com/pkg/errors"
 )
@@ -43,7 +42,6 @@ func toDng(input, output string, exp *exportSettings) error {
 
 	log.Printf("dngconv %v\n", opts)
 	cmd := exec.Command(dngconv, opts...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	if _, err := cmd.Output(); err != nil {
 		return errors.WithMessagef(err, "DNG Converter: %v", opts)
 	}

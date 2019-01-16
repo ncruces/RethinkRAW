@@ -9,11 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 )
 
 var chrome = `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
-var baseDir, tempDir string
+var baseDir, dataDir, tempDir string
 var lock *os.File
 
 func main() {
@@ -21,14 +20,16 @@ func main() {
 		log.Fatal(err)
 	} else {
 		baseDir = filepath.Dir(exe)
-		tempDir = filepath.Join(baseDir, "temp")
+		dataDir = filepath.Join(baseDir, "data")
+		tempDir = filepath.Join(dataDir, "temp")
 	}
 
-	if err := os.MkdirAll(tempDir, 0700); err != nil {
+	if err := os.MkdirAll(dataDir, 0700); err != nil {
 		log.Fatal(err)
 	}
 
 	url := url.URL{Scheme: "http"}
+	hideConsole()
 
 	// path
 	var path string
@@ -66,19 +67,22 @@ func main() {
 
 	url.Host = ln.Addr().String()
 	lock, err = createLock(url.Host)
-	if err == nil {
-		server := setupServer()
-		defer func() {
-			server.Shutdown(context.Background())
-			os.RemoveAll(filepath.Join(tempDir, "work"))
-		}()
-		go server.Serve(ln)
-	} else {
+	if err != nil {
 		url.Host, err = getLocked()
 		if err != nil {
 			log.Fatal(err)
 		}
 		ln.Close()
+	} else {
+		exif := setupExifTool()
+		http := setupHTTP()
+		defer func() {
+			log.Println("Exiting...")
+			exif.Stop()
+			http.Shutdown(context.Background())
+			os.RemoveAll(tempDir)
+		}()
+		go http.Serve(ln)
 	}
 
 	chrome := setupChrome(url.String())
@@ -88,7 +92,7 @@ func main() {
 }
 
 func setupChrome(url string) *exec.Cmd {
-	dir := filepath.Join(tempDir, "chrome")
+	dir := filepath.Join(dataDir, "chrome")
 
 	prefs := filepath.Join(dir, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
@@ -97,13 +101,11 @@ func setupChrome(url string) *exec.Cmd {
 		}
 	}
 
-	cmd := exec.Command(chrome, "--app="+url, "--user-data-dir="+dir, "--no-first-run", "--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins", "--disable-background-networking")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	return cmd
+	return exec.Command(chrome, "--app="+url, "--user-data-dir="+dir, "--no-first-run", "--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins", "--disable-background-networking")
 }
 
 func createLock(address string) (file *os.File, err error) {
-	filename := filepath.Join(tempDir, "lockfile")
+	filename := filepath.Join(dataDir, "lockfile")
 
 	err = os.RemoveAll(filename)
 	if err != nil {
@@ -120,7 +122,7 @@ func createLock(address string) (file *os.File, err error) {
 }
 
 func getLocked() (string, error) {
-	filename := filepath.Join(tempDir, "lockfile")
+	filename := filepath.Join(dataDir, "lockfile")
 
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
