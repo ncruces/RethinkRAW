@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -15,7 +14,6 @@ import (
 
 var chrome = `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
 var baseDir, tempDir string
-var server *http.Server
 var lock *os.File
 
 func main() {
@@ -26,8 +24,7 @@ func main() {
 		tempDir = filepath.Join(baseDir, "temp")
 	}
 
-	err := os.MkdirAll(tempDir, 0700)
-	if err != nil {
+	if err := os.MkdirAll(tempDir, 0700); err != nil {
 		log.Fatal(err)
 	}
 
@@ -38,6 +35,7 @@ func main() {
 	if len(os.Args) > 1 {
 		path = os.Args[1]
 	} else {
+		var err error
 		path, err = os.Getwd()
 		if err != nil {
 			log.Fatal(err)
@@ -69,8 +67,11 @@ func main() {
 	url.Host = ln.Addr().String()
 	lock, err = createLock(url.Host)
 	if err == nil {
-		server = setupServer()
-		defer server.Shutdown(context.Background())
+		server := setupServer()
+		defer func() {
+			server.Shutdown(context.Background())
+			os.RemoveAll(filepath.Join(tempDir, "work"))
+		}()
 		go server.Serve(ln)
 	} else {
 		url.Host, err = getLocked()
@@ -80,8 +81,8 @@ func main() {
 		ln.Close()
 	}
 
-	err = setupChrome(url.String()).Run()
-	if err != nil {
+	chrome := setupChrome(url.String())
+	if err := chrome.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -9,23 +9,26 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {
-	wk, err := newWorkspace(path)
+	wk, err := openWorkspace(path)
 	if err != nil {
 		return
 	}
+	defer wk.Close()
 
 	return loadXmp(wk.OrigXmp())
 }
 
 func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
-	wk, err := newWorkspace(path)
+	wk, err := openWorkspace(path)
 	if err != nil {
 		return
 	}
+	defer wk.Close()
 
 	err = saveXmp(wk.LastXmp(), xmp)
 	if err != nil {
@@ -51,10 +54,11 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte, err error) {
-	wk, err := newWorkspace(path)
+	wk, err := openWorkspace(path)
 	if err != nil {
 		return
 	}
+	defer wk.Close()
 
 	err = saveXmp(wk.OrigXmp(), xmp)
 	if err != nil {
@@ -177,10 +181,12 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 }
 
 type workspace struct {
+	hash    string
 	base    string
 	ext     string
 	hasXmp  bool
 	hasEdit bool
+	mutex   sync.Mutex
 }
 
 func (wk *workspace) Orig() string {
@@ -219,12 +225,22 @@ func (wk *workspace) LastXmp() string {
 	}
 }
 
-func newWorkspace(path string) (wk workspace, err error) {
+var workspaces = make(map[string]*workspace)
+var workspacesMutex sync.Mutex
+
+func openWorkspace(path string) (wk *workspace, err error) {
+	workspacesMutex.Lock()
+	defer workspacesMutex.Unlock()
+
 	path = filepath.Clean(path)
 	hash := md5sum(filepath.ToSlash(path))
 
-	wk.base = filepath.Join(tempDir, hash) + string(filepath.Separator)
-	wk.ext = filepath.Ext(path)
+	wk, ok := workspaces[hash]
+	if !ok {
+		wk = &workspace{hash: hash}
+		wk.ext = filepath.Ext(path)
+		wk.base = filepath.Join(tempDir, "work", hash) + string(filepath.Separator)
+	}
 
 	err = os.MkdirAll(wk.base, 0700)
 	if err != nil {
@@ -234,7 +250,10 @@ func newWorkspace(path string) (wk workspace, err error) {
 	defer func() {
 		if err != nil {
 			os.RemoveAll(wk.base)
-			wk = workspace{}
+			wk = nil
+		} else {
+			wk.mutex.Lock()
+			delete(workspaces, hash)
 		}
 	}()
 
@@ -260,6 +279,22 @@ func newWorkspace(path string) (wk workspace, err error) {
 		wk.hasXmp = true
 	}
 	return
+}
+
+func (wk *workspace) Close() {
+	workspacesMutex.Lock()
+	defer workspacesMutex.Unlock()
+
+	if len(workspaces) >= 2 {
+		for k, w := range workspaces {
+			delete(workspaces, k)
+			os.RemoveAll(w.base)
+			break
+		}
+	}
+
+	workspaces[wk.hash] = wk
+	wk.mutex.Unlock()
 }
 
 func copyFile(src, dst string) (err error) {
