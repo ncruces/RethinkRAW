@@ -77,9 +77,8 @@ func main() {
 		exif := setupExifTool()
 		http := setupHTTP()
 		defer func() {
-			log.Println("Exiting...")
-			exif.Stop()
 			http.Shutdown(context.Background())
+			exif.Stop()
 			os.RemoveAll(tempDir)
 		}()
 		go http.Serve(ln)
@@ -101,7 +100,9 @@ func setupChrome(url string) *exec.Cmd {
 		}
 	}
 
-	return exec.Command(chrome, "--app="+url, "--user-data-dir="+dir, "--no-first-run", "--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins", "--disable-background-networking")
+	return exec.Command(chrome, "--app="+url, "--user-data-dir="+dir, "--no-first-run", "--disk-cache-size=1048576",
+		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins",
+		"--disable-background-networking")
 }
 
 func createLock(address string) (file *os.File, err error) {
