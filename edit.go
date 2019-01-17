@@ -191,42 +191,29 @@ type workspace struct {
 	ext     string
 	hasXmp  bool
 	hasEdit bool
-	mutex   sync.Mutex
 }
 
-var workspaces = make(map[string]*workspace)
-var workspacesMutex sync.Mutex
-
-const maxWorkspaces = 5
-
-func openWorkspace(path string) (wk *workspace, err error) {
-	workspacesMutex.Lock()
-	defer workspacesMutex.Unlock()
-
+func openWorkspace(path string) (wk workspace, err error) {
 	path = filepath.Clean(path)
-	hash := md5sum(filepath.ToSlash(path))
 
-	wk, ok := workspaces[hash]
-	if !ok {
-		wk = &workspace{hash: hash}
-		wk.ext = filepath.Ext(path)
-		wk.base = filepath.Join(tempDir, hash) + string(filepath.Separator)
-	}
+	wk.hash = md5sum(filepath.ToSlash(path))
+	wk.base = filepath.Join(tempDir, wk.hash) + string(filepath.Separator)
+	wk.ext = filepath.Ext(path)
+
+	workspaces.open(wk.hash)
+	defer func() {
+		if err != nil {
+			if workspaces.delete(wk.hash) {
+				os.RemoveAll(wk.base)
+			}
+			wk = workspace{}
+		}
+	}()
 
 	err = os.MkdirAll(wk.base, 0700)
 	if err != nil {
 		return
 	}
-
-	defer func() {
-		if err != nil {
-			os.RemoveAll(wk.base)
-			wk = nil
-		} else {
-			wk.mutex.Lock()
-			delete(workspaces, hash)
-		}
-	}()
 
 	fi, err := os.Stat(wk.base + "edit.dng")
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
@@ -253,19 +240,9 @@ func openWorkspace(path string) (wk *workspace, err error) {
 }
 
 func (wk *workspace) close() {
-	workspacesMutex.Lock()
-	defer workspacesMutex.Unlock()
-
-	if len(workspaces) >= maxWorkspaces {
-		for k, w := range workspaces {
-			delete(workspaces, k)
-			os.RemoveAll(w.base)
-			break
-		}
+	if old := workspaces.close(wk.hash); old != "" {
+		os.RemoveAll(filepath.Join(tempDir, old))
 	}
-
-	workspaces[wk.hash] = wk
-	wk.mutex.Unlock()
 }
 
 func (wk *workspace) orig() string {
@@ -302,6 +279,76 @@ func (wk *workspace) lastXmp() string {
 	} else {
 		return wk.origXmp()
 	}
+}
+
+type workspaceLock struct {
+	sync.Mutex
+	n int
+}
+
+type workspaceLocker struct {
+	sync.Mutex
+	lru   []string
+	locks map[string]*workspaceLock
+}
+
+var workspaces = workspaceLocker{locks: make(map[string]*workspaceLock)}
+
+const workspaceMaxLRU = 3
+
+func (wl *workspaceLocker) open(hash string) {
+	wl.Lock()
+
+	lk, ok := wl.locks[hash]
+	if !ok {
+		lk = &workspaceLock{}
+		wl.locks[hash] = lk
+	}
+	lk.n++
+
+	for i, h := range wl.lru {
+		if h == hash {
+			wl.lru = append(wl.lru[:i], wl.lru[i+1:]...)
+		}
+	}
+
+	wl.Unlock()
+	lk.Lock()
+}
+
+func (wl *workspaceLocker) close(hash string) (old string) {
+	wl.Lock()
+
+	lk := wl.locks[hash]
+	lk.n--
+
+	if lk.n <= 0 {
+		if len(wl.lru) >= workspaceMaxLRU {
+			old, wl.lru = wl.lru[0], wl.lru[1:]
+		}
+		wl.lru = append(wl.lru, hash)
+		delete(wl.locks, hash)
+	}
+
+	lk.Unlock()
+	wl.Unlock()
+	return
+}
+
+func (wl *workspaceLocker) delete(hash string) (ok bool) {
+	wl.Lock()
+
+	lk := wl.locks[hash]
+	lk.n--
+
+	if lk.n <= 0 {
+		delete(wl.locks, hash)
+		ok = true
+	}
+
+	lk.Unlock()
+	wl.Unlock()
+	return
 }
 
 func copyFile(src, dst string) (err error) {
