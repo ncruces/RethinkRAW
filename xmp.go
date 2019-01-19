@@ -45,9 +45,15 @@ type xmpSettings struct {
 	AutoLateralCA bool `json:"autoLateralCA"`
 }
 
+func hasXmp(path string) bool {
+	log.Printf("exiv2 [-PXn -gXmp.crs. %s]\n", path)
+	cmd := exec.Command(exiv2, "-PXn", "-gXmp.crs.", path)
+	return cmd.Run() == nil
+}
+
 func loadXmp(path string) (xmp xmpSettings, err error) {
-	log.Printf("exiv2 [-Pnv -gXmp.crs. -gExif.Image. %s]\n", path)
-	cmd := exec.Command(exiv2, "-Pnv", "-gExif.Image.", "-gXmp.crs.", path)
+	log.Printf("exiv2 [-PEXnv -gXmp.crs. -gExif.Image. %s]\n", path)
+	cmd := exec.Command(exiv2, "-PEXnv", "-gExif.Image.", "-gXmp.crs.", path)
 	out, err := cmd.Output()
 	if err != nil {
 		return

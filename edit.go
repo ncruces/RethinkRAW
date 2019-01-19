@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/xml"
 	"image"
 	"io"
 	"io/ioutil"
@@ -194,9 +196,7 @@ type workspace struct {
 }
 
 func openWorkspace(path string) (wk workspace, err error) {
-	path = filepath.Clean(path)
-
-	wk.hash = md5sum(filepath.ToSlash(path))
+	wk.hash = md5sum(filepath.Clean(path))
 	wk.base = filepath.Join(tempDir, wk.hash) + string(filepath.Separator)
 	wk.ext = filepath.Ext(path)
 
@@ -223,14 +223,19 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return
 	}
 
+	fi, err = os.Stat(wk.base + "orig" + wk.ext)
+	if err == nil && time.Since(fi.ModTime()) < time.Minute {
+		_, e := os.Stat(wk.base + "orig.xmp")
+		wk.hasXmp = e == nil
+		return
+	}
+
 	err = copyFile(path, wk.base+"orig"+wk.ext)
 	if err != nil {
 		return
 	}
 
-	path = strings.TrimSuffix(path, wk.ext) + ".xmp"
-
-	err = copyFile(path, wk.base+"orig.xmp")
+	err = copySidecar(path, wk.base+"orig.xmp")
 	if os.IsNotExist(err) {
 		err = nil
 	} else if err == nil {
@@ -370,4 +375,77 @@ func copyFile(src, dst string) (err error) {
 
 	_, err = io.Copy(out, in)
 	return
+}
+
+func copySidecar(src, dst string) error {
+	var d []byte
+	err := os.ErrNotExist
+	ext := filepath.Ext(src)
+
+	if ext != "" {
+		xmp := strings.TrimSuffix(src, ext) + ".xmp"
+		d, err = ioutil.ReadFile(xmp)
+		if err == nil && !isSidecarForExt(d, ext) {
+			err = os.ErrNotExist
+		}
+	}
+	if os.IsNotExist(err) {
+		d, err = ioutil.ReadFile(src + ".xmp")
+		if err == nil && !isSidecarForExt(d, ext) {
+			err = os.ErrNotExist
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(dst, d, 0600)
+}
+
+func saveSidecar(src string) (string, error) {
+	ret := src + ".xmp"
+	ext := filepath.Ext(src)
+
+	if ext != "" {
+		xmp := strings.TrimSuffix(src, ext) + ".xmp"
+		if d, err := ioutil.ReadFile(xmp); err == nil {
+			if isSidecarForExt(d, ext) {
+				return xmp, nil
+			}
+		} else if !os.IsNotExist(err) {
+			return "", err
+		} else {
+			ret = xmp
+		}
+	}
+
+	if _, err := os.Stat(src + ".xmp"); err == nil {
+		return src + ".xmp", nil
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	if strings.EqualFold(ext, ".DNG") && hasXmp(src) {
+		return src, nil
+	}
+
+	return ret, nil
+}
+
+func isSidecarForExt(data []byte, ext string) bool {
+	dec := xml.NewDecoder(bytes.NewBuffer(data))
+	for {
+		t, err := dec.Token()
+		if err != nil {
+			return err == io.EOF
+		}
+
+		if s, ok := t.(xml.StartElement); ok {
+			for _, a := range s.Attr {
+				if a.Name.Local == "SidecarForExtension" &&
+					strings.HasPrefix(a.Name.Space, "http://ns.adobe.com/photoshop/") {
+					return strings.EqualFold(ext, "."+a.Value)
+				}
+			}
+		}
+	}
 }
