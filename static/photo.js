@@ -1,7 +1,7 @@
 void function () {
 
 let form = document.getElementById('settings');
-let changed = false;
+let save = document.getElementById('save');
 
 document.body.onload = async () => {
     let settings = await jsonRequest('GET', `/photo/${template.Path}?settings`);
@@ -38,15 +38,15 @@ document.body.onload = async () => {
 
     if (settings.autoTone) tone = 'Auto';
     toneChange(form.tone, tone);
-    changed = processChanged;
 
+    save.disabled = !processChanged;
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }
 }
 
 window.onbeforeunload = function () {
-    if (changed) return 'Do you want to leave this page? Changes you made may not be saved.';
+    if (!save.disabled) return 'Leave this page? Changes that you made may not be saved.';
 }
 
 window.valueChange = function () {
@@ -73,7 +73,7 @@ window.valueChange = function () {
     }
 
     return () => {
-        changed = true;
+        save.disabled = false;
         if (done) {
             done = false;
             setTimeout(delayed, 0);
@@ -197,6 +197,16 @@ window.rangeInput = function (e, v) {
 window.setCustomWhiteBalance = () => form.whiteBalance.value = 'Custom';
 window.setCustomTone = () => form.tone.value = 'Custom';
 
+window.saveFile = async () => {
+    let query = formQuery();
+    try {
+        await jsonRequest('POST', `/photo/${template.Path}?save&` + query);
+        save.disabled = true;
+    } catch (e) {
+        alert(e.statusText);
+    }
+}
+
 window.exportFile = function (state) {
     if (state === 'dialog') {
         exportChange(document.getElementById('export-form'));
@@ -208,8 +218,8 @@ window.exportFile = function (state) {
     let query = formQuery();
     if (state === 'export') query += '&' + exportQuery();
     window.location = `/photo/${template.Path}?export&` + query;
-    setTimeout(c => changed = c, 0, changed);
-    changed = false;
+    setTimeout(d => save.disabled = d, 0, save.disabled);
+    save.disabled = true;
 }
 
 window.exportChange = function (e) {

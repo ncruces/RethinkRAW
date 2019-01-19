@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"image"
 	"io"
 	"io/ioutil"
@@ -23,6 +24,44 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	defer wk.close()
 
 	return loadXmp(wk.origXmp())
+}
+
+func saveEdit(path string, xmp *xmpSettings) (err error) {
+	wk, err := openWorkspace(path)
+	if err != nil {
+		return
+	}
+	defer wk.close()
+
+	err = saveXmp(wk.origXmp(), xmp)
+	if err != nil {
+		return
+	}
+
+	dest, err := saveSidecar(path)
+	if err != nil {
+		return
+	}
+
+	if path == dest {
+		err = os.RemoveAll(wk.temp())
+		if err != nil {
+			return
+		}
+
+		err = toDng(wk.orig(), wk.temp(), &exportSettings{Dng: true, Embed: true})
+		if err != nil {
+			return
+		}
+
+		err = os.Rename(wk.temp(), path+".bak")
+		if err != nil {
+			return
+		}
+		return os.Rename(path+".bak", path)
+	}
+
+	return errors.New("Not implemented!")
 }
 
 func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {

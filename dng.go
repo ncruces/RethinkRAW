@@ -25,7 +25,9 @@ func toDng(input, output string, exp *exportSettings) error {
 	case exp == nil:
 		opts = append(opts, "-p2", "-side", "1920")
 	case exp.Dng:
-		opts = append(opts, "-"+exp.Preview)
+		if exp.Preview != "" {
+			opts = append(opts, "-"+exp.Preview)
+		}
 		if exp.FastLoad {
 			opts = append(opts, "-fl")
 		}

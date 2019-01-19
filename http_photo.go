@@ -17,6 +17,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	query := r.URL.Query()
 
 	_, meta := query["meta"]
+	_, save := query["save"]
 	_, export := query["export"]
 	_, preview := query["preview"]
 	_, settings := query["settings"]
@@ -28,6 +29,19 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		} else {
 			w.Header().Add("Content-Type", "text/plain")
 			w.Write(out)
+			return HTTPResult{}
+		}
+
+	case save:
+		var xmp xmpSettings
+		dec := schema.NewDecoder()
+		dec.IgnoreUnknownKeys(true)
+		if err := dec.Decode(&xmp, query); err != nil {
+			return handleError(err)
+		}
+		if err := saveEdit(path, &xmp); err != nil {
+			return handleError(err)
+		} else {
 			return HTTPResult{}
 		}
 

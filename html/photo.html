@@ -16,7 +16,7 @@
         <div id=menu>
             <div class="toolbar">
                 <button type=button title="Back" onclick="window.history.back()"><i class="fas fa-arrow-left"></i></button>
-                <button type=button title="Save" disabled><i class="fas fas fa-save"></i></button>
+                <button type=button title="Save" onclick="saveFile()" id="save" disabled><i class="fas fas fa-save"></i></button>
                 <button type=button title="Export JPEG (shift-click for options)…" class="shift-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
                 <button type=button title="Export…" class="shift-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
                 <button type=button title="Zoom" disabled><i class="fas fa-search-plus"></i></button>
