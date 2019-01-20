@@ -42,7 +42,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if err := saveEdit(path, &xmp); err != nil {
 			return handleError(err)
 		} else {
-			return HTTPResult{}
+			return HTTPResult{Status: http.StatusNoContent}
 		}
 
 	case export:

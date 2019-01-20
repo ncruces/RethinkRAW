@@ -199,27 +199,43 @@ window.setCustomTone = () => form.tone.value = 'Custom';
 
 window.saveFile = async () => {
     let query = formQuery();
+
+    let dialog = document.getElementById('progress-dialog');
+    dialogPolyfill.registerDialog(dialog);
+    dialog.firstChild.textContent = 'Saving…';
+    dialog.showModal();
     try {
         await jsonRequest('POST', `/photo/${template.Path}?save&` + query);
         save.disabled = true;
     } catch (e) {
         alert(e.statusText);
     }
+    dialog.close();
 }
 
-window.exportFile = function (state) {
+window.exportFile = async (state) => {
     if (state === 'dialog') {
         exportChange(document.getElementById('export-form'));
         let dialog = document.getElementById('export-dialog');
+        dialogPolyfill.registerDialog(dialog);
         dialog.onclose = () => dialog.returnValue && exportFile(dialog.returnValue);
         dialog.showModal();
         return;
     }
+
     let query = formQuery();
     if (state === 'export') query += '&' + exportQuery();
-    window.location = `/photo/${template.Path}?export&` + query;
-    setTimeout(d => save.disabled = d, 0, save.disabled);
-    save.disabled = true;
+
+    let dialog = document.getElementById('progress-dialog');
+    dialogPolyfill.registerDialog(dialog);
+    dialog.firstChild.textContent = 'Exporting…';
+    dialog.showModal();
+    try {
+        await blobRequest('POST', `/photo/${template.Path}?export&` + query);
+    } catch (e) {
+        alert(e.statusText);
+    }
+    dialog.close();
 }
 
 window.exportChange = function (e) {
@@ -405,6 +421,36 @@ function jsonRequest(method, url, body) {
         xhr.onload = () => {
             if (200 <= xhr.status && xhr.status < 300) {
                 resolve(xhr.response);
+            } else {
+                reject({
+                    status: xhr.status,
+                    statusText: xhr.statusText
+                });
+            }
+        };
+        xhr.onerror = () => reject({
+            status: xhr.status,
+            statusText: xhr.statusText
+        });
+        xhr.send(body);
+    });
+}
+
+function blobRequest(method, url, body) {
+    return new Promise((resolve, reject) => {
+        if (body !== void 0) body = JSON.stringify(body);
+        let xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        xhr.open(method, url);
+        xhr.onload = () => {
+            if (200 <= xhr.status && xhr.status < 300) {
+                let disposition = xhr.getResponseHeader('content-disposition');
+                let name = disposition.match(/filename="([^"]*)"/)[1];
+                let a = document.createElement('a');
+                a.href = window.URL.createObjectURL(xhr.response);
+                a.download = name;
+                a.dispatchEvent(new MouseEvent('click'));
+                resolve();
             } else {
                 reject({
                     status: xhr.status,

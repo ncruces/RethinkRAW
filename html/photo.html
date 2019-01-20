@@ -8,6 +8,8 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
     <link rel="stylesheet" href="/photo.css">
+    <link rel="stylesheet" href="/dialog-polyfill.css">
+    <script src="/dialog-polyfill.js" defer></script>
     <script>const template = {{.}}</script>
     <script src="/photo.js" defer></script>
 </head>
@@ -252,6 +254,12 @@
             </div>
         </form>
     </dialog>
+
+    <dialog id="progress-dialog">
+        <br>
+        <progress></progress>
+    </dialog>
+
 </body>
 
 </html>
