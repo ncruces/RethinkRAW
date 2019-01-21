@@ -34,6 +34,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case save:
 		var xmp xmpSettings
+		xmp.Filename = path
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, query); err != nil {
@@ -47,6 +48,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case export:
 		var xmp xmpSettings
+		xmp.Filename = path
 		var exp exportSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)

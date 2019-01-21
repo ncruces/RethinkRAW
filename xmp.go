@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,7 +16,8 @@ const exiv2 = "./utils/exiv2"
 var exiv2Regex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
 
 type xmpSettings struct {
-	Orientation int `json:"orientation,omitempty"`
+	Filename    string `json:"-"`
+	Orientation int    `json:"orientation,omitempty"`
 
 	Process   float32 `json:"process,omitempty"`
 	Profile   string  `json:"profile,omitempty"`
@@ -149,6 +151,21 @@ func saveXmp(path string, xmp *xmpSettings) (err error) {
 // nolint: errcheck
 func (xmp *xmpSettings) buffer() *bytes.Buffer {
 	buf := bytes.Buffer{}
+
+	// filename
+	if xmp.Filename != "" {
+		name := filepath.Base(xmp.Filename)
+		fmt.Fprintf(&buf, `
+			set Xmp.crs.RawFileName %s`, name)
+		ext := filepath.Ext(xmp.Filename)
+		if ext != "" {
+			fmt.Fprintf(&buf, `
+				set Xmp.photoshop.SidecarForExtension %s`, ext[1:])
+		} else {
+			buf.WriteString(`
+				del Xmp.photoshop.SidecarForExtension`)
+		}
+	}
 
 	// orientation
 	fmt.Fprintf(&buf, `
