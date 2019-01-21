@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
-	"errors"
 	"image"
 	"io"
 	"io/ioutil"
@@ -37,6 +36,7 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 	if err != nil {
 		return
 	}
+	wk.hasXmp = true
 
 	dest, err := saveSidecar(path)
 	if err != nil {
@@ -54,14 +54,15 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 			return
 		}
 
-		err = os.Rename(wk.temp(), path+".bak")
-		if err != nil {
-			return
-		}
-		return os.Rename(path+".bak", path)
+		err = os.Rename(wk.temp(), dest+".bak")
+	} else {
+		err = copyFile(wk.origXmp(), dest+".bak")
 	}
 
-	return errors.New("Not implemented!")
+	if err != nil {
+		return
+	}
+	return os.Rename(dest+".bak", dest)
 }
 
 func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
@@ -105,6 +106,7 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	if err != nil {
 		return
 	}
+	wk.hasXmp = true
 
 	err = os.RemoveAll(wk.temp())
 	if err != nil {
@@ -463,7 +465,7 @@ func saveSidecar(src string) (string, error) {
 		return "", err
 	}
 
-	if strings.EqualFold(ext, ".DNG") && hasXmp(src) {
+	if strings.EqualFold(ext, ".dng") && hasXmp(src) {
 		return src, nil
 	}
 
