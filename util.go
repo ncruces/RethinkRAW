@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"log"
+	"mime"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -13,6 +14,16 @@ const MaxUint = ^uint(0)
 const MinUint = 0
 const MaxInt = int(MaxUint >> 1)
 const MinInt = -MaxInt - 1
+
+func init() {
+	must(mime.AddExtensionType(".dng", "image/x-adobe-dng"))
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func btoi(b bool) int {
 	if b {
@@ -26,13 +37,21 @@ func md5sum(data string) string {
 	return base64.URLEncoding.EncodeToString(h[:15])
 }
 
-func filename(name string) string {
-	if name == "" {
-		return ""
-	}
-
-	dots := 0
+func toASCII(str string) string {
 	builder := strings.Builder{}
+	for _, r := range str {
+		if r < ' ' || r >= 0x7f {
+			continue
+		}
+		builder.WriteRune(r)
+	}
+	return builder.String()
+}
+
+func filename(name string) string {
+	builder := strings.Builder{}
+	dots := 0
+
 	for _, r := range name {
 		if r < ' ' {
 			continue

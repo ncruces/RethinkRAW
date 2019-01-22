@@ -4,7 +4,7 @@ let form = document.getElementById('settings');
 let save = document.getElementById('save');
 
 document.body.onload = async () => {
-    let settings = await jsonRequest('GET', `/photo/${template.Path}?settings`);
+    let settings = await jsonRequest('GET', `/photo/${encodeURI(template.Path)}?settings`);
     let processChanged = false;
 
     if (settings.process == null || settings.process < 6.7 || settings > 11) {
@@ -45,6 +45,8 @@ document.body.onload = async () => {
     }
 }
 
+window.gallery = () => location.replace('/gallery/' + template.Parent);
+
 window.onbeforeunload = function () {
     if (!save.disabled) return 'Leave this page? Changes that you made may not be saved.';
 }
@@ -59,7 +61,7 @@ window.valueChange = function () {
         query = formQuery();
         spinner.hidden = false;
         photo.onload = loaded;
-        photo.src = `/photo/${template.Path}?preview&` + query;
+        photo.src = `/photo/${encodeURI(template.Path)}?preview&` + query;
     }
 
     function loaded() {
@@ -68,7 +70,7 @@ window.valueChange = function () {
             done = true;
         } else {
             done = false;
-            setTimeout(delayed, 0);
+            setTimeout(delayed);
         }
     }
 
@@ -76,7 +78,7 @@ window.valueChange = function () {
         save.disabled = false;
         if (done) {
             done = false;
-            setTimeout(delayed, 0);
+            setTimeout(delayed);
         }
     };
 }();
@@ -205,7 +207,7 @@ window.saveFile = async () => {
     dialog.firstChild.textContent = 'Saving…';
     dialog.showModal();
     try {
-        await jsonRequest('POST', `/photo/${template.Path}?save&` + query);
+        await jsonRequest('POST', `/photo/${encodeURI(template.Path)}?save&` + query);
         save.disabled = true;
     } catch (e) {
         alert(e.statusText);
@@ -231,7 +233,7 @@ window.exportFile = async (state) => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await blobRequest('POST', `/photo/${template.Path}?export&` + query);
+        await blobRequest('POST', `/photo/${encodeURI(template.Path)}?export&` + query);
     } catch (e) {
         alert(e.statusText);
     }
@@ -444,11 +446,14 @@ function blobRequest(method, url, body) {
         xhr.open(method, url);
         xhr.onload = () => {
             if (200 <= xhr.status && xhr.status < 300) {
+                let match, name;
                 let disposition = xhr.getResponseHeader('content-disposition');
-                let name = disposition.match(/filename="([^"]*)"/)[1];
+                if (match = disposition.match(/\bfilename=([^,;]+)/)) name = match[1];
+                if (match = disposition.match(/\bfilename="([^"\\]+)"/)) name = match[1];
+                if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) name = decodeURIComponent(match[1]);
                 let a = document.createElement('a');
                 a.href = window.URL.createObjectURL(xhr.response);
-                a.download = name;
+                if (name) a.download = name;
                 a.dispatchEvent(new MouseEvent('click'));
                 resolve();
             } else {

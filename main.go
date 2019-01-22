@@ -21,7 +21,7 @@ func main() {
 	} else {
 		baseDir = filepath.Dir(exe)
 		dataDir = filepath.Join(baseDir, "data")
-		tempDir = filepath.Join(dataDir, "temp")
+		tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
 	}
 
 	if err := os.MkdirAll(dataDir, 0700); err != nil {
@@ -91,16 +91,17 @@ func main() {
 }
 
 func setupChrome(url string) *exec.Cmd {
-	dir := filepath.Join(dataDir, "chrome")
+	data := filepath.Join(dataDir, "chrome")
+	cache := filepath.Join(tempDir, "chrome")
 
-	prefs := filepath.Join(dir, "Default", "Preferences")
+	prefs := filepath.Join(data, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(prefs), 0700); err == nil {
 			ioutil.WriteFile(prefs, []byte(`{"download":{"prompt_for_download":true}}`), 0600)
 		}
 	}
 
-	return exec.Command(chrome, "--app="+url, "--user-data-dir="+dir, "--no-first-run", "--disk-cache-size=1048576",
+	return exec.Command(chrome, "--app="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache, "--no-first-run",
 		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins",
 		"--disable-background-networking")
 }

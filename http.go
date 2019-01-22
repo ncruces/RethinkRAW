@@ -4,10 +4,13 @@ import (
 	"context"
 	"html/template"
 	"log"
+	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -69,10 +72,57 @@ func handleError(err error) HTTPResult {
 		return HTTPResult{Status: http.StatusNotFound}
 	}
 
+	if os.IsPermission(err) {
+		return HTTPResult{Status: http.StatusForbidden}
+	}
+
 	if err, ok := err.(*exec.ExitError); ok {
 		log.Println(string(err.Stderr))
 	}
 
 	log.Println(err)
 	return HTTPResult{Status: http.StatusInternalServerError}
+}
+
+func cacheHeaders(path string, req, res http.Header) HTTPResult {
+	if fi, err := os.Stat(path); err != nil {
+		return handleError(err)
+	} else {
+		ims := req.Get("If-Modified-Since")
+		if ims != "" {
+			if t, err := http.ParseTime(ims); err == nil {
+				if fi.ModTime().Before(t.Add(1 * time.Second)) {
+					return HTTPResult{Status: http.StatusNotModified}
+				}
+			}
+		}
+		res.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
+	}
+	return HTTPResult{}
+}
+
+func attachmentHeaders(path, ext string, headers http.Header) {
+	if ext == "" {
+		ext = filepath.Ext(path)
+	}
+	path = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+
+	utf := filename(path)
+	ascii := filename(toASCII(path))
+	if utf == "" {
+		utf = "download"
+	}
+	if ascii == "" {
+		ascii = "download"
+	}
+
+	headers.Set("Content-Type", mime.TypeByExtension(ext))
+	headers.Set("Content-Disposition", `attachment; filename="`+ascii+ext+`"; filename*=UTF-8''`+url.PathEscape(utf+ext))
+}
+
+func toURLPath(path string) string {
+	if strings.HasPrefix(path, `\\`) {
+		return `\\` + filepath.ToSlash(path[2:])
+	}
+	return filepath.ToSlash(path)
 }

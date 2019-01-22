@@ -131,22 +131,13 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 }
 
 func exportHeaders(path string, exp *exportSettings, headers http.Header) {
-	var name, mime string
-
-	name = filename(strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)))
-	if name == "" {
-		name = "photo"
-	}
+	var ext string
 	if exp.Dng {
-		mime = "image/x-adobe-dng"
-		name += ".dng"
+		ext = ".dng"
 	} else {
-		mime = "image/jpeg"
-		name += ".jpg"
+		ext = ".jpg"
 	}
-
-	headers.Add("Content-Disposition", `attachment; filename="`+name+`"`)
-	headers.Add("Content-Type", mime)
+	attachmentHeaders(path, ext, headers)
 }
 
 type exportSettings struct {

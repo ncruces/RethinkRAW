@@ -59,7 +59,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	} else {
 		data := galleryData{
 			Title:  filepath.Clean(path),
-			Parent: filepath.ToSlash(filepath.Join(path, "..")),
+			Parent: toURLPath(filepath.Join(path, "..")),
 		}
 
 		for _, i := range files {
@@ -68,7 +68,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			}
 
 			name := i.Name()
-			item := galleryItem{name, filepath.ToSlash(filepath.Join(path, name))}
+			item := galleryItem{name, toURLPath(filepath.Join(path, name))}
 
 			if i.IsDir() {
 				data.Dirs = append(data.Dirs, item)
@@ -76,7 +76,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 				data.Photos = append(data.Photos, item)
 			}
 		}
-		w.Header().Add("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/html")
 		return handleError(templates.ExecuteTemplate(w, "gallery.html", data))
 	}
 }

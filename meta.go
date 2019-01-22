@@ -15,7 +15,7 @@ var exifserver *pkg.Stayopen
 func setupExifTool() *pkg.Stayopen {
 	var err error
 	os.Setenv("PAR_GLOBAL_TEMP", filepath.Join(dataDir, "exiftool"))
-	exifserver, err = pkg.NewStayOpen(exiftool)
+	exifserver, err = pkg.NewStayOpen(exiftool, "-charset", "filename=UTF8")
 	if err != nil {
 		log.Fatal(err)
 	}

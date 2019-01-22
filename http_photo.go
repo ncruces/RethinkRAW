@@ -27,7 +27,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if out, err := getMeta(path); err != nil {
 			return handleError(err)
 		} else {
-			w.Header().Add("Content-Type", "text/plain")
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.Write(out)
 			return HTTPResult{}
 		}
@@ -76,7 +76,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if out, err := previewEdit(path, &xmp); err != nil {
 			return handleError(err)
 		} else {
-			w.Header().Add("Content-Type", "image/jpeg")
+			w.Header().Set("Content-Type", "image/jpeg")
 			w.Write(out)
 			return HTTPResult{}
 		}
@@ -85,7 +85,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if xmp, err := loadEdit(path); err != nil {
 			return handleError(err)
 		} else {
-			w.Header().Add("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "application/json")
 			enc := json.NewEncoder(w)
 			if err := enc.Encode(xmp); err != nil {
 				return handleError(err)
@@ -97,11 +97,11 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		data := photoData{
 			Name:   filepath.Base(path),
 			Title:  filepath.Clean(path),
-			Path:   filepath.ToSlash(filepath.Clean(path)),
-			Parent: filepath.ToSlash(filepath.Join(path, "..")),
+			Path:   toURLPath(filepath.Clean(path)),
+			Parent: toURLPath(filepath.Join(path, "..")),
 		}
 
-		w.Header().Add("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/html")
 		return handleError(templates.ExecuteTemplate(w, "photo.html", data))
 	}
 }
