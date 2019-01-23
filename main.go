@@ -24,6 +24,10 @@ func main() {
 		tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
 	}
 
+	if err := os.Chdir(baseDir); err != nil {
+		log.Fatal(err)
+	}
+
 	if err := os.MkdirAll(dataDir, 0700); err != nil {
 		log.Fatal(err)
 	}
@@ -31,32 +35,18 @@ func main() {
 	url := url.URL{Scheme: "http"}
 	hideConsole()
 
-	// path
-	var path string
 	if len(os.Args) > 1 {
-		path = os.Args[1]
-	} else {
-		var err error
-		path, err = os.Getwd()
-		if err != nil {
+		if fi, err := os.Stat(os.Args[1]); err != nil {
 			log.Fatal(err)
-		}
-	}
-
-	if fi, err := os.Stat(path); err != nil {
-		log.Fatal(err)
-	} else if abs, err := filepath.Abs(path); err != nil {
-		log.Fatal(err)
-	} else {
-		if fi.IsDir() {
-			url.Path = "/gallery/" + abs
+		} else if abs, err := filepath.Abs(os.Args[1]); err != nil {
+			log.Fatal(err)
 		} else {
-			url.Path = "/photo/" + abs
+			if fi.IsDir() {
+				url.Path = "/gallery/" + abs
+			} else {
+				url.Path = "/photo/" + abs
+			}
 		}
-	}
-
-	if err := os.Chdir(baseDir); err != nil {
-		log.Fatal(err)
 	}
 
 	// address

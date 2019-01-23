@@ -18,7 +18,7 @@
         <div id=menu>
             <div class="toolbar">
                 <button type=button title="Back" onclick="gallery()"><i class="fas fa-arrow-left"></i></button>
-                <button type=button title="Save" onclick="saveFile()" id="save" disabled><i class="fas fas fa-save"></i></button>
+                <button type=button title="Save" onclick="saveFile()" id=save disabled><i class="fas fas fa-save"></i></button>
                 <button type=button title="Export JPEG (shift-click for options)…" class="shift-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
                 <button type=button title="Export…" class="shift-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
                 <button type=button title="Zoom" disabled><i class="fas fa-search-plus"></i></button>
@@ -173,8 +173,8 @@
         </fieldset>
     </form>
 
-    <dialog id="export-dialog">
-        <form id="export-form" method="dialog">
+    <dialog id=export-dialog>
+        <form id=export-form method=dialog>
             <div>
                 <label style="grid-column: auto/span 4">Image format:</label>
                 <select style="grid-column: auto/span 2" name=format onchange="exportChange(this)">
@@ -182,7 +182,7 @@
                     <option>DNG</option>
                 </select>
             </div>
-            <div id="export-jpeg">
+            <div id=export-jpeg>
                 <label style="grid-area: 1/1/auto/span 4" for=resample>Export for web/print:</label>
                 <input style="grid-area: 1/5/auto/span 1" type=checkbox id=resample name=resample onchange="exportChange(this)">
         
@@ -230,7 +230,7 @@
                 <span style="grid-area: 6/5/auto/span 4">megapixels</span>
             </div>
 
-            <div id="export-dng">
+            <div id=export-dng>
                 <label style="grid-area: 1/1/auto/span 4" for=preview>JPEG preview:</label>
                 <select style="grid-area: 1/5/auto/span 4" id=preview name=preview>
                     <option value="p0">None</option>
@@ -255,7 +255,7 @@
         </form>
     </dialog>
 
-    <dialog id="progress-dialog">
+    <dialog id=progress-dialog>
         <br>
         <progress></progress>
     </dialog>

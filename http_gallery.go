@@ -3,10 +3,13 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	nfd "./go-nfd"
 )
 
 type galleryItem struct {
@@ -53,13 +56,36 @@ var extensions = map[string]struct{}{
 
 func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
+	query := r.URL.Query()
+
+	_, browse := query["browse"]
+	if browse {
+		bringToTop()
+		if folder, err := nfd.PickFolder(r.URL.Path); err != nil {
+			return handleError(err)
+		} else if folder == "" {
+			return HTTPResult{Status: http.StatusResetContent}
+		} else {
+			url := url.URL{Path: "/gallery/" + toURLPath(folder)}
+			return HTTPResult{
+				Status:   http.StatusSeeOther,
+				Location: url.String(),
+			}
+		}
+	}
 
 	if files, err := ioutil.ReadDir(path); err != nil {
 		return handleError(err)
 	} else {
+		path = filepath.Join(path, ".")
+		parent := filepath.Join(path, "..")
+		if path == parent {
+			parent = ""
+		}
+
 		data := galleryData{
 			Title:  filepath.Clean(path),
-			Parent: toURLPath(filepath.Join(path, "..")),
+			Parent: toURLPath(parent),
 		}
 
 		for _, i := range files {

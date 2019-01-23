@@ -10,9 +10,13 @@
 </head>
 
 <body>
-    <form id=menu>
+    <form id=menu method=post>
         <div class="toolbar">
+            {{if (ne .Parent "")}}
             <button title="Parent directory" formaction="/gallery/{{.Parent}}"><i class="fas fa-arrow-up"></i></button>
+            {{else}}
+            <button title="Parent" formaction="/"><i class="fas fa-arrow-left"></i></button>
+            {{end}}
             <span>{{.Title}}</span>
         </div>
         {{range .Dirs}}

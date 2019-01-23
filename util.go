@@ -105,3 +105,23 @@ func hideConsole() {
 		showWindow.Call(hwnd, 0) // SW_HIDE
 	}
 }
+
+func bringToTop() {
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	user32 := syscall.NewLazyDLL("user32.dll")
+
+	getConsoleWindow := kernel32.NewProc("GetConsoleWindow")
+	setForegroundWindow := user32.NewProc("SetForegroundWindow")
+	if err := getConsoleWindow.Find(); err != nil {
+		log.Fatal(err)
+	}
+	if err := setForegroundWindow.Find(); err != nil {
+		log.Fatal(err)
+	}
+
+	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
+		return // no window
+	} else {
+		setForegroundWindow.Call(hwnd)
+	}
+}
