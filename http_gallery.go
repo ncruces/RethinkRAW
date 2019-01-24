@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	nfd "./go-nfd"
+	nfd "github.com/ncruces/go-nativefiledialog"
 )
 
 type galleryItem struct {
