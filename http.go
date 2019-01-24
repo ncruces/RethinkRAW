@@ -109,6 +109,7 @@ func attachmentHeaders(path, ext string, headers http.Header) {
 
 	utf := filename(path)
 	ascii := filename(toASCII(path))
+
 	if utf == "" {
 		utf = "download"
 	}
@@ -116,8 +117,13 @@ func attachmentHeaders(path, ext string, headers http.Header) {
 		ascii = "download"
 	}
 
+	disposition := `attachment;filename="` + ascii + ext + `"`
+	if ascii != utf {
+		disposition += `;filename*=UTF-8''` + url.PathEscape(utf+ext)
+	}
+
+	headers.Set("Content-Disposition", disposition)
 	headers.Set("Content-Type", mime.TypeByExtension(ext))
-	headers.Set("Content-Disposition", `attachment; filename="`+ascii+ext+`"; filename*=UTF-8''`+url.PathEscape(utf+ext))
 }
 
 func toURLPath(path string) string {

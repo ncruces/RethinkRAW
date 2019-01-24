@@ -40,10 +40,16 @@ func md5sum(data string) string {
 func toASCII(str string) string {
 	builder := strings.Builder{}
 	for _, r := range str {
-		if r < ' ' || r >= 0x7f {
+		// control
+		if r < ' ' || 0x7f <= r && r < 0xa0 {
 			continue
 		}
-		builder.WriteRune(r)
+		// unicode
+		if r >= 0x7f {
+			builder.WriteByte('?')
+		} else {
+			builder.WriteRune(r)
+		}
 	}
 	return builder.String()
 }
@@ -53,11 +59,13 @@ func filename(name string) string {
 	dots := 0
 
 	for _, r := range name {
-		if r < ' ' {
+		// control
+		if r < ' ' || 0x7f <= r && r < 0xa0 {
 			continue
 		}
 		switch r {
-		case 0x7f, '\\', '/', ':', '*', '?', '<', '>', '|':
+		// invalid
+		case '\\', '/', ':', '*', '?', '<', '>', '|':
 			continue
 		case '"':
 			builder.WriteByte('\'')
