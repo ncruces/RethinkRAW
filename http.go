@@ -17,11 +17,11 @@ import (
 var templates *template.Template
 
 func setupHTTP() *http.Server {
-	templates = template.Must(template.ParseGlob("html/*.html"))
+	templates = template.Must(template.ParseGlob("templates/*.html"))
 	http.Handle("/gallery/", http.StripPrefix("/gallery/", HTTPHandler(galleryHandler)))
 	http.Handle("/photo/", http.StripPrefix("/photo/", HTTPHandler(photoHandler)))
 	http.Handle("/thumb/", http.StripPrefix("/thumb/", HTTPHandler(thumbHandler)))
-	http.Handle("/", http.FileServer(http.Dir(filepath.Join(baseDir, "/static"))))
+	http.Handle("/", http.FileServer(http.Dir("static")))
 	return &http.Server{}
 }
 
