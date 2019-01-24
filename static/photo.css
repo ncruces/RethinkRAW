@@ -35,10 +35,16 @@ img#photo {
 }
 
 form#settings {
-    padding-right: 1rem;
-    overflow: overlay;
     flex-shrink: 0;
     width: 15rem;
+    overflow-y: scroll;
+}
+
+@supports (overflow: overlay) {
+    form#settings {
+        padding-right: 1rem;
+        overflow: overlay;
+    }
 }
 
 form#settings fieldset {
@@ -85,6 +91,14 @@ form#settings div[class*=disabled] output {
     visibility: hidden;
 }
 
+dialog#progress-dialog {
+    width: 10rem;
+}
+
+dialog#export-dialog {
+    width: 20rem;
+}
+
 form#export-form div {
     margin-top: 0.4rem;
     display: grid;
@@ -98,7 +112,7 @@ form#export-form>:first-child {
 }
 
 form#export-form input[type=number] {
-    min-width: 9ch;
+    width: 4.5rem;
 }
 
 form#export-form input[type=checkbox] {

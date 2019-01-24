@@ -2,7 +2,7 @@
 @import 'normalize.css';
 
 body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, 'Segoe UI', system-ui, 'Roboto', 'Helvetica Neue', sans-serif;
     margin: 8px;
 }
 

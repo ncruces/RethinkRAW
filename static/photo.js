@@ -367,7 +367,7 @@ window.exportChange = function (e) {
 
 function disableInputs(n) {
     let disabled = n.className.includes('disabled');
-    for (let i of n.getElementsByTagName('input')) {
+    for (let i of Array.from(n.getElementsByTagName('input'))) {
         i.disabled = disabled;
     }
 }
@@ -488,8 +488,8 @@ let passive = { passive: true };
 
 function keyboardEventListener(evt) {
     if (evt == null) evt = window.event;
-    for (let n of document.getElementsByClassName('shift-on')) n.hidden = !evt.shiftKey;
-    for (let n of document.getElementsByClassName('shift-off')) n.hidden = evt.shiftKey;
+    for (let n of Array.from(document.getElementsByClassName('shift-on'))) n.hidden = !evt.shiftKey;
+    for (let n of Array.from(document.getElementsByClassName('shift-off'))) n.hidden = evt.shiftKey;
 }
 window.addEventListener('keydown', keyboardEventListener, passive);
 window.addEventListener('keyup', keyboardEventListener, passive);
@@ -504,6 +504,21 @@ for (let d of document.querySelectorAll('dialog')) {
             d.close();
         }, passive);
     }
+}
+
+if (typeof RadioNodeList === "undefined") {
+    Object.defineProperty(HTMLCollection.prototype, "value", {
+        get: function () {
+            for (let i of Array.from(this)) {
+                if (i.type === 'radio' && i.checked) return i.value;
+            }
+        },
+        set: function (value) {
+            for (let i of Array.from(this)) {
+                if (i.type === 'radio') i.checked = i.value == String(value);
+            }
+        }
+    });
 }
 
 }()

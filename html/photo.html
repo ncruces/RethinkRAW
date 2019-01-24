@@ -44,8 +44,8 @@
             <legend>Profile</legend>
             Treatment:
             <div style="float:right">
-                <label class="inline"><input type=radio name=grayscale value="false" onchange="treatmentChange(this)">Color</label>
-                <label class="inline"><input type=radio name=grayscale value="true" onchange="treatmentChange(this)">B&amp;W</label>
+                <label class="inline"><input type=radio name=grayscale value="false" onchange="treatmentChange(this)"> Color</label>
+                <label class="inline"><input type=radio name=grayscale value="true" onchange="treatmentChange(this)"> B&amp;W</label>
             </div>
             <select name=profile class="below">
                 <option hidden>
@@ -173,6 +173,11 @@
         </fieldset>
     </form>
 
+    <dialog id=progress-dialog>
+        <br>
+        <progress></progress>
+    </dialog>
+
     <dialog id=export-dialog>
         <form id=export-form method=dialog>
             <div>
@@ -253,11 +258,6 @@
                 <button style="grid-column: 6/span 3" type=cancel>Cancel</button>
             </div>
         </form>
-    </dialog>
-
-    <dialog id=progress-dialog>
-        <br>
-        <progress></progress>
     </dialog>
 
 </body>
