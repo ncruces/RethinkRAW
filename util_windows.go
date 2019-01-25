@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -53,15 +54,6 @@ func hideConsole() {
 	getConsoleProcessList := kernel32.NewProc("GetConsoleProcessList")
 	getConsoleWindow := kernel32.NewProc("GetConsoleWindow")
 	showWindow := user32.NewProc("ShowWindow")
-	if err := getConsoleProcessList.Find(); err != nil {
-		log.Fatal(err)
-	}
-	if err := getConsoleWindow.Find(); err != nil {
-		log.Fatal(err)
-	}
-	if err := showWindow.Find(); err != nil {
-		log.Fatal(err)
-	}
 
 	var pid uint32
 	if n, _, err := getConsoleProcessList.Call(uintptr(unsafe.Pointer(&pid)), 1); n == 0 {
@@ -83,16 +75,28 @@ func bringToTop() {
 
 	getConsoleWindow := kernel32.NewProc("GetConsoleWindow")
 	setForegroundWindow := user32.NewProc("SetForegroundWindow")
-	if err := getConsoleWindow.Find(); err != nil {
-		log.Fatal(err)
-	}
-	if err := setForegroundWindow.Find(); err != nil {
-		log.Fatal(err)
-	}
 
 	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
 		return // no window
 	} else {
 		setForegroundWindow.Call(hwnd)
+	}
+}
+
+func handleConsoleCtrl(c chan<- os.Signal) {
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+
+	setConsoleCtrlHandler := kernel32.NewProc("SetConsoleCtrlHandler")
+
+	if n, _, err := setConsoleCtrlHandler.Call(
+		syscall.NewCallback(func(controlType uint) uint {
+			if controlType >= 2 {
+				c <- syscall.Signal(0x1f + controlType)
+				time.Sleep(30 * time.Second)
+			}
+			return 0
+		}),
+		1); n == 0 {
+		log.Fatal(err)
 	}
 }

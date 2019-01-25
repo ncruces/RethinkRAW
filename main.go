@@ -68,6 +68,7 @@ func main() {
 			log.Fatal(err)
 		}
 		c := make(chan os.Signal, 1)
+		handleConsoleCtrl(c)
 		signal.Notify(c)
 		<-c
 	}
