@@ -13,7 +13,6 @@ import (
 )
 
 var baseDir, dataDir, tempDir string
-var lock *os.File
 
 func main() {
 	if err := setupDirs(); err != nil {
@@ -24,7 +23,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	url := url.URL{Scheme: "http"}
+	url := url.URL{
+		Scheme: "http",
+		Host:   "[::1]:39639",
+	}
 
 	if len(os.Args) > 1 {
 		if fi, err := os.Stat(os.Args[1]); err != nil {
@@ -44,21 +46,8 @@ func main() {
 		url.Path = "/dngconv.html"
 	}
 
-	// address
-	ln, err := net.Listen("tcp", "[::1]:0")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	url.Host = ln.Addr().String()
-	lock, err = createLock(url.Host)
-	if err != nil {
-		url.Host, err = getLocked()
-		if err != nil {
-			log.Fatal(err)
-		}
-		ln.Close()
-	} else {
+	ln, err := net.Listen("tcp", url.Host)
+	if err == nil {
 		exif := setupExifTool()
 		http := setupHTTP()
 		defer func() {
@@ -135,32 +124,4 @@ func setupChrome(url string) *exec.Cmd {
 	return exec.Command(chrome, "--app="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache, "--no-first-run",
 		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins", "--disable-translate",
 		"--disable-background-networking")
-}
-
-func createLock(address string) (file *os.File, err error) {
-	filename := filepath.Join(dataDir, "lockfile")
-
-	err = os.RemoveAll(filename)
-	if err != nil {
-		return
-	}
-
-	file, err = os.OpenFile(filename, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
-	if err != nil {
-		return
-	}
-
-	_, err = file.WriteString(address)
-	return
-}
-
-func getLocked() (string, error) {
-	filename := filepath.Join(dataDir, "lockfile")
-
-	buf, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return "", err
-	}
-
-	return string(buf), nil
 }
