@@ -14,13 +14,6 @@ import (
 	"github.com/nfnt/resize"
 )
 
-const dcraw = "./utils/dcraw"
-const jpegtran = "./utils/jpegtran"
-
-type constError string
-
-func (e constError) Error() string { return string(e) }
-
 const notJPEG = constError("not a JPEG file")
 const invalidJPEG = constError("not a valid JPEG file")
 const unsupportedThumb = constError("unsupported thumbnail")

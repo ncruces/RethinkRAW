@@ -8,8 +8,6 @@ import (
 	pkg "github.com/ncruces/go-exiftool"
 )
 
-const exiftool = "./utils/exiftool"
-
 var exifserver *pkg.Stayopen
 
 func setupExifTool() *pkg.Stayopen {

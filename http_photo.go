@@ -14,13 +14,13 @@ type photoData struct {
 
 func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
-	query := r.URL.Query()
+	r.ParseForm()
 
-	_, meta := query["meta"]
-	_, save := query["save"]
-	_, export := query["export"]
-	_, preview := query["preview"]
-	_, settings := query["settings"]
+	_, meta := r.Form["meta"]
+	_, save := r.Form["save"]
+	_, export := r.Form["export"]
+	_, preview := r.Form["preview"]
+	_, settings := r.Form["settings"]
 
 	switch {
 	case meta:
@@ -37,7 +37,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		xmp.Filename = path
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
-		if err := dec.Decode(&xmp, query); err != nil {
+		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return handleError(err)
 		}
 		if err := saveEdit(path, &xmp); err != nil {
@@ -52,10 +52,10 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		var exp exportSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
-		if err := dec.Decode(&xmp, query); err != nil {
+		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return handleError(err)
 		}
-		if err := dec.Decode(&exp, query); err != nil {
+		if err := dec.Decode(&exp, r.Form); err != nil {
 			return handleError(err)
 		}
 		if out, err := exportEdit(path, &xmp, &exp); err != nil {
@@ -70,7 +70,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		var xmp xmpSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
-		if err := dec.Decode(&xmp, query); err != nil {
+		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return handleError(err)
 		}
 		if out, err := previewEdit(path, &xmp); err != nil {

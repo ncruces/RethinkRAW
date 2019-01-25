@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	nfd "github.com/ncruces/go-nativefiledialog"
 )
@@ -56,17 +55,26 @@ var extensions = map[string]struct{}{
 
 func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
-	query := r.URL.Query()
+	r.ParseForm()
 
-	_, browse := query["browse"]
+	_, browse := r.Form["browse"]
 	if browse {
 		bringToTop()
-		if folder, err := nfd.PickFolder(r.URL.Path); err != nil {
+		if folder, err := nfd.PickFolder(path); err != nil {
 			return handleError(err)
 		} else if folder == "" {
 			return HTTPResult{Status: http.StatusResetContent}
+		} else if fi, err := os.Stat(folder); os.IsNotExist(err) {
+			return HTTPResult{Status: http.StatusResetContent}
+		} else if err != nil {
+			return handleError(err)
 		} else {
-			url := url.URL{Path: "/gallery/" + toURLPath(folder)}
+			var url url.URL
+			if fi.IsDir() {
+				url.Path = "/gallery/" + toURLPath(folder)
+			} else {
+				url.Path = "/photo/" + toURLPath(folder)
+			}
 			return HTTPResult{
 				Status:   http.StatusSeeOther,
 				Location: url.String(),
@@ -105,17 +113,4 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Content-Type", "text/html")
 		return handleError(templates.ExecuteTemplate(w, "gallery.html", data))
 	}
-}
-
-func isHidden(fi os.FileInfo) bool {
-	if strings.HasPrefix(fi.Name(), ".") {
-		return true
-	}
-
-	if s, ok := fi.Sys().(*syscall.Win32FileAttributeData); ok &&
-		s.FileAttributes&(syscall.FILE_ATTRIBUTE_HIDDEN|syscall.FILE_ATTRIBUTE_SYSTEM) != 0 {
-		return true
-	}
-
-	return false
 }

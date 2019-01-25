@@ -22,7 +22,7 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	}
 	defer wk.close()
 
-	return loadXmp(wk.origXmp())
+	return loadXMP(wk.origXMP())
 }
 
 func saveEdit(path string, xmp *xmpSettings) (err error) {
@@ -32,11 +32,11 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 	}
 	defer wk.close()
 
-	err = saveXmp(wk.origXmp(), xmp)
+	err = saveXMP(wk.origXMP(), xmp)
 	if err != nil {
 		return
 	}
-	wk.hasXmp = true
+	wk.hasXMP = true
 
 	dest, err := saveSidecar(path)
 	if err != nil {
@@ -49,14 +49,14 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 			return
 		}
 
-		err = toDng(wk.orig(), wk.temp(), &exportSettings{Dng: true, Embed: true})
+		err = runDNGConverter(wk.orig(), wk.temp(), &exportSettings{DNG: true, Embed: true})
 		if err != nil {
 			return
 		}
 
 		err = os.Rename(wk.temp(), dest+".bak")
 	} else {
-		err = copyFile(wk.origXmp(), dest+".bak")
+		err = copyFile(wk.origXMP(), dest+".bak")
 	}
 
 	if err != nil {
@@ -72,7 +72,7 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 	}
 	defer wk.close()
 
-	err = saveXmp(wk.lastXmp(), xmp)
+	err = saveXMP(wk.lastXMP(), xmp)
 	if err != nil {
 		return
 	}
@@ -82,7 +82,7 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 		return
 	}
 
-	err = toDng(wk.last(), wk.temp(), nil)
+	err = runDNGConverter(wk.last(), wk.temp(), nil)
 	if err != nil {
 		return
 	}
@@ -102,23 +102,23 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	}
 	defer wk.close()
 
-	err = saveXmp(wk.origXmp(), xmp)
+	err = saveXMP(wk.origXMP(), xmp)
 	if err != nil {
 		return
 	}
-	wk.hasXmp = true
+	wk.hasXMP = true
 
 	err = os.RemoveAll(wk.temp())
 	if err != nil {
 		return
 	}
 
-	err = toDng(wk.orig(), wk.temp(), exp)
+	err = runDNGConverter(wk.orig(), wk.temp(), exp)
 	if err != nil {
 		return
 	}
 
-	if exp.Dng {
+	if exp.DNG {
 		err = copyMeta(wk.orig(), wk.temp(), path)
 		if err != nil {
 			return
@@ -132,7 +132,7 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 
 func exportHeaders(path string, exp *exportSettings, headers http.Header) {
 	var ext string
-	if exp.Dng {
+	if exp.DNG {
 		ext = ".dng"
 	} else {
 		ext = ".jpg"
@@ -141,7 +141,7 @@ func exportHeaders(path string, exp *exportSettings, headers http.Header) {
 }
 
 type exportSettings struct {
-	Dng      bool
+	DNG      bool
 	Preview  string
 	FastLoad bool
 	Embed    bool
@@ -223,7 +223,7 @@ type workspace struct {
 	hash    string
 	base    string
 	ext     string
-	hasXmp  bool
+	hasXMP  bool
 	hasEdit bool
 }
 
@@ -250,7 +250,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 	fi, err := os.Stat(wk.base + "edit.dng")
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
-		wk.hasXmp = e == nil
+		wk.hasXMP = e == nil
 		wk.hasEdit = true
 		return
 	}
@@ -258,7 +258,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 	fi, err = os.Stat(wk.base + "orig" + wk.ext)
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
-		wk.hasXmp = e == nil
+		wk.hasXMP = e == nil
 		return
 	}
 
@@ -271,7 +271,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 	if os.IsNotExist(err) {
 		err = nil
 	} else if err == nil {
-		wk.hasXmp = true
+		wk.hasXMP = true
 	}
 	return
 }
@@ -294,8 +294,8 @@ func (wk *workspace) temp() string {
 	return wk.base + "temp.dng"
 }
 
-func (wk *workspace) origXmp() string {
-	if wk.hasXmp {
+func (wk *workspace) origXMP() string {
+	if wk.hasXMP {
 		return wk.base + "orig.xmp"
 	} else {
 		return wk.base + "orig" + wk.ext
@@ -310,11 +310,11 @@ func (wk *workspace) last() string {
 	}
 }
 
-func (wk *workspace) lastXmp() string {
+func (wk *workspace) lastXMP() string {
 	if wk.hasEdit {
 		return wk.edit()
 	} else {
-		return wk.origXmp()
+		return wk.origXMP()
 	}
 }
 
@@ -456,7 +456,7 @@ func saveSidecar(src string) (string, error) {
 		return "", err
 	}
 
-	if strings.EqualFold(ext, ".dng") && hasXmp(src) {
+	if strings.EqualFold(ext, ".dng") && hasXMP(src) {
 		return src, nil
 	}
 

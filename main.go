@@ -8,32 +8,23 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 )
 
-var chrome = `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe`
 var baseDir, dataDir, tempDir string
 var lock *os.File
 
 func main() {
-	if exe, err := os.Executable(); err != nil {
-		log.Fatal(err)
-	} else {
-		baseDir = filepath.Dir(exe)
-		dataDir = filepath.Join(baseDir, "data")
-		tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
-	}
-
-	if err := os.Chdir(baseDir); err != nil {
+	if err := setupDirs(); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := os.MkdirAll(dataDir, 0700); err != nil {
+	if err := loadConfig(); err != nil {
 		log.Fatal(err)
 	}
 
 	url := url.URL{Scheme: "http"}
-	hideConsole()
 
 	if len(os.Args) > 1 {
 		if fi, err := os.Stat(os.Args[1]); err != nil {
@@ -42,11 +33,15 @@ func main() {
 			log.Fatal(err)
 		} else {
 			if fi.IsDir() {
-				url.Path = "/gallery/" + abs
+				url.Path = "/gallery/" + toURLPath(abs)
 			} else {
-				url.Path = "/photo/" + abs
+				url.Path = "/photo/" + toURLPath(abs)
 			}
 		}
+	}
+
+	if err := testDNGConverter(); err != nil {
+		url.Path = "/dngconv.html"
 	}
 
 	// address
@@ -74,13 +69,59 @@ func main() {
 		go http.Serve(ln)
 	}
 
-	chrome := setupChrome(url.String())
-	if err := chrome.Run(); err != nil {
-		log.Fatal(err)
+	if chrome := setupChrome(url.String()); chrome != nil {
+		hideConsole()
+		if err := chrome.Run(); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		if err := openURLCmd(url.String()).Run(); err != nil {
+			log.Fatal(err)
+		}
+		c := make(chan os.Signal, 1)
+		signal.Notify(c)
+		<-c
+	}
+}
+
+func setupDirs() error {
+	if exe, err := os.Executable(); err != nil {
+		return err
+	} else {
+		baseDir = filepath.Dir(exe)
+		tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
+	}
+
+	if err := os.Chdir(baseDir); err != nil {
+		return err
+	}
+
+	dataDir = filepath.Join(baseDir, "data")
+	if err := testDataDir(dataDir); err == nil {
+		return err
+	}
+
+	dataDir = filepath.Join(os.Getenv("APPDATA"), "RethinkRAW")
+	return testDataDir(dataDir)
+}
+
+func testDataDir(dir string) error {
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	if f, err := os.Create(filepath.Join(dir, "lastrun")); err != nil {
+		return err
+	} else {
+		return f.Close()
 	}
 }
 
 func setupChrome(url string) *exec.Cmd {
+	chrome := getChromePath()
+	if chrome == "" {
+		return nil
+	}
+
 	data := filepath.Join(dataDir, "chrome")
 	cache := filepath.Join(tempDir, "chrome")
 
@@ -92,7 +133,7 @@ func setupChrome(url string) *exec.Cmd {
 	}
 
 	return exec.Command(chrome, "--app="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache, "--no-first-run",
-		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins",
+		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins", "--disable-translate",
 		"--disable-background-networking")
 }
 

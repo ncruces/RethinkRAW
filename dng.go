@@ -9,9 +9,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-const dngconv = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+func testDNGConverter(conv ...string) (err error) {
+	for _, c := range append(conv, serverConfig.DNGConverter) {
+		_, err = os.Stat(c)
+		if err == nil {
+			break
+		}
+	}
+	return err
+}
 
-func toDng(input, output string, exp *exportSettings) error {
+func runDNGConverter(input, output string, exp *exportSettings) error {
 	err := os.RemoveAll(output)
 	if err != nil {
 		return err
@@ -24,7 +32,7 @@ func toDng(input, output string, exp *exportSettings) error {
 	switch {
 	case exp == nil:
 		opts = append(opts, "-p2", "-side", "1920")
-	case exp.Dng:
+	case exp.DNG:
 		if exp.Preview != "" {
 			opts = append(opts, "-"+exp.Preview)
 		}
@@ -43,7 +51,7 @@ func toDng(input, output string, exp *exportSettings) error {
 	opts = append(opts, "-d", dir, "-o", output, input)
 
 	log.Printf("dngconv %v\n", opts)
-	cmd := exec.Command(dngconv, opts...)
+	cmd := exec.Command(serverConfig.DNGConverter, opts...)
 	if _, err := cmd.Output(); err != nil {
 		return errors.WithMessagef(err, "DNG Converter: %v", opts)
 	}

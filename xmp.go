@@ -11,8 +11,6 @@ import (
 	"strings"
 )
 
-const exiv2 = "./utils/exiv2"
-
 var exiv2Regex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
 
 type xmpSettings struct {
@@ -47,13 +45,13 @@ type xmpSettings struct {
 	AutoLateralCA bool `json:"autoLateralCA"`
 }
 
-func hasXmp(path string) bool {
+func hasXMP(path string) bool {
 	log.Printf("exiv2 [-PXn -gXmp.crs. %s]\n", path)
 	cmd := exec.Command(exiv2, "-PXn", "-gXmp.crs.", path)
 	return cmd.Run() == nil
 }
 
-func loadXmp(path string) (xmp xmpSettings, err error) {
+func loadXMP(path string) (xmp xmpSettings, err error) {
 	log.Printf("exiv2 [-PEXnv -gXmp.crs. -gExif.Image. %s]\n", path)
 	cmd := exec.Command(exiv2, "-PEXnv", "-gExif.Image.", "-gXmp.crs.", path)
 	out, err := cmd.Output()
@@ -125,7 +123,7 @@ func loadXmp(path string) (xmp xmpSettings, err error) {
 	return
 }
 
-func saveXmp(path string, xmp *xmpSettings) (err error) {
+func saveXMP(path string, xmp *xmpSettings) (err error) {
 	opts := []string{}
 
 	if !strings.HasSuffix(path, ".xmp") && !strings.HasSuffix(path, ".dng") {

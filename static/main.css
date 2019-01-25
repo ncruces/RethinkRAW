@@ -53,6 +53,13 @@ body {
     flex-flow: row wrap;
 }
 
+#gallery span {
+    text-align: center;
+    width: 100%;
+    max-width: 960px;
+    margin-top: 32px;
+}
+
 #gallery a {
     height: 192px;
     margin: 0.1rem;

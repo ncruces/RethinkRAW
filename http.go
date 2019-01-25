@@ -21,6 +21,7 @@ func setupHTTP() *http.Server {
 	http.Handle("/gallery/", http.StripPrefix("/gallery/", HTTPHandler(galleryHandler)))
 	http.Handle("/photo/", http.StripPrefix("/photo/", HTTPHandler(photoHandler)))
 	http.Handle("/thumb/", http.StripPrefix("/thumb/", HTTPHandler(thumbHandler)))
+	http.Handle("/config", HTTPHandler(configHandler))
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	return &http.Server{}
 }
