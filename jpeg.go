@@ -9,8 +9,7 @@ import (
 	"log"
 	"os/exec"
 
-	"./rotateflip"
-
+	"github.com/ncruces/rotateflip"
 	"github.com/nfnt/resize"
 )
 
@@ -90,8 +89,8 @@ func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
 			return nil, err
 		}
 
-		rft := rotateflip.Orientation(exifOrientation(data)).Type()
-		img = rotateflip.Image(img, rft)
+		exf := rotateflip.Orientation(exifOrientation(data))
+		img = rotateflip.Image(img, exf.Op())
 		fit := settings.FitImage(img.Bounds().Size())
 		img = resize.Thumbnail(uint(fit.X), uint(fit.Y), img, resize.Lanczos2)
 
