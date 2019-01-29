@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	exif "./exiftool"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {
@@ -113,20 +115,33 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 		return
 	}
 
+	var writer io.WriteCloser
+	var result *exif.AsyncResult
+	if !(exp.DNG || exp.Resample) {
+		writer, result = fixMetaJPEGAsync(wk.orig())
+	}
+
 	err = runDNGConverter(wk.orig(), wk.temp(), exp)
 	if err != nil {
 		return
 	}
 
 	if exp.DNG {
-		err = copyMeta(wk.orig(), wk.temp(), path)
+		err = fixMetaDNG(wk.orig(), wk.temp(), path)
 		if err != nil {
 			return
 		}
 
 		return ioutil.ReadFile(wk.temp())
 	} else {
-		return exportJPEG(wk.temp(), exp)
+		data, err = exportJPEG(wk.temp(), exp)
+		if err != nil || exp.Resample {
+			return
+		}
+
+		writer.Write(data)
+		writer.Close()
+		return result.Get()
 	}
 }
 

@@ -24,13 +24,16 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	switch {
 	case meta:
-		if out, err := getMeta(path); err != nil {
-			return handleError(err)
-		} else {
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.Write(out)
-			return HTTPResult{}
+		res := cacheHeaders(path, r.Header, w.Header())
+		if res.Status == 0 {
+			if out, err := getMeta(path); err != nil {
+				return handleError(err)
+			} else {
+				w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+				w.Write(out)
+			}
 		}
+		return res
 
 	case save:
 		var xmp xmpSettings

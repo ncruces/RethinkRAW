@@ -52,7 +52,7 @@ func main() {
 		http := setupHTTP()
 		defer func() {
 			http.Shutdown(context.Background())
-			exif.Stop()
+			exif.Shutdown()
 			os.RemoveAll(tempDir)
 		}()
 		go http.Serve(ln)

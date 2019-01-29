@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"html/template"
 	"log"
@@ -78,7 +79,7 @@ func handleError(err error) HTTPResult {
 	}
 
 	if err, ok := err.(*exec.ExitError); ok {
-		log.Println(string(err.Stderr))
+		log.Println(string(bytes.TrimSpace(err.Stderr)))
 	}
 
 	log.Println(err)
