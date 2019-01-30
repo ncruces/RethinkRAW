@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"html/template"
 	"log"
 	"mime"
@@ -32,7 +33,10 @@ type HTTPResult struct {
 	Status   int
 	Message  string
 	Location string
+	Error    error
 }
+
+func (r *HTTPResult) Done() bool { return r.Location != "" || r.Status != 0 || r.Error != nil }
 
 // HTTPHandler is an http.Handler that returns an HTTPResult
 type HTTPHandler func(w http.ResponseWriter, r *http.Request) HTTPResult
@@ -50,10 +54,6 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, res.Location, res.Status)
 
 	case res.Status >= 400:
-		h := w.Header()
-		for k := range h {
-			delete(h, k)
-		}
 		if res.Message == "" {
 			res.Message = http.StatusText(res.Status)
 		}
@@ -62,38 +62,53 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case res.Status != 0:
 		w.WriteHeader(res.Status)
 
-	}
-}
+	case res.Error != nil:
+		var status int
+		var message strings.Builder
 
-func handleError(err error) HTTPResult {
-	if err == nil {
-		return HTTPResult{}
-	}
+		switch {
+		case os.IsNotExist(res.Error):
+			status = http.StatusNotFound
+		case os.IsPermission(res.Error):
+			status = http.StatusForbidden
+		default:
+			status = http.StatusInternalServerError
+		}
 
-	if os.IsNotExist(err) {
-		return HTTPResult{Status: http.StatusNotFound}
-	}
+		if err, ok := res.Error.(*exec.ExitError); ok {
+			message.Write(bytes.TrimSpace(err.Stderr))
+			message.WriteByte('\n')
+		}
+		message.WriteString(strings.TrimSpace(res.Error.Error()))
 
-	if os.IsPermission(err) {
-		return HTTPResult{Status: http.StatusForbidden}
-	}
+		w.WriteHeader(status)
 
-	if err, ok := err.(*exec.ExitError); ok {
-		log.Println(string(bytes.TrimSpace(err.Stderr)))
-	}
+		if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
+			templates.ExecuteTemplate(w, "error.html", struct {
+				Status, Message string
+			}{
+				http.StatusText(status),
+				message.String(),
+			})
+		} else {
+			json.NewEncoder(w).Encode(message.String())
+		}
 
-	log.Println(err)
-	return HTTPResult{Status: http.StatusInternalServerError}
+		log.Print(message.String())
+	}
 }
 
 func cacheHeaders(path string, req, res http.Header) HTTPResult {
 	if fi, err := os.Stat(path); err != nil {
-		return handleError(err)
+		return HTTPResult{Error: err}
 	} else {
 		ims := req.Get("If-Modified-Since")
 		if ims != "" {
 			if t, err := http.ParseTime(ims); err == nil {
 				if fi.ModTime().Before(t.Add(1 * time.Second)) {
+					for k := range res {
+						delete(res, k)
+					}
 					return HTTPResult{Status: http.StatusNotModified}
 				}
 			}

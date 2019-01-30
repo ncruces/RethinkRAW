@@ -7,15 +7,16 @@ import (
 func thumbHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
 
-	res := cacheHeaders(path, r.Header, w.Header())
-	if res.Status == 0 {
-		if out, err := previewJPEG(path); err != nil {
-			return handleError(err)
-		} else {
-			w.Header().Set("Cache-Control", "max-age=60")
-			w.Header().Set("Content-Type", "image/jpeg")
-			w.Write(out)
-		}
+	if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
+		return r
 	}
-	return res
+
+	if out, err := previewJPEG(path); err != nil {
+		return HTTPResult{Error: err}
+	} else {
+		w.Header().Set("Cache-Control", "max-age=60")
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write(out)
+		return HTTPResult{}
+	}
 }

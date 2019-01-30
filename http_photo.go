@@ -3,14 +3,11 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/gorilla/schema"
 )
-
-type photoData struct {
-	Title, Parent, Name, Path string
-}
 
 func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
@@ -24,16 +21,18 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	switch {
 	case meta:
-		res := cacheHeaders(path, r.Header, w.Header())
-		if res.Status == 0 {
-			if out, err := getMeta(path); err != nil {
-				return handleError(err)
-			} else {
-				w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-				w.Write(out)
-			}
+		if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
+			return r
 		}
-		return res
+
+		if out, err := getMeta(path); err != nil {
+			return HTTPResult{Error: err}
+		} else {
+			w.Header().Set("Cache-Control", "max-age=60")
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Write(out)
+			return HTTPResult{}
+		}
 
 	case save:
 		var xmp xmpSettings
@@ -41,10 +40,10 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		}
 		if err := saveEdit(path, &xmp); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		} else {
 			return HTTPResult{Status: http.StatusNoContent}
 		}
@@ -56,13 +55,13 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		}
 		if err := dec.Decode(&exp, r.Form); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		}
 		if out, err := exportEdit(path, &xmp, &exp); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		} else {
 			exportHeaders(path, &exp, w.Header())
 			w.Write(out)
@@ -74,10 +73,10 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		}
 		if out, err := previewEdit(path, &xmp); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "image/jpeg")
 			w.Write(out)
@@ -86,25 +85,32 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case settings:
 		if xmp, err := loadEdit(path); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			enc := json.NewEncoder(w)
 			if err := enc.Encode(xmp); err != nil {
-				return handleError(err)
+				return HTTPResult{Error: err}
 			}
 		}
 		return HTTPResult{}
 
 	default:
-		data := photoData{
-			Name:   filepath.Base(path),
-			Title:  filepath.Clean(path),
-			Path:   toURLPath(filepath.Clean(path)),
-			Parent: toURLPath(filepath.Join(path, "..")),
+		if _, err := os.Stat(path); err != nil {
+			return HTTPResult{Error: err}
 		}
 
+		w.Header().Set("Cache-Control", "max-age=300")
 		w.Header().Set("Content-Type", "text/html")
-		return handleError(templates.ExecuteTemplate(w, "photo.html", data))
+		return HTTPResult{
+			Error: templates.ExecuteTemplate(w, "photo.html", struct {
+				Name, Title, Path, Parent string
+			}{
+				filepath.Base(path),
+				filepath.Clean(path),
+				toURLPath(filepath.Clean(path)),
+				toURLPath(filepath.Join(path, "..")),
+			}),
+		}
 	}
 }

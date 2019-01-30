@@ -11,15 +11,6 @@ import (
 	nfd "github.com/ncruces/go-nativefiledialog"
 )
 
-type galleryItem struct {
-	Name, Path string
-}
-
-type galleryData struct {
-	Title, Parent string
-	Dirs, Photos  []galleryItem
-}
-
 var extensions = map[string]struct{}{
 	".CRW": {}, // Canon
 	".NEF": {}, // Nikon
@@ -61,13 +52,13 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	if browse {
 		bringToTop()
 		if folder, err := nfd.PickFolder(path); err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		} else if folder == "" {
 			return HTTPResult{Status: http.StatusResetContent}
 		} else if fi, err := os.Stat(folder); os.IsNotExist(err) {
 			return HTTPResult{Status: http.StatusResetContent}
 		} else if err != nil {
-			return handleError(err)
+			return HTTPResult{Error: err}
 		} else {
 			var url url.URL
 			if fi.IsDir() {
@@ -82,8 +73,12 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 	}
 
+	if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
+		return r
+	}
+
 	if files, err := ioutil.ReadDir(path); err != nil {
-		return handleError(err)
+		return HTTPResult{Error: err}
 	} else {
 		path = filepath.Join(path, ".")
 		parent := filepath.Join(path, "..")
@@ -91,7 +86,10 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			parent = ""
 		}
 
-		data := galleryData{
+		data := struct {
+			Title, Parent string
+			Dirs, Photos  []struct{ Name, Path string }
+		}{
 			Title:  filepath.Clean(path),
 			Parent: toURLPath(parent),
 		}
@@ -102,7 +100,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			}
 
 			name := i.Name()
-			item := galleryItem{name, toURLPath(filepath.Join(path, name))}
+			item := struct{ Name, Path string }{name, toURLPath(filepath.Join(path, name))}
 
 			if i.IsDir() {
 				data.Dirs = append(data.Dirs, item)
@@ -110,7 +108,11 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 				data.Photos = append(data.Photos, item)
 			}
 		}
+
+		w.Header().Set("Cache-Control", "max-age=60")
 		w.Header().Set("Content-Type", "text/html")
-		return handleError(templates.ExecuteTemplate(w, "gallery.html", data))
+		return HTTPResult{
+			Error: templates.ExecuteTemplate(w, "gallery.html", data),
+		}
 	}
 }

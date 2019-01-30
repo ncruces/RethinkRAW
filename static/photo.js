@@ -2,17 +2,26 @@ void function () {
 
 let form = document.getElementById('settings');
 let save = document.getElementById('save');
+let spinner = document.getElementById('spinner');
 
 document.body.onload = async () => {
-    let settings = await jsonRequest('GET', `/photo/${encodeURI(template.Path)}?settings`);
+    let settings;
+    try {
+        settings = await jsonRequest('GET', `/photo/${encodeURI(template.Path)}?settings`);
+    } catch (e) {
+        alertError('Load', e);
+        spinner.hidden = true;
+        return;
+    }
+
     let processChanged = false;
 
     if (settings.process == null || settings.process < 6.7 || settings > 11) {
-        if (settings.process) window.alert('This file was processed with an incompatible version of Camera Raw.\nPrevious edits will not be faithfully reproduced.');
+        if (settings.process) alert('This file was processed with an incompatible version of Camera Raw.\nPrevious edits will not be faithfully reproduced.');
         settings.process = 11;
         processChanged = true;
     }
-    if (settings.process < 11 && window.confirm('This file was processed with an older version of Camera Raw.\nPrevious edits may not be faithfully reproduced.\n\nUpdate to the current Camera Raw process version?')) {
+    if (settings.process < 11 && confirm('This file was processed with an older version of Camera Raw.\nPrevious edits may not be faithfully reproduced.\n\nUpdate to the current Camera Raw process version?')) {
         settings.process = 11;
         processChanged = true;
     }
@@ -52,7 +61,6 @@ window.onbeforeunload = function () {
 }
 
 window.valueChange = function () {
-    let spinner = document.getElementById('spinner');
     let photo = document.getElementById('photo');
     let done = true;
     let query;
@@ -203,14 +211,13 @@ window.saveFile = async () => {
     let query = formQuery();
 
     let dialog = document.getElementById('progress-dialog');
-    dialogPolyfill.registerDialog(dialog);
     dialog.firstChild.textContent = 'Saving…';
     dialog.showModal();
     try {
         await jsonRequest('POST', `/photo/${encodeURI(template.Path)}?save&` + query);
         save.disabled = true;
     } catch (e) {
-        alert(e.statusText);
+        alertError('Save', e);
     }
     dialog.close();
 }
@@ -219,7 +226,6 @@ window.exportFile = async (state) => {
     if (state === 'dialog') {
         exportChange(document.getElementById('export-form'));
         let dialog = document.getElementById('export-dialog');
-        dialogPolyfill.registerDialog(dialog);
         dialog.onclose = () => dialog.returnValue && exportFile(dialog.returnValue);
         dialog.showModal();
         return;
@@ -229,13 +235,12 @@ window.exportFile = async (state) => {
     if (state === 'export') query += '&' + exportQuery();
 
     let dialog = document.getElementById('progress-dialog');
-    dialogPolyfill.registerDialog(dialog);
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
         await blobRequest('POST', `/photo/${encodeURI(template.Path)}?export&` + query);
     } catch (e) {
-        alert(e.statusText);
+        alertError('Export', e);
     }
     dialog.close();
 }
@@ -367,8 +372,22 @@ window.exportChange = function (e) {
 
 function disableInputs(n) {
     let disabled = n.className.includes('disabled');
-    for (let i of Array.from(n.getElementsByTagName('input'))) {
+    for (let i of n.querySelectorAll('input')) {
         i.disabled = disabled;
+    }
+}
+
+let lastError = 0;
+
+function alertError(src, ex) {
+    let thisError = Date.now();
+    if (thisError - lastError > 5000) {
+        lastError = thisError;
+        if (ex.response != null) {
+            alert(ex.statusText + '\n' + src + ' failed with:\n' + ex.response);
+        } else {
+            alert(ex.statusText + '\n' + src + ' failed.');
+        }
     }
 }
 
@@ -416,7 +435,6 @@ function exportQuery() {
 
 function jsonRequest(method, url, body) {
     return new Promise((resolve, reject) => {
-        if (body !== void 0) body = JSON.stringify(body);
         let xhr = new XMLHttpRequest();
         xhr.responseType = 'json';
         xhr.open(method, url);
@@ -426,21 +444,26 @@ function jsonRequest(method, url, body) {
             } else {
                 reject({
                     status: xhr.status,
-                    statusText: xhr.statusText
+                    statusText: xhr.statusText,
+                    response: xhr.response,
                 });
             }
         };
         xhr.onerror = () => reject({
             status: xhr.status,
-            statusText: xhr.statusText
+            statusText: xhr.statusText,
         });
+        if (body !== void 0) {
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            body = JSON.stringify(body);
+        }
+        xhr.setRequestHeader('Accept', 'application/json');
         xhr.send(body);
     });
 }
 
 function blobRequest(method, url, body) {
     return new Promise((resolve, reject) => {
-        if (body !== void 0) body = JSON.stringify(body);
         let xhr = new XMLHttpRequest();
         xhr.responseType = 'blob';
         xhr.open(method, url);
@@ -452,20 +475,25 @@ function blobRequest(method, url, body) {
                 if (match = disposition.match(/\bfilename="([^"\\]+)"/)) name = match[1];
                 if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) name = decodeURIComponent(match[1]);
                 let a = document.createElement('a');
-                a.href = window.URL.createObjectURL(xhr.response);
+                a.href = URL.createObjectURL(xhr.response);
                 if (name) a.download = name;
                 a.dispatchEvent(new MouseEvent('click'));
                 resolve();
             } else {
-                reject({
-                    status: xhr.status,
-                    statusText: xhr.statusText
-                });
+                var reader = new FileReader();
+                reader.onload = () => {
+                    reject({
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        response: JSON.parse(reader.result),
+                    });
+                };
+                reader.readAsText(xhr.response);
             }
         };
         xhr.onerror = () => reject({
             status: xhr.status,
-            statusText: xhr.statusText
+            statusText: xhr.statusText,
         });
         xhr.send(body);
     });
@@ -488,14 +516,16 @@ let passive = { passive: true };
 
 function keyboardEventListener(evt) {
     if (evt == null) evt = window.event;
-    for (let n of Array.from(document.getElementsByClassName('shift-on'))) n.hidden = !evt.shiftKey;
-    for (let n of Array.from(document.getElementsByClassName('shift-off'))) n.hidden = evt.shiftKey;
+    for (let n of document.querySelectorAll('.shift-on')) n.hidden = !evt.shiftKey;
+    for (let n of document.querySelectorAll('.shift-off')) n.hidden = evt.shiftKey;
 }
 window.addEventListener('keydown', keyboardEventListener, passive);
 window.addEventListener('keyup', keyboardEventListener, passive);
 keyboardEventListener({});
 
-for (let d of document.querySelectorAll('dialog')) {
+// dialog polyfill (Firefox, Safari, Edge) and cancel buttons
+for (let d of n.querySelectorAll('dialog')) {
+    dialogPolyfill.registerDialog(d);
     d.addEventListener('cancel', () => d.returnValue = '', passive);
     for (let b of d.querySelectorAll('form button[type=cancel]')) {
         b.type = 'button';
@@ -506,7 +536,8 @@ for (let d of document.querySelectorAll('dialog')) {
     }
 }
 
-if (typeof RadioNodeList === "undefined") {
+// RadioNodeList polyfill (Edge)
+if (typeof RadioNodeList === 'undefined') {
     Object.defineProperty(HTMLCollection.prototype, "value", {
         get: function () {
             for (let i of Array.from(this)) {

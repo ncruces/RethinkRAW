@@ -53,7 +53,7 @@ func runDNGConverter(input, output string, exp *exportSettings) error {
 	log.Printf("dngconv %v\n", opts)
 	cmd := exec.Command(serverConfig.DNGConverter, opts...)
 	if _, err := cmd.Output(); err != nil {
-		return errors.WithMessagef(err, "DNG Converter: %v", opts)
+		return errors.WithMessagef(err, "DNG Converter")
 	}
 	return nil
 }
