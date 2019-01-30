@@ -9,7 +9,7 @@ document.body.onload = async () => {
     try {
         settings = await jsonRequest('GET', `/photo/${encodeURI(template.Path)}?settings`);
     } catch (e) {
-        alertError('Load', e);
+        alertError('Load failed', e);
         spinner.hidden = true;
         return;
     }
@@ -68,7 +68,7 @@ window.valueChange = function () {
     function delayed() {
         query = formQuery();
         spinner.hidden = false;
-        photo.onload = loaded;
+        photo.onload = photo.onerror = loaded;
         photo.src = `/photo/${encodeURI(template.Path)}?preview&` + query;
     }
 
@@ -217,7 +217,7 @@ window.saveFile = async () => {
         await jsonRequest('POST', `/photo/${encodeURI(template.Path)}?save&` + query);
         save.disabled = true;
     } catch (e) {
-        alertError('Save', e);
+        alertError('Save failed', e);
     }
     dialog.close();
 }
@@ -240,7 +240,7 @@ window.exportFile = async (state) => {
     try {
         await blobRequest('POST', `/photo/${encodeURI(template.Path)}?export&` + query);
     } catch (e) {
-        alertError('Export', e);
+        alertError('Export failed', e);
     }
     dialog.close();
 }
@@ -383,10 +383,14 @@ function alertError(src, ex) {
     let thisError = Date.now();
     if (thisError - lastError > 5000) {
         lastError = thisError;
-        if (ex.response != null) {
-            alert(ex.statusText + '\n' + src + ' failed with:\n' + ex.response);
+        if (ex != null && ex.message) {
+            if (ex.response) {
+                alert(ex.message + '\n' + src + ' with:\n' + ex.response);
+            } else {
+                alert(ex.message + '\n' + src + '.');
+            }
         } else {
-            alert(ex.statusText + '\n' + src + ' failed.');
+            alert('Error\n' + src + '.');
         }
     }
 }
@@ -444,14 +448,14 @@ function jsonRequest(method, url, body) {
             } else {
                 reject({
                     status: xhr.status,
-                    statusText: xhr.statusText,
+                    message: xhr.statusText,
                     response: xhr.response,
                 });
             }
         };
         xhr.onerror = () => reject({
             status: xhr.status,
-            statusText: xhr.statusText,
+            message: xhr.statusText,
         });
         if (body !== void 0) {
             xhr.setRequestHeader('Content-Type', 'application/json');
@@ -484,7 +488,7 @@ function blobRequest(method, url, body) {
                 reader.onload = () => {
                     reject({
                         status: xhr.status,
-                        statusText: xhr.statusText,
+                        message: xhr.statusText,
                         response: JSON.parse(reader.result),
                     });
                 };
@@ -493,7 +497,7 @@ function blobRequest(method, url, body) {
         };
         xhr.onerror = () => reject({
             status: xhr.status,
-            statusText: xhr.statusText,
+            message: xhr.statusText,
         });
         xhr.send(body);
     });
@@ -524,7 +528,7 @@ window.addEventListener('keyup', keyboardEventListener, passive);
 keyboardEventListener({});
 
 // dialog polyfill (Firefox, Safari, Edge) and cancel buttons
-for (let d of n.querySelectorAll('dialog')) {
+for (let d of document.querySelectorAll('dialog')) {
     dialogPolyfill.registerDialog(d);
     d.addEventListener('cancel', () => d.returnValue = '', passive);
     for (let b of d.querySelectorAll('form button[type=cancel]')) {

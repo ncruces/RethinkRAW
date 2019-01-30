@@ -75,11 +75,13 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			status = http.StatusInternalServerError
 		}
 
-		if err, ok := res.Error.(*exec.ExitError); ok {
-			message.Write(bytes.TrimSpace(err.Stderr))
-			message.WriteByte('\n')
-		}
 		message.WriteString(strings.TrimSpace(res.Error.Error()))
+		if err, ok := res.Error.(*exec.ExitError); ok {
+			if msg := bytes.TrimSpace(err.Stderr); len(msg) > 0 {
+				message.WriteByte('\n')
+				message.Write(msg)
+			}
+		}
 
 		w.WriteHeader(status)
 

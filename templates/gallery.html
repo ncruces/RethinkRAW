@@ -26,7 +26,7 @@
     </form>
     <div id=gallery>
         {{range .Photos}}
-        <a href="/photo/{{.Path}}"><img title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}"></a>
+        <a href="/photo/{{.Path}}"><img title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
         {{else}}
         <span>No RAW files here.</span>
         {{end}}

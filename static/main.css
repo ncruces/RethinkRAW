@@ -57,7 +57,7 @@ body {
     text-align: center;
     width: 100%;
     max-width: 960px;
-    margin-top: 32px;
+    padding-top: 32px;
 }
 
 #gallery a {
