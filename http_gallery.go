@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	nfd "github.com/ncruces/go-nativefiledialog"
@@ -45,6 +44,8 @@ var extensions = map[string]struct{}{
 	".CR3": {}, // Canon
 }
 
+var filter = "CRW,NEF,RAF,ORF,MRW,DCR,MOS,RAW,PEF,SRF,DNG,X3F,CR2,ERF,SR2,KDC,MFW,MEF,ARW,NRW,RW2,RWL,IIQ,3FR,FFF,SRW,GPR,DXO,ARQ,CR3"
+
 func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := r.URL.Path
 	r.ParseForm()
@@ -54,13 +55,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	if edit || browse {
 		bringToTop()
 		if edit {
-			exts := make([]string, 0, len(extensions))
-			for e := range extensions {
-				exts = append(exts, e[1:])
-			}
-			sort.Strings(exts)
-
-			if res, err := nfd.OpenDialog(strings.Join(exts, ","), path); err != nil {
+			if res, err := nfd.OpenDialog(filter, path); err != nil {
 				return HTTPResult{Error: err}
 			} else {
 				path = res
@@ -74,8 +69,10 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 
 		if path == "" {
+			w.Header().Add("Refresh", "0; url=/")
 			return HTTPResult{Status: http.StatusResetContent}
 		} else if fi, err := os.Stat(path); os.IsNotExist(err) {
+			w.Header().Add("Refresh", "0; url=/")
 			return HTTPResult{Status: http.StatusResetContent}
 		} else if err != nil {
 			return HTTPResult{Error: err}

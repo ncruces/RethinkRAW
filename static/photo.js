@@ -525,7 +525,7 @@ window.addEventListener('keydown', keyboardEventListener, passive);
 window.addEventListener('keyup', keyboardEventListener, passive);
 keyboardEventListener({});
 
-// dialog polyfill (Firefox, Safari, Edge) and cancel buttons
+// dialog polyfill, add type=cancel buttons
 for (let d of document.querySelectorAll('dialog')) {
     dialogPolyfill.registerDialog(d);
     d.addEventListener('cancel', () => d.returnValue = '', passive);
@@ -540,7 +540,7 @@ for (let d of document.querySelectorAll('dialog')) {
 
 // RadioNodeList polyfill (Edge)
 if (typeof RadioNodeList === 'undefined') {
-    Object.defineProperty(HTMLCollection.prototype, "value", {
+    Object.defineProperty(HTMLCollection.prototype, 'value', {
         get: function () {
             for (let i of Array.from(this)) {
                 if (i.type === 'radio' && i.checked) return i.value;

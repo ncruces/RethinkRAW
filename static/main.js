@@ -1,14 +1,10 @@
 void function () {
 
-var old;
-try {
-    new Function('async()=>{}');
-} catch (e) {
-    old = e instanceof SyntaxError;
-}
-if (old) {
+if (!('CSS' in window && CSS.supports('grid-area', 'auto'))) {
     location.replace('/browser.html');
-} else if ('serviceWorker' in navigator) {
+}
+
+if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
 }
 
