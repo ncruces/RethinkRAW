@@ -104,12 +104,11 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Content-Type", "text/html")
 		return HTTPResult{
 			Error: templates.ExecuteTemplate(w, "photo.html", struct {
-				Name, Title, Path, Parent string
+				Name, Title, Path string
 			}{
 				filepath.Base(path),
 				filepath.Clean(path),
 				toURLPath(filepath.Clean(path)),
-				toURLPath(filepath.Join(path, "..")),
 			}),
 		}
 	}

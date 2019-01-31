@@ -54,8 +54,6 @@ document.body.onload = async () => {
     }
 }
 
-window.gallery = () => location.replace('/gallery/' + template.Parent);
-
 window.onbeforeunload = function () {
     if (!save.disabled) return 'Leave this page? Changes that you made may not be saved.';
 }

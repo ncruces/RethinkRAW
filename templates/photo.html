@@ -12,13 +12,13 @@
     <script src="/dialog-polyfill.js" defer></script>
     <script>const template = {{.}}</script>
     <script src="/photo.js" defer></script>
-    <script src="/browser.js" async></script>
+    <script src="/main.js" async></script>
 </head>
 <body>
     <div id=box1>
         <div id=menu>
             <div class="toolbar">
-                <button type=button title="Back" onclick="gallery()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
                 <button type=button title="Save" onclick="saveFile()" id=save disabled><i class="fas fas fa-save"></i></button>
                 <button type=button title="Export JPEG (shift-click for options)…" class="shift-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
                 <button type=button title="Export…" class="shift-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>

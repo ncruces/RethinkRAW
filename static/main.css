@@ -48,6 +48,16 @@ body {
     font-size: 1rem;
 }
 
+#menu .minimal-ui {
+    display: none;
+}
+
+@media not all and (display-mode: browser) {
+    #menu .minimal-ui {
+        display: unset;
+    }
+}
+
 #gallery {
     display: flex;
     flex-flow: row wrap;
