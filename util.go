@@ -3,8 +3,12 @@ package main
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"io"
 	"mime"
+	"os"
+	"runtime"
 	"strings"
+	"syscall"
 )
 
 const MaxUint = ^uint(0)
@@ -81,4 +85,52 @@ func filename(name string) string {
 		return builder.String()
 	}
 	return ""
+}
+
+func copyFile(src, dst string) (err error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return
+	}
+	defer func() {
+		if cerr := out.Close(); err == nil {
+			err = cerr
+		}
+	}()
+
+	_, err = io.Copy(out, in)
+	return
+}
+
+func moveFile(src, dst string) error {
+	le, ok := os.Rename(src, dst).(*os.LinkError)
+
+	// 0x12 is EXDEF, 0x11 is ERROR_NOT_SAME_DEVICE
+	if ok && (le.Err == syscall.Errno(0x12) || (le.Err == syscall.Errno(0x11) && runtime.GOOS == "windows")) {
+		if err := copyFile(src, dst); err != nil {
+			return err
+		}
+		if err := os.Remove(src); err == nil || os.IsNotExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+	return le
+}
+
+func lnkyFile(src, dst string) error {
+	le, ok := os.Link(src, dst).(*os.LinkError)
+
+	// 0x12 is EXDEF, 0x11 is ERROR_NOT_SAME_DEVICE
+	if ok && (le.Err == syscall.Errno(0x12) || (le.Err == syscall.Errno(0x11) && runtime.GOOS == "windows")) {
+		return copyFile(src, dst)
+	}
+	return le
 }

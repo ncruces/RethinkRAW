@@ -56,7 +56,7 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 			return
 		}
 
-		err = os.Rename(wk.temp(), dest+".bak")
+		err = lnkyFile(wk.temp(), dest+".bak")
 	} else {
 		err = copyFile(wk.origXMP(), dest+".bak")
 	}
@@ -277,7 +277,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return
 	}
 
-	err = copyFile(path, wk.base+"orig"+wk.ext)
+	err = lnkyFile(path, wk.base+"orig"+wk.ext)
 	if err != nil {
 		return
 	}
@@ -400,27 +400,6 @@ func (wl *workspaceLocker) delete(hash string) (ok bool) {
 
 	lk.Unlock()
 	wl.Unlock()
-	return
-}
-
-func copyFile(src, dst string) (err error) {
-	in, err := os.Open(src)
-	if err != nil {
-		return
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return
-	}
-	defer func() {
-		if cerr := out.Close(); err == nil {
-			err = cerr
-		}
-	}()
-
-	_, err = io.Copy(out, in)
 	return
 }
 
