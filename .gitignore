@@ -17,4 +17,5 @@
 /data
 /stuff
 /samples
+/assets_vfsdata.go
 !/utils/*.*

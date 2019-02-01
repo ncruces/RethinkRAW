@@ -15,7 +15,7 @@ func openURLCmd(url string) *exec.Cmd {
 	return exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
 }
 
-func getChromePath() string {
+func findChrome() string {
 	versions := []string{`Google\Chrome`, `Google\Chrome SxS`, "Chromium"}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
 	suffix := `\Application\chrome.exe`

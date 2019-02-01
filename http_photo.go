@@ -103,7 +103,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Cache-Control", "max-age=300")
 		w.Header().Set("Content-Type", "text/html")
 		return HTTPResult{
-			Error: templates.ExecuteTemplate(w, "photo.html", struct {
+			Error: templates.ExecuteTemplate(w, "photo.gohtml", struct {
 				Name, Title, Path string
 			}{
 				filepath.Base(path),

@@ -123,7 +123,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Cache-Control", "max-age=60")
 		w.Header().Set("Content-Type", "text/html")
 		return HTTPResult{
-			Error: templates.ExecuteTemplate(w, "gallery.html", data),
+			Error: templates.ExecuteTemplate(w, "gallery.gohtml", data),
 		}
 	}
 }

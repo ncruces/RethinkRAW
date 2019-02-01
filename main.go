@@ -42,6 +42,11 @@ func main() {
 		}
 	}
 
+	chrome := findChrome()
+	if chrome != "" {
+		hideConsole()
+	}
+
 	if err := testDNGConverter(); err != nil {
 		url.Path = "/dngconv.html"
 	}
@@ -58,9 +63,8 @@ func main() {
 		go http.Serve(ln)
 	}
 
-	if chrome := setupChrome(url.String()); chrome != nil {
-		hideConsole()
-		if err := chrome.Run(); err != nil {
+	if chrome != "" {
+		if err := setupChrome(chrome, url.String()).Run(); err != nil {
 			log.Fatal(err)
 		}
 	} else {
@@ -106,12 +110,7 @@ func testDataDir(dir string) error {
 	}
 }
 
-func setupChrome(url string) *exec.Cmd {
-	chrome := getChromePath()
-	if chrome == "" {
-		return nil
-	}
-
+func setupChrome(chrome, url string) *exec.Cmd {
 	data := filepath.Join(dataDir, "chrome")
 	cache := filepath.Join(tempDir, "chrome")
 
@@ -123,6 +122,6 @@ func setupChrome(url string) *exec.Cmd {
 	}
 
 	return exec.Command(chrome, "--app="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache, "--no-first-run",
-		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins", "--disable-translate",
-		"--disable-background-networking")
+		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins",
+		"--disable-bundled-ppapi-flash", "--disable-background-networking")
 }
