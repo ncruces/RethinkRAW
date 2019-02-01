@@ -1,5 +1,5 @@
-@import 'fontawesome/all.css';
 @import 'normalize.css';
+@import 'fontawesome.css';
 
 body {
     font-family: -apple-system, 'Segoe UI', system-ui, 'Roboto', 'Helvetica Neue', sans-serif;
