@@ -46,8 +46,8 @@ type xmpSettings struct {
 }
 
 func hasXMP(path string) bool {
-	log.Printf("exiv2 [-PXn -gXmp.crs. %s]\n", path)
-	cmd := exec.Command(exiv2, "-PXn", "-gXmp.crs.", path)
+	log.Printf("exiv2 [-PXn -gXmp.photoshop. %s]\n", path)
+	cmd := exec.Command(exiv2, "-PXn", "-gXmp.photoshop.", path)
 	return cmd.Run() == nil
 }
 
@@ -362,4 +362,21 @@ func loadFloat32(dst *float32, m map[string][]byte, key string) {
 			*dst = float32(f)
 		}
 	}
+}
+
+func tiffOrientation(path string) int {
+	log.Printf("exiv2 [-PEXv -g.Orientation %s]\n", path)
+	cmd := exec.Command(exiv2, "-PEXv", "-g.Orientation", path)
+	out, err := cmd.Output()
+	if err != nil {
+		return 0
+	}
+
+	var orientation int
+	_, err = fmt.Fscanf(bytes.NewReader(out), "%d\n", &orientation)
+	if err != nil {
+		return 0
+	}
+
+	return orientation
 }

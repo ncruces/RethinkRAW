@@ -38,6 +38,9 @@ func previewJPEG(path string) ([]byte, error) {
 			return nil, err
 		}
 
+		exf := rotateflip.Orientation(tiffOrientation(path))
+		img = rotateflip.Image(img, exf.Op())
+
 		buf := bytes.Buffer{}
 		if err := jpeg.Encode(&buf, img, nil); err != nil {
 			return nil, err
@@ -46,6 +49,9 @@ func previewJPEG(path string) ([]byte, error) {
 	}
 
 	exif := exifOrientation(data)
+	if exif == 0 {
+		exif = tiffOrientation(path)
+	}
 	switch {
 	case exif == -1:
 		return nil, notJPEG
@@ -207,8 +213,8 @@ func jfifHeader(settings *exportSettings) []byte {
 
 func pnmDecodeThumb(data []byte) (image.Image, error) {
 	var format, width, height int
-	n, err := fmt.Sscanf(string(data), "P%d\n%d %d\n255\n", &format, &width, &height)
-	if err == nil && n == 3 {
+	n, _ := fmt.Fscanf(bytes.NewReader(data), "P%d\n%d %d\n255\n", &format, &width, &height)
+	if n == 3 {
 		for i := 0; i < 3; i++ {
 			data = data[bytes.IndexByte(data, '\n')+1:]
 		}

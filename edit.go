@@ -409,6 +409,7 @@ func copySidecar(src, dst string) error {
 	ext := filepath.Ext(src)
 
 	if ext != "" {
+		// if NAME.XMP is there for NAME.EXT, use it
 		xmp := strings.TrimSuffix(src, ext) + ".xmp"
 		d, err = ioutil.ReadFile(xmp)
 		if err == nil && !isSidecarForExt(d, ext) {
@@ -416,6 +417,7 @@ func copySidecar(src, dst string) error {
 		}
 	}
 	if os.IsNotExist(err) {
+		// if NAME.EXT.XMP is there for NAME.EXT, use it
 		d, err = ioutil.ReadFile(src + ".xmp")
 		if err == nil && !isSidecarForExt(d, ext) {
 			err = os.ErrNotExist
@@ -428,10 +430,12 @@ func copySidecar(src, dst string) error {
 }
 
 func saveSidecar(src string) (string, error) {
+	// fallback to NAME.EXT.XMP
 	ret := src + ".xmp"
 	ext := filepath.Ext(src)
 
 	if ext != "" {
+		// if NAME.XMP is there for NAME.EXT, use it
 		xmp := strings.TrimSuffix(src, ext) + ".xmp"
 		if d, err := ioutil.ReadFile(xmp); err == nil {
 			if isSidecarForExt(d, ext) {
@@ -440,20 +444,24 @@ func saveSidecar(src string) (string, error) {
 		} else if !os.IsNotExist(err) {
 			return "", err
 		} else {
+			// fallback to NAME.XMP
 			ret = xmp
 		}
 	}
 
+	// if NAME.EXT.XMP exists, use it
 	if _, err := os.Stat(src + ".xmp"); err == nil {
 		return src + ".xmp", nil
 	} else if !os.IsNotExist(err) {
 		return "", err
 	}
 
+	// if NAME.DNG has embed XMP, use it
 	if strings.EqualFold(ext, ".dng") && hasXMP(src) {
 		return src, nil
 	}
 
+	// otherwise, fallback
 	return ret, nil
 }
 
