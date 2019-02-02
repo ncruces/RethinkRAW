@@ -12,6 +12,7 @@ import (
 )
 
 var exiv2Regex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
+var exiv2ResRegex = regexp.MustCompile(`(\d+) ?x ?(\d+)`)
 
 type xmpSettings struct {
 	Filename    string `json:"-"`
@@ -61,7 +62,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 
 	m := make(map[string][]byte)
 	for _, s := range exiv2Regex.FindAllSubmatch(out, -1) {
-		m[string(s[1])] = bytes.TrimSpace(s[2])
+		m[string(s[1])] = bytes.TrimRight(s[2], "\r")
 	}
 
 	// legacy with defaults (will be upgraded/overwritten)
@@ -379,4 +380,35 @@ func tiffOrientation(path string) int {
 	}
 
 	return orientation
+}
+
+func dngPreview(path string) string {
+	log.Printf("exiv2 [-pp %s]\n", path)
+	cmd := exec.Command(exiv2, "-pp", path)
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	var max int
+	for _, s := range exiv2ResRegex.FindAllStringSubmatch(string(out), -1) {
+		var i int
+		i, _ = strconv.Atoi(s[1])
+		if i > max {
+			max = i
+		}
+		i, _ = strconv.Atoi(s[2])
+		if i > max {
+			max = i
+		}
+	}
+
+	switch {
+	case max > 1024:
+		return "p2"
+	case max > 256:
+		return "p1"
+	default:
+		return "p0"
+	}
 }

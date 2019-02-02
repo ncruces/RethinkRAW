@@ -51,7 +51,13 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 			return
 		}
 
-		err = runDNGConverter(wk.orig(), wk.temp(), &exportSettings{DNG: true, Embed: true})
+		exp := exportSettings{
+			DNG:     true,
+			Embed:   true,
+			Preview: dngPreview(path),
+		}
+
+		err = runDNGConverter(wk.orig(), wk.temp(), &exp)
 		if err != nil {
 			return
 		}
@@ -156,11 +162,10 @@ func exportHeaders(path string, exp *exportSettings, headers http.Header) {
 }
 
 type exportSettings struct {
-	DNG      bool
-	Preview  string
-	FastLoad bool
-	Embed    bool
-	Lossy    bool
+	DNG     bool
+	Preview string
+	Lossy   bool
+	Embed   bool
 
 	Resample bool
 	Quality  int

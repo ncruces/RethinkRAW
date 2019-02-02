@@ -11,6 +11,11 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return r
 	}
 
+	if r.Method == "HEAD" {
+		w.Header().Set("Content-Type", "image/jpeg")
+		return HTTPResult{}
+	}
+
 	if out, err := previewJPEG(path); err != nil {
 		return HTTPResult{Error: err}
 	} else {

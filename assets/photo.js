@@ -213,6 +213,7 @@ window.saveFile = async () => {
     dialog.showModal();
     try {
         await jsonRequest('POST', `/photo/${encodeURI(template.Path)}?save&` + query);
+        pingRequest(`/thumb/${encodeURI(template.Path)}`)
         save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
@@ -419,7 +420,7 @@ function exportQuery() {
     if (form.format.value === 'DNG') {
         query.push('dng=1');
         query.push('preview=' + encodeURIComponent(form.preview.value));
-        for (let k of ['fastload', 'embed', 'lossy']) {
+        for (let k of ['lossy', 'embed']) {
             if (form[k].checked) query.push(k + '=1');
         }
     } else {
@@ -499,6 +500,13 @@ function blobRequest(method, url, body) {
         });
         xhr.send(body);
     });
+}
+
+function pingRequest(url) {
+    let xhr = new XMLHttpRequest();
+    xhr.open('HEAD', url);
+    xhr.setRequestHeader('Cache-Control', 'max-age=0');
+    xhr.send();
 }
 
 function formatNumber(value, step) {

@@ -36,14 +36,11 @@ func runDNGConverter(input, output string, exp *exportSettings) error {
 		if exp.Preview != "" {
 			opts = append(opts, "-"+exp.Preview)
 		}
-		if exp.FastLoad {
-			opts = append(opts, "-fl")
+		if exp.Lossy {
+			opts = append(opts, "-lossy")
 		}
 		if exp.Embed {
 			opts = append(opts, "-e")
-		}
-		if exp.Lossy {
-			opts = append(opts, "-lossy")
 		}
 	default:
 		opts = append(opts, "-p2")
