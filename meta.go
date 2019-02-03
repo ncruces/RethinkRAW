@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -22,7 +24,7 @@ func setupExifTool() *exif.Server {
 }
 
 func getMeta(path string) ([]byte, error) {
-	log.Printf("exiftool [-ignoreMinorErrors -fixBase -groupHeadings0:1 %s]\n", path)
+	log.Printf("exiftool [-ignoreMinorErrors -fixBase -groupHeadings0:1 %s]", path)
 	return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-groupHeadings0:1", path)
 }
 
@@ -33,7 +35,7 @@ func fixMetaDNG(orig, dest, name string) (err error) {
 	}
 	opts = append(opts, "-overwrite_original", dest)
 
-	log.Printf("exiftool %v\n", opts)
+	log.Printf("exiftool %v", opts)
 	_, err = exifserver.Command(opts...)
 	return err
 }
@@ -42,6 +44,28 @@ func fixMetaJPEGAsync(orig string) (io.WriteCloser, *exif.AsyncResult) {
 	opts := []string{"-tagsFromFile", orig, "-gps:all", "-exifIFD:all", "-commonIFD0", "-fast", "-"}
 
 	rp, wp := io.Pipe()
-	log.Printf("exiftool %v\n", opts)
+	log.Printf("exiftool %v", opts)
 	return wp, exif.CommandAsync(exiftool, rp, opts...)
+}
+
+func hasEdits(path string) bool {
+	log.Printf("exiftool [-xmp-photoshop:* %s]", path)
+	out, err := exifserver.Command("-xmp-photoshop:*", path)
+	return err == nil && len(out) > 0
+}
+
+func tiffOrientation(path string) int {
+	log.Printf("exiftool [-s3 -n -orientation %s]", path)
+	out, err := exifserver.Command("-s3", "-n", "-orientation", path)
+	if err != nil {
+		return 0
+	}
+
+	var orientation int
+	_, err = fmt.Fscanf(bytes.NewReader(out), "%d\n", &orientation)
+	if err != nil {
+		return 0
+	}
+
+	return orientation
 }

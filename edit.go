@@ -54,7 +54,7 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 		exp := exportSettings{
 			DNG:     true,
 			Embed:   true,
-			Preview: dngPreview(path),
+			Preview: dngPreview(wk.orig()),
 		}
 
 		err = runDNGConverter(wk.orig(), wk.temp(), &exp)
@@ -461,8 +461,8 @@ func saveSidecar(src string) (string, error) {
 		return "", err
 	}
 
-	// if NAME.DNG has embed XMP, use it
-	if strings.EqualFold(ext, ".dng") && hasXMP(src) {
+	// if NAME.DNG was edited, use it
+	if strings.EqualFold(ext, ".dng") && hasEdits(src) {
 		return src, nil
 	}
 

@@ -18,7 +18,7 @@ const invalidJPEG = constError("not a valid JPEG file")
 const unsupportedThumb = constError("unsupported thumbnail")
 
 func extractThumb(path string) ([]byte, error) {
-	log.Printf("dcraw [-e -c %s]\n", path)
+	log.Printf("dcraw [-e -c %s]", path)
 	cmd := exec.Command(dcraw, "-e", "-c", path)
 	if out, err := cmd.Output(); err != nil || len(out) > 2 {
 		return out, err
@@ -73,7 +73,7 @@ func previewJPEG(path string) ([]byte, error) {
 
 	opts := append([]string{"-trim", "-copy", "none"}, flags[exif-2]...)
 
-	log.Printf("jpegtran %v\n", opts)
+	log.Printf("jpegtran %v", opts)
 	cmd := exec.Command(jpegtran, opts...)
 	cmd.Stdin = bytes.NewReader(data)
 	return cmd.Output()

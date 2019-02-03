@@ -47,6 +47,33 @@ func isHidden(fi os.FileInfo) bool {
 	return false
 }
 
+func getShortPath(path string) string {
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	getShortPathName := kernel32.NewProc("GetShortPathNameW")
+
+	prefixed := false
+	path = filepath.Clean(path)
+	if len(path) >= 248 && len(filepath.VolumeName(path)) == 2 {
+		path = `\\?\` + path
+		prefixed = true
+	}
+
+	long, err := syscall.UTF16PtrFromString(path)
+	if err == nil {
+		count := len(path) + 1
+		short := make([]uint16, count)
+		n, _, _ := getShortPathName.Call(uintptr(unsafe.Pointer(long)), uintptr(unsafe.Pointer(&short[0])), uintptr(count))
+		if 0 < n && int(n) <= count {
+			path = syscall.UTF16ToString(short[:n])
+		}
+	}
+
+	if prefixed {
+		return strings.TrimPrefix(path, `\\?\`)
+	}
+	return path
+}
+
 func hideConsole() {
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
 	user32 := syscall.NewLazyDLL("user32.dll")
@@ -85,7 +112,6 @@ func bringToTop() {
 
 func handleConsoleCtrl(c chan<- os.Signal) {
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
-
 	setConsoleCtrlHandler := kernel32.NewProc("SetConsoleCtrlHandler")
 
 	if n, _, err := setConsoleCtrlHandler.Call(

@@ -46,14 +46,8 @@ type xmpSettings struct {
 	AutoLateralCA bool `json:"autoLateralCA"`
 }
 
-func hasXMP(path string) bool {
-	log.Printf("exiv2 [-PXn -gXmp.photoshop. %s]\n", path)
-	cmd := exec.Command(exiv2, "-PXn", "-gXmp.photoshop.", path)
-	return cmd.Run() == nil
-}
-
 func loadXMP(path string) (xmp xmpSettings, err error) {
-	log.Printf("exiv2 [-PEXnv -gXmp.crs. -gExif.Image. %s]\n", path)
+	log.Printf("exiv2 [-PEXnv -gXmp.crs. -gExif.Image. %s]", path)
 	cmd := exec.Command(exiv2, "-PEXnv", "-gExif.Image.", "-gXmp.crs.", path)
 	out, err := cmd.Output()
 	if err != nil {
@@ -136,7 +130,7 @@ func saveXMP(path string, xmp *xmpSettings) (err error) {
 
 	if len(opts) > 0 {
 		opts = append(opts, path)
-		log.Printf("exiv2 %v\n", opts)
+		log.Printf("exiv2 %v", opts)
 		cmd := exec.Command(exiv2, opts...)
 		if xmp != nil {
 			cmd.Stdin = xmp.buffer()
@@ -365,25 +359,8 @@ func loadFloat32(dst *float32, m map[string][]byte, key string) {
 	}
 }
 
-func tiffOrientation(path string) int {
-	log.Printf("exiv2 [-PEXv -g.Orientation %s]\n", path)
-	cmd := exec.Command(exiv2, "-PEXv", "-g.Orientation", path)
-	out, err := cmd.Output()
-	if err != nil {
-		return 0
-	}
-
-	var orientation int
-	_, err = fmt.Fscanf(bytes.NewReader(out), "%d\n", &orientation)
-	if err != nil {
-		return 0
-	}
-
-	return orientation
-}
-
 func dngPreview(path string) string {
-	log.Printf("exiv2 [-pp %s]\n", path)
+	log.Printf("exiv2 [-pp %s]", path)
 	cmd := exec.Command(exiv2, "-pp", path)
 	out, err := cmd.Output()
 	if err != nil {

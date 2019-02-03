@@ -83,7 +83,7 @@ func setupDirs() error {
 		return err
 	} else {
 		baseDir = filepath.Dir(exe)
-		tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
+		tempDir = filepath.Join(getShortPath(os.TempDir()), "RethinkRAW")
 	}
 
 	if err := os.Chdir(baseDir); err != nil {
