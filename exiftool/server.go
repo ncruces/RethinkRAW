@@ -7,6 +7,7 @@ import (
 	"io"
 	"os/exec"
 	"sync"
+	"syscall"
 
 	"errors"
 )
@@ -23,8 +24,12 @@ type Server struct {
 	stderr *bufio.Scanner
 }
 
-func NewServer(path string, commonArg ...string) (*Server, error) {
+func NewServer(path, arg1 string, commonArg ...string) (*Server, error) {
 	e := &Server{path: path}
+
+	if arg1 != "" {
+		e.args = append(e.args, arg1)
+	}
 
 	e.args = append(e.args, "-stay_open", "True", "-@", "-", "-common_args", "-echo4", "{ready"+boundary+"}", "-charset", "filename=utf8")
 	e.args = append(e.args, commonArg...)
@@ -66,6 +71,7 @@ func (e *Server) start() (err error) {
 }
 
 func (e *Server) restart() {
+	e.cmd.Process.Signal(syscall.SIGTERM)
 	e.stdin.Close()
 	e.cmd = nil
 	e.start()

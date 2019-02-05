@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"path/filepath"
 
-	exif "./exiftool"
+	"./exiftool"
 )
 
-var exifserver *exif.Server
+var exifserver *exiftool.Server
 
-func setupExifTool() *exif.Server {
+func setupExifTool() *exiftool.Server {
 	var err error
-	os.Setenv("PAR_GLOBAL_TEMP", filepath.Join(dataDir, "exiftool"))
-	exifserver, err = exif.NewServer(exiftool)
+	exifserver, err = exiftool.NewServer(exiftoolExe, exiftoolArg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,12 +38,12 @@ func fixMetaDNG(orig, dest, name string) (err error) {
 	return err
 }
 
-func fixMetaJPEGAsync(orig string) (io.WriteCloser, *exif.AsyncResult) {
+func fixMetaJPEGAsync(orig string) (io.WriteCloser, *exiftool.AsyncResult) {
 	opts := []string{"-tagsFromFile", orig, "-gps:all", "-exifIFD:all", "-commonIFD0", "-fast", "-"}
 
 	rp, wp := io.Pipe()
 	log.Printf("exiftool %v", opts)
-	return wp, exif.CommandAsync(exiftool, rp, opts...)
+	return wp, exiftool.CommandAsync(exiftoolExe, exiftoolArg, rp, opts...)
 }
 
 func hasEdits(path string) bool {

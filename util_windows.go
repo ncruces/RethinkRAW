@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -11,10 +12,46 @@ import (
 	"unsafe"
 )
 
-func openURLCmd(url string) *exec.Cmd {
-	return exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
+func setupDirs() (err error) {
+	if exe, err := os.Executable(); err != nil {
+		return err
+	} else {
+		baseDir = filepath.Dir(exe)
+	}
+
+	baseDir, err = getANSIPath(baseDir)
+	if err != nil {
+		return
+	}
+
+	tempDir, err = getANSIPath(filepath.Join(os.TempDir(), "RethinkRAW"))
+	if err != nil {
+		return
+	}
+
+	dataDir, err = getANSIPath(filepath.Join(os.Getenv("APPDATA"), "RethinkRAW"))
+	if err != nil {
+		return
+	}
+
+	data := filepath.Join(baseDir, "data")
+	if err = testDataDir(data); err == nil {
+		dataDir = data
+		return nil
+	}
+	return testDataDir(dataDir)
 }
 
+func testDataDir(dir string) error {
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return err
+	}
+	if f, err := os.Create(filepath.Join(dir, "lastrun")); err != nil {
+		return err
+	} else {
+		return f.Close()
+	}
+}
 func findChrome() string {
 	versions := []string{`Google\Chrome`, `Google\Chrome SxS`, "Chromium"}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
@@ -34,6 +71,10 @@ func findChrome() string {
 	return ""
 }
 
+func openURLCmd(url string) *exec.Cmd {
+	return exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
+}
+
 func isHidden(fi os.FileInfo) bool {
 	if strings.HasPrefix(fi.Name(), ".") {
 		return true
@@ -47,31 +88,62 @@ func isHidden(fi os.FileInfo) bool {
 	return false
 }
 
-func getShortPath(path string) string {
-	kernel32 := syscall.NewLazyDLL("kernel32.dll")
-	getShortPathName := kernel32.NewProc("GetShortPathNameW")
-
-	prefixed := false
+func getANSIPath(path string) (string, error) {
 	path = filepath.Clean(path)
-	if len(path) >= 248 && len(filepath.VolumeName(path)) == 2 {
-		path = `\\?\` + path
-		prefixed = true
+	vol := len(filepath.VolumeName(path))
+
+	if vol > 2 {
+		return "", errors.New("UNC path not supported: " + path)
 	}
 
-	long, err := syscall.UTF16PtrFromString(path)
-	if err == nil {
-		count := len(path) + 1
-		short := make([]uint16, count)
-		n, _, _ := getShortPathName.Call(uintptr(unsafe.Pointer(long)), uintptr(unsafe.Pointer(&short[0])), uintptr(count))
-		if 0 < n && int(n) <= count {
-			path = syscall.UTF16ToString(short[:n])
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	getShortPathName := kernel32.NewProc("GetShortPathNameW")
+	wideCharToMultiByte := kernel32.NewProc("WideCharToMultiByte")
+
+	sep := len(path)
+	for {
+		_, err := os.Stat(path[:sep])
+		if os.IsNotExist(err) {
+			i := sep - 1
+			for i >= vol && !os.IsPathSeparator(path[i]) {
+				i--
+			}
+			if i >= vol {
+				sep = i
+				continue
+			}
+		}
+		if err == nil {
+			file := path[:sep]
+			if filepath.IsAbs(file) {
+				file = `\\?\` + file
+			}
+			if long, err := syscall.UTF16FromString(file); err == nil {
+				short := [264]uint16{}
+				n, _, _ := getShortPathName.Call(
+					uintptr(unsafe.Pointer(&long[0])),
+					uintptr(unsafe.Pointer(&short[0])), 264)
+				if 0 < n && n < 264 {
+					file = syscall.UTF16ToString(short[:n])
+					path = strings.TrimPrefix(file, `\\?\`) + path[sep:]
+				}
+			}
+		}
+		break
+	}
+
+	if long, err := syscall.UTF16FromString(path); err == nil {
+		var used int32
+		n, _, _ := wideCharToMultiByte.Call(0 /*CP_ACP*/, 0x400, /*WC_NO_BEST_FIT_CHARS*/
+			uintptr(unsafe.Pointer(&long[0])), ^uintptr(0), 0, 0, 0,
+			uintptr(unsafe.Pointer(&used)))
+
+		if 0 < n && n < 260 && used == 0 {
+			return path, nil
 		}
 	}
 
-	if prefixed {
-		return strings.TrimPrefix(path, `\\?\`)
-	}
-	return path
+	return path, errors.New("Could not convert to ANSI path: " + path)
 }
 
 func hideConsole() {

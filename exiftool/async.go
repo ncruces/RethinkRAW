@@ -17,8 +17,12 @@ func (r *AsyncResult) Get() ([]byte, error) {
 	return r.Out, r.Err
 }
 
-func CommandAsync(path string, r io.Reader, arg ...string) *AsyncResult {
+func CommandAsync(path, arg1 string, r io.Reader, arg ...string) *AsyncResult {
 	var args []string
+
+	if arg1 != "" {
+		args = append(args, arg1)
+	}
 
 	args = append(args, "-charset", "filename=utf8")
 	args = append(args, arg...)

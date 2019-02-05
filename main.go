@@ -12,8 +12,6 @@ import (
 	"path/filepath"
 )
 
-var baseDir, dataDir, tempDir string
-
 func main() {
 	if err := setupDirs(); err != nil {
 		log.Fatal(err)
@@ -40,6 +38,10 @@ func main() {
 				url.Path = "/photo/" + toURLPath(abs)
 			}
 		}
+	}
+
+	if err := os.Chdir(baseDir); err != nil {
+		log.Fatal(err)
 	}
 
 	chrome := findChrome()
@@ -75,38 +77,6 @@ func main() {
 		handleConsoleCtrl(c)
 		signal.Notify(c)
 		<-c
-	}
-}
-
-func setupDirs() error {
-	if exe, err := os.Executable(); err != nil {
-		return err
-	} else {
-		baseDir = filepath.Dir(exe)
-		tempDir = filepath.Join(getShortPath(os.TempDir()), "RethinkRAW")
-	}
-
-	if err := os.Chdir(baseDir); err != nil {
-		return err
-	}
-
-	dataDir = filepath.Join(baseDir, "data")
-	if err := testDataDir(dataDir); err == nil {
-		return err
-	}
-
-	dataDir = filepath.Join(os.Getenv("APPDATA"), "RethinkRAW")
-	return testDataDir(dataDir)
-}
-
-func testDataDir(dir string) error {
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return err
-	}
-	if f, err := os.Create(filepath.Join(dir, "lastrun")); err != nil {
-		return err
-	} else {
-		return f.Close()
 	}
 }
 

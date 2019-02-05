@@ -8,9 +8,11 @@ import (
 
 const dcraw = "./utils/dcraw"
 const exiv2 = "./utils/exiv2"
-const exiftool = "./utils/exiftool"
 const jpegtran = "./utils/jpegtran"
+const exiftoolExe = "./utils/exiftool/exiftool"
+const exiftoolArg = "./utils/exiftool/exiftool"
 
+var baseDir, dataDir, tempDir string
 var serverConfig serverSettings
 
 type serverSettings struct {

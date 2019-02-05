@@ -13,9 +13,9 @@ import (
 	"github.com/nfnt/resize"
 )
 
-const notJPEG = constError("not a JPEG file")
-const invalidJPEG = constError("not a valid JPEG file")
-const unsupportedThumb = constError("unsupported thumbnail")
+const errNotJPEG = constError("not a JPEG file")
+const errInvalidJPEG = constError("not a valid JPEG file")
+const errUnsupportedThumb = constError("unsupported thumbnail")
 
 func extractThumb(path string) ([]byte, error) {
 	log.Printf("dcraw [-e -c %s]", path)
@@ -23,7 +23,7 @@ func extractThumb(path string) ([]byte, error) {
 	if out, err := cmd.Output(); err != nil || len(out) > 2 {
 		return out, err
 	}
-	return nil, unsupportedThumb
+	return nil, errUnsupportedThumb
 }
 
 func previewJPEG(path string) ([]byte, error) {
@@ -54,9 +54,9 @@ func previewJPEG(path string) ([]byte, error) {
 	}
 	switch {
 	case exif == -1:
-		return nil, notJPEG
+		return nil, errNotJPEG
 	case exif < 0 || exif > 9:
-		return nil, invalidJPEG
+		return nil, errInvalidJPEG
 	case exif < 2 || exif == 9:
 		return data, nil
 	}
@@ -86,7 +86,7 @@ func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
 	}
 
 	if data[0] != '\xff' || data[1] != '\xd8' {
-		return nil, notJPEG
+		return nil, errNotJPEG
 	}
 
 	if settings.Resample {
@@ -228,7 +228,7 @@ func pnmDecodeThumb(data []byte) (image.Image, error) {
 
 		case format == 6 && len(data) == 3*width*height:
 			if len(data) != 3*width*height {
-				return nil, unsupportedThumb
+				return nil, errUnsupportedThumb
 			}
 			img := image.NewRGBA(rect)
 			var i, j int
@@ -244,5 +244,5 @@ func pnmDecodeThumb(data []byte) (image.Image, error) {
 		}
 	}
 
-	return nil, unsupportedThumb
+	return nil, errUnsupportedThumb
 }
