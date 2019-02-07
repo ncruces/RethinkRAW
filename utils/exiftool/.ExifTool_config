@@ -1,0 +1,5 @@
+%Image::ExifTool::UserDefined = (
+    'Image::ExifTool::XMP::crs' => {
+        AutoTone  => { Writable => 'boolean' },
+    },
+);

@@ -7,7 +7,6 @@ import (
 )
 
 const dcraw = "./utils/dcraw"
-const exiv2 = "./utils/exiv2"
 const jpegtran = "./utils/jpegtran"
 const exiftoolExe = "./utils/exiftool/exiftool"
 const exiftoolArg = "./utils/exiftool/exiftool"

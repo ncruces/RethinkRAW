@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	exif "./exiftool"
+	"./exiftool"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {
@@ -24,7 +24,7 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	}
 	defer wk.close()
 
-	return loadXMP(wk.origXMP())
+	return loadXMP(wk.loadXmp())
 }
 
 func saveEdit(path string, xmp *xmpSettings) (err error) {
@@ -38,7 +38,6 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 	if err != nil {
 		return
 	}
-	wk.hasXMP = true
 
 	dest, err := saveSidecar(path)
 	if err != nil {
@@ -114,7 +113,6 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	if err != nil {
 		return
 	}
-	wk.hasXMP = true
 
 	err = os.RemoveAll(wk.temp())
 	if err != nil {
@@ -122,7 +120,7 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	}
 
 	var writer io.WriteCloser
-	var result *exif.AsyncResult
+	var result *exiftool.AsyncResult
 	if !(exp.DNG || exp.Resample) {
 		writer, result = fixMetaJPEGAsync(wk.orig())
 	}
@@ -315,6 +313,10 @@ func (wk *workspace) temp() string {
 }
 
 func (wk *workspace) origXMP() string {
+	return wk.base + "orig.xmp"
+}
+
+func (wk *workspace) loadXmp() string {
 	if wk.hasXMP {
 		return wk.base + "orig.xmp"
 	} else {
@@ -324,17 +326,17 @@ func (wk *workspace) origXMP() string {
 
 func (wk *workspace) last() string {
 	if wk.hasEdit {
-		return wk.edit()
+		return wk.base + "edit.dng"
 	} else {
-		return wk.orig()
+		return wk.base + "orig" + wk.ext
 	}
 }
 
 func (wk *workspace) lastXMP() string {
 	if wk.hasEdit {
-		return wk.edit()
+		return wk.base + "edit.xmp"
 	} else {
-		return wk.origXMP()
+		return wk.base + "orig.xmp"
 	}
 }
 

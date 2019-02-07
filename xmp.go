@@ -8,11 +8,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
-var exiv2Regex = regexp.MustCompile(`(?m:^(\w+)\s+(.*))`)
-var exiv2ResRegex = regexp.MustCompile(`(\d+) ?x ?(\d+)`)
+var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
+var exiftoolRegex = regexp.MustCompile(`(?m:^(\w+): (.*))`)
 
 type xmpSettings struct {
 	Filename    string `json:"-"`
@@ -47,15 +46,14 @@ type xmpSettings struct {
 }
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
-	log.Printf("exiv2 [-PEXnv -gXmp.crs. -gExif.Image. %s]", path)
-	cmd := exec.Command(exiv2, "-PEXnv", "-gExif.Image.", "-gXmp.crs.", path)
-	out, err := cmd.Output()
+	log.Print("exiftool (load xmp)...")
+	out, err := exifserver.Command("-S", "-n", "-fast2", "-orientation", "-xmp-crs:*", path)
 	if err != nil {
 		return
 	}
 
 	m := make(map[string][]byte)
-	for _, s := range exiv2Regex.FindAllSubmatch(out, -1) {
+	for _, s := range exiftoolRegex.FindAllSubmatch(out, -1) {
 		m[string(s[1])] = bytes.TrimRight(s[2], "\r")
 	}
 
@@ -88,7 +86,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 
 	// white balance
 	loadString(&xmp.WhiteBalance, m, "WhiteBalance")
-	loadInt(&xmp.Temperature, m, "Temperature")
+	loadInt(&xmp.Temperature, m, "ColorTemperature")
 	loadInt(&xmp.Tint, m, "Tint")
 
 	// tone
@@ -119,141 +117,97 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 }
 
 func saveXMP(path string, xmp *xmpSettings) (err error) {
-	opts := []string{}
-
-	if !strings.HasSuffix(path, ".xmp") && !strings.HasSuffix(path, ".dng") {
-		opts = append(opts, "-f", "-eX")
-	}
-	if xmp != nil {
-		opts = append(opts, "-m-")
-	}
-
-	if len(opts) > 0 {
-		opts = append(opts, path)
-		log.Printf("exiv2 %v", opts)
-		cmd := exec.Command(exiv2, opts...)
-		if xmp != nil {
-			cmd.Stdin = xmp.buffer()
-		}
-		_, err = cmd.Output()
-	}
-
-	return err
-}
-
-// nolint: errcheck
-func (xmp *xmpSettings) buffer() *bytes.Buffer {
-	buf := bytes.Buffer{}
+	opts := []string{"-n", "-z"}
 
 	// filename
 	if xmp.Filename != "" {
 		name := filepath.Base(xmp.Filename)
-		fmt.Fprintf(&buf, `
-			set Xmp.crs.RawFileName %s`, name)
 		ext := filepath.Ext(xmp.Filename)
-		if ext != "" {
-			fmt.Fprintf(&buf, `
-				set Xmp.photoshop.SidecarForExtension %s`, ext[1:])
-		} else {
-			buf.WriteString(`
-				del Xmp.photoshop.SidecarForExtension`)
-		}
+		opts = append(opts,
+			"-XMP-crs:RawFileName="+name,
+			"-XMP-photoshop:SidecarForExtension="+ext)
 	}
 
-	// orientation
-	fmt.Fprintf(&buf, `
-		set Exif.Image.Orientation %[1]d
-		set Xmp.tiff.Orientation %[1]d
-		set Xmp.crs.ProcessVersion %.1f`,
-		xmp.Orientation, xmp.Process)
+	// orientation, process, grayscale
+	opts = append(opts,
+		"-Orientation="+strconv.Itoa(xmp.Orientation),
+		"-XMP-crs:ProcessVersion="+fmt.Sprintf("%.1f", xmp.Process),
+		"-XMP-crs:ConvertToGrayscale="+strconv.FormatBool(xmp.Grayscale))
 
 	// profile
-	fmt.Fprintf(&buf, `
-		set Xmp.crs.ConvertToGrayscale %t`, xmp.Grayscale)
 	if xmp.Profile != "" {
-		fmt.Fprintf(&buf, `
-			set Xmp.crs.CameraProfile %s`,
-			xmp.Profile)
+		opts = append(opts, "-XMP-crs:CameraProfile="+xmp.Profile)
 	}
 
 	// white balance
+	opts = append(opts, "-XMP-crs:WhiteBalance="+xmp.WhiteBalance)
 	switch xmp.WhiteBalance {
-	case "":
-		buf.WriteString(`
-			del Xmp.crs.WhiteBalance
-			del Xmp.crs.Temperature
-			del Xmp.crs.Tint`)
+	case "As Shot", "Auto":
 	case "Custom":
-		fmt.Fprintf(&buf, `
-			set Xmp.crs.WhiteBalance Custom
-			set Xmp.crs.Temperature  %d
-			set Xmp.crs.Tint         %d`,
-			xmp.Temperature, xmp.Tint)
+		opts = append(opts,
+			"-XMP-crs:ColorTemperature="+strconv.Itoa(xmp.Temperature),
+			"-XMP-crs:Tint="+strconv.Itoa(xmp.Tint))
 	default:
-		fmt.Fprintf(&buf, `
-			set Xmp.crs.WhiteBalance %s
-			del Xmp.crs.Temperature
-			del Xmp.crs.Tint`,
-			xmp.WhiteBalance)
+		opts = append(opts,
+			"-XMP-crs:ColorTemperature=",
+			"-XMP-crs:Tint=")
 	}
 
 	// tone
 	if xmp.AutoTone {
-		buf.WriteString(`
-			set Xmp.crs.AutoTone       True
-			set Xmp.crs.AutoExposure   True
-			set Xmp.crs.AutoContrast   True
-			set Xmp.crs.AutoShadows    True
-			set Xmp.crs.AutoBrightness True
-			del Xmp.crs.Exposure
-			del Xmp.crs.Contrast
-			del Xmp.crs.Shadows
-			del Xmp.crs.Brightness
-			`)
+		opts = append(opts,
+			"-XMP-crs:AutoTone=true",
+			"-XMP-crs:AutoExposure=true",
+			"-XMP-crs:AutoContrast=true",
+			"-XMP-crs:AutoShadows=true",
+			"-XMP-crs:AutoBrightness=true",
+			"-XMP-crs:Exposure=",
+			"-XMP-crs:Contrast=",
+			"-XMP-crs:Shadows=",
+			"-XMP-crs:Brightness=")
 	} else {
-		fmt.Fprintf(&buf, `
-			del Xmp.crs.AutoTone
-			del Xmp.crs.AutoExposure
-			del Xmp.crs.AutoContrast
-			del Xmp.crs.AutoShadows
-			del Xmp.crs.AutoBrightness
-			set Xmp.crs.Exposure       %+.2f
-			set Xmp.crs.Contrast       %+d
-			set Xmp.crs.Shadows        %d
-			set Xmp.crs.Brightness     %d
-			set Xmp.crs.Exposure2012   %+.2f
-			set Xmp.crs.Contrast2012   %+d
-			set Xmp.crs.Highlights2012 %+d
-			set Xmp.crs.Shadows2012    %+d
-			set Xmp.crs.Whites2012     %+d
-			set Xmp.crs.Blacks2012     %+d`,
-			xmp.oldExposure(), xmp.oldContrast(), xmp.oldShadows(), xmp.oldBrightness(),
-			xmp.Exposure, xmp.Contrast, xmp.Highlights, xmp.Shadows, xmp.Whites, xmp.Blacks)
+		opts = append(opts,
+			"-XMP-crs:AutoTone=",
+			"-XMP-crs:AutoExposure=",
+			"-XMP-crs:AutoContrast=",
+			"-XMP-crs:AutoShadows=",
+			"-XMP-crs:AutoBrightness=",
+			"-XMP-crs:Exposure="+fmt.Sprintf("%.2f", xmp.oldExposure()),
+			"-XMP-crs:Contrast="+strconv.Itoa(xmp.oldContrast()),
+			"-XMP-crs:Shadows="+strconv.Itoa(xmp.oldShadows()),
+			"-XMP-crs:Brightness="+strconv.Itoa(xmp.oldBrightness()),
+			"-XMP-crs:Exposure2012="+fmt.Sprintf("%.2f", xmp.Exposure),
+			"-XMP-crs:Contrast2012="+strconv.Itoa(xmp.Contrast),
+			"-XMP-crs:Highlights2012="+strconv.Itoa(xmp.Highlights),
+			"-XMP-crs:Shadows2012="+strconv.Itoa(xmp.Shadows),
+			"-XMP-crs:Whites2012="+strconv.Itoa(xmp.Whites),
+			"-XMP-crs:Blacks2012="+strconv.Itoa(xmp.Blacks))
 	}
 
 	// presence
-	fmt.Fprintf(&buf, `
-		set Xmp.crs.Clarity     %+d
-		set Xmp.crs.Dehaze      %+d
-		set Xmp.crs.Vibrance    %+d
-		set Xmp.crs.Saturation  %+d
-		set Xmp.crs.Clarity2012 %+d`,
-		xmp.oldClarity(), xmp.Dehaze, xmp.Vibrance, xmp.Saturation, xmp.Clarity)
+	opts = append(opts,
+		"-XMP-crs:Clarity="+strconv.Itoa(xmp.oldClarity()),
+		"-XMP-crs:Dehaze="+strconv.Itoa(xmp.Dehaze),
+		"-XMP-crs:Vibrance="+strconv.Itoa(xmp.Vibrance),
+		"-XMP-crs:Saturation="+strconv.Itoa(xmp.Saturation),
+		"-XMP-crs:Clarity2012="+strconv.Itoa(xmp.Clarity))
 
 	// detail
-	fmt.Fprintf(&buf, `
-		set Xmp.crs.Sharpness           %d
-		set Xmp.crs.LuminanceSmoothing  %d
-		set Xmp.crs.ColorNoiseReduction %d`,
-		xmp.Sharpness, xmp.LuminanceNR, xmp.ColorNR)
+	opts = append(opts,
+		"-XMP-crs:Sharpness="+strconv.Itoa(xmp.Sharpness),
+		"-XMP-crs:LuminanceSmoothing="+strconv.Itoa(xmp.LuminanceNR),
+		"-XMP-crs:ColorNoiseReduction="+strconv.Itoa(xmp.ColorNR))
 
 	// lens corrections
-	fmt.Fprintf(&buf, `
-		set Xmp.crs.AutoLateralCA     %d
-		set Xmp.crs.LensProfileEnable %d`,
-		btoi(xmp.AutoLateralCA), btoi(xmp.LensProfile))
+	opts = append(opts,
+		"-XMP-crs:AutoLateralCA="+strconv.Itoa(btoi(xmp.AutoLateralCA)),
+		"-XMP-crs:LensProfileEnable="+strconv.Itoa(btoi(xmp.LensProfile)))
 
-	return &buf
+	opts = append(opts, "-overwrite_original", path)
+
+	log.Print("exiftool (save xmp)...")
+	_, err = exifserver.Command(opts...)
+	return
 }
 
 func (xmp *xmpSettings) update(shadows, brightness, contrast, clarity int) {
@@ -360,23 +314,21 @@ func loadFloat32(dst *float32, m map[string][]byte, key string) {
 }
 
 func dngPreview(path string) string {
-	log.Printf("exiv2 [-pp %s]", path)
-	cmd := exec.Command(exiv2, "-pp", path)
+	log.Print("dcraw thumb-size ...")
+	cmd := exec.Command(dcraw, "-i", "-v", path)
 	out, err := cmd.Output()
 	if err != nil {
 		return ""
 	}
 
 	var max int
-	for _, s := range exiv2ResRegex.FindAllStringSubmatch(string(out), -1) {
-		var i int
-		i, _ = strconv.Atoi(s[1])
-		if i > max {
-			max = i
-		}
-		i, _ = strconv.Atoi(s[2])
-		if i > max {
-			max = i
+	if match := dcrawThumbRegex.FindSubmatch(out); match != nil {
+		width, _ := strconv.Atoi(string(match[1]))
+		height, _ := strconv.Atoi(string(match[2]))
+		if width > height {
+			max = width
+		} else {
+			max = height
 		}
 	}
 

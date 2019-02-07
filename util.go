@@ -109,20 +109,21 @@ func copyFile(src, dst string) (err error) {
 }
 
 func moveFile(src, dst string) error {
-	le, ok := os.Rename(src, dst).(*os.LinkError)
+	err := os.Rename(src, dst)
+	le, ok := err.(*os.LinkError)
 
 	// 0x12 is EXDEV, 0x11 is ERROR_NOT_SAME_DEVICE
 	if ok && (le.Err == syscall.Errno(0x12) || (le.Err == syscall.Errno(0x11) && runtime.GOOS == "windows")) {
 		if err := copyFile(src, dst); err != nil {
 			return err
 		}
-		if err := os.Remove(src); err == nil || os.IsNotExist(err) {
+		if err := os.Remove(src); os.IsNotExist(err) {
 			return nil
 		} else {
 			return err
 		}
 	}
-	return le
+	return err
 }
 
 func lnkyFile(src, dst string) error {
@@ -132,15 +133,16 @@ func lnkyFile(src, dst string) error {
 	}
 
 	dfi, err := os.Stat(dst)
-	if err == nil && os.SameFile(sfi, dfi) {
+	if os.SameFile(sfi, dfi) {
 		return nil
 	}
 
-	le, ok := os.Link(src, dst).(*os.LinkError)
+	err = os.Link(src, dst)
+	le, ok := err.(*os.LinkError)
 
 	// 0x12 is EXDEV, 0x11 is ERROR_NOT_SAME_DEVICE
 	if ok && (os.IsExist(le) || le.Err == syscall.Errno(0x12) || (le.Err == syscall.Errno(0x11) && runtime.GOOS == "windows")) {
 		return copyFile(src, dst)
 	}
-	return le
+	return err
 }
