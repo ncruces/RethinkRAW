@@ -14,20 +14,17 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/shurcooL/httpfs/html/vfstemplate"
-	"github.com/shurcooL/httpgzip"
 )
 
 var templates *template.Template
 
 func setupHTTP() *http.Server {
-	templates = template.Must(vfstemplate.ParseGlob(assets, nil, "*.gohtml"))
 	http.Handle("/gallery/", http.StripPrefix("/gallery/", HTTPHandler(galleryHandler)))
 	http.Handle("/photo/", http.StripPrefix("/photo/", HTTPHandler(photoHandler)))
 	http.Handle("/thumb/", http.StripPrefix("/thumb/", HTTPHandler(thumbHandler)))
 	http.Handle("/config", HTTPHandler(configHandler))
-	http.Handle("/", httpgzip.FileServer(assets, httpgzip.FileServerOptions{IndexHTML: true}))
+	http.Handle("/", assetHandler)
+	templates = assetTemplates()
 	return &http.Server{}
 }
 

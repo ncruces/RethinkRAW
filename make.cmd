@@ -5,5 +5,5 @@ IF [%1]==[test] (
     go build && RethinkRAW.exe
 ) ELSE (
     ECHO Release build...
-    go generate && go build -tags vfsdata -ldflags -s
+    go generate && go build -tags imbed -ldflags -s
 )

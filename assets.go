@@ -1,9 +1,16 @@
-// +build !vfsdata
+// +build !imbed
 
 package main
 
-//go:generate go run assets_vfsgen.go
+import (
+	"html/template"
+	"net/http"
+)
 
-import "net/http"
+//go:generate go-imbed assets imbed
 
-var assets = http.Dir("assets")
+var assetHandler = http.FileServer(http.Dir("assets"))
+
+func assetTemplates() *template.Template {
+	return template.Must(template.ParseGlob("assets/*.gohtml"))
+}
