@@ -3,25 +3,20 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Rethink RAW: {{.Status}}</title>
+    <title>Rethink RAW: Not Found</title>
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
 </head>
 
 <body>
-    <h1>{{.Status}}</h1>
+    <h1>Not Found</h1>
     <p>There was an error processing your request.</p>
     <h3>Here are a few links you may find useful:</h3>
     <ul>
         <li>Go back to the <a href="javascript:history.back()">previous page</a>.</li>
         <li>Go back to our <a href="javascript:location.replace('/')">welcome screen</a>.</li>
     </ul>
-    {{if (ne .Message "") -}}
-    <small style="white-space: pre-line">More information about this error:
-        {{.Message}}
-    </small>
-    {{end}}
 </body>
 
 </html>

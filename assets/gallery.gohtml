@@ -7,24 +7,43 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
+    <link rel="preload" as="style" href="/fontawesome.css">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/webfonts/fa-solid-900.woff2">
     <script src="/main.js" async></script>
     <script src="/gallery.js" defer></script>
 </head>
 
+<style>
+    body {
+        margin-top: 0;
+    }
+    #box {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        background: white;
+        padding-top: 8px;
+        padding-bottom: 2px;
+        margin-bottom: -2px;
+    }
+</style>
+
 <body>
-    <form id=menu>
-        <div class="toolbar">
-            <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
-            <span>{{.Title}}</span>
-        </div>
-        {{range .Dirs}}
-        <button formaction="/gallery/{{.Path}}">{{.Name}}</button>
-        {{end}}
-    </form>
+    <div id=box>
+        <form id=menu>
+            <div class="toolbar">
+                <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                <span>{{.Title}}</span>
+            </div>
+            {{range .Dirs -}}
+            <button formaction="/gallery/{{.Path}}">{{.Name}}</button>
+            {{end}}
+        </form>
+    </div>
     <div id=gallery>
-        {{range .Photos}}
+        {{range .Photos -}}
         <a href="/photo/{{.Path}}"><img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
-        {{else}}
+        {{else -}}
         <span>No RAW files here.</span>
         {{end}}
     </div>

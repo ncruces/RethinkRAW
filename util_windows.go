@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -52,6 +53,7 @@ func testDataDir(dir string) error {
 		return f.Close()
 	}
 }
+
 func findChrome() string {
 	versions := []string{`Google\Chrome`, `Google\Chrome SxS`, "Chromium"}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
@@ -69,6 +71,15 @@ func findChrome() string {
 	}
 
 	return ""
+}
+
+func exitChrome(cmd *exec.Cmd) {
+	for i := 0; i < 10; i++ {
+		if exec.Command("taskkill", "/pid", strconv.Itoa(cmd.Process.Pid)).Run() != nil {
+			return
+		}
+		time.Sleep(time.Second / 10)
+	}
 }
 
 func openURLCmd(url string) *exec.Cmd {
@@ -186,15 +197,17 @@ func handleConsoleCtrl(c chan<- os.Signal) {
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
 	setConsoleCtrlHandler := kernel32.NewProc("SetConsoleCtrlHandler")
 
-	if n, _, err := setConsoleCtrlHandler.Call(
+	n, _, err := setConsoleCtrlHandler.Call(
 		syscall.NewCallback(func(controlType uint) uint {
 			if controlType >= 2 {
 				c <- syscall.Signal(0x1f + controlType)
-				time.Sleep(30 * time.Second)
+				select {}
 			}
 			return 0
 		}),
-		1); n == 0 {
+		1)
+
+	if n == 0 {
 		log.Fatal(err)
 	}
 }

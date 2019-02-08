@@ -65,18 +65,29 @@ func main() {
 		go http.Serve(ln)
 	}
 
+	sigs := make(chan os.Signal, 1)
+	handleConsoleCtrl(sigs)
+	signal.Notify(sigs)
+
 	if chrome != "" {
-		if err := setupChrome(chrome, url.String()).Run(); err != nil {
+		cmd := setupChrome(chrome, url.String())
+		if err := cmd.Start(); err != nil {
+			log.Fatal(err)
+		}
+		go func() {
+			for {
+				<-sigs
+				exitChrome(cmd)
+			}
+		}()
+		if err := cmd.Wait(); err != nil {
 			log.Fatal(err)
 		}
 	} else {
 		if err := openURLCmd(url.String()).Run(); err != nil {
 			log.Fatal(err)
 		}
-		c := make(chan os.Signal, 1)
-		handleConsoleCtrl(c)
-		signal.Notify(c)
-		<-c
+		<-sigs
 	}
 }
 
