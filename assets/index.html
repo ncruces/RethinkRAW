@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Rethink RAW</title>
+    <title>RethinkRAW</title>
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
@@ -26,6 +26,12 @@
         font-size: larger;
         margin: 0 0.2em;
     }
+    span {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        margin: 1rem;
+    }
 </style>
 
 <body>
@@ -34,6 +40,7 @@
         <button formmethod=post formaction="/gallery/?edit">Edit a photo…</button>
         <button formmethod=post formaction="/gallery/?browse">Browse photos…</button>
     </form>
+    <span><a href="/about.html">About RethinkRAW</a><span>
 </body>
 
 </html>
