@@ -107,6 +107,11 @@ dialog#progress-dialog {
     width: 10rem;
 }
 
+dialog#progress-dialog progress {
+    margin-top: 0.2rem;
+    max-width: 100%;
+}
+
 dialog#export-dialog {
     width: 20rem;
 }

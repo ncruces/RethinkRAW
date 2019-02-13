@@ -38,13 +38,27 @@ body {
 
 #menu .toolbar>button {
     font-size: 0;
-    padding: 0.25rem;
+    padding: 0;
+    width: 30px;
+    height: 30px;
 }
 
-#menu .toolbar>button>* {
+#menu .toolbar>button.pushed {
+    border: 1px inset;
+}
+
+#menu .toolbar>button>i {
     width: 1rem;
     height: 1rem;
     font-size: 1rem;
+}
+
+#menu .toolbar>button:not(.pushed)>i.pushed {
+    display: none;
+}
+
+#menu .toolbar>button.pushed>i:not(.pushed) {
+    display: none;
 }
 
 #menu .minimal-ui {

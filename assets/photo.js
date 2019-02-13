@@ -1,5 +1,6 @@
 void function () {
 
+let zoom = false;
 let form = document.getElementById('settings');
 let save = document.getElementById('save');
 let spinner = document.getElementById('spinner');
@@ -243,6 +244,12 @@ window.exportFile = async (state) => {
     }
     dialog.close();
 }
+
+window.zoomMode = function (e, evt) {
+    zoom = !zoom;
+    if (evt.detail) e.blur();
+    e.classList.toggle('pushed', zoom);
+};
 
 window.exportChange = function (e) {
     let form = e.tagName === 'FORM' ? e : e.form;
@@ -525,9 +532,8 @@ function formatNumber(value, step) {
 let passive = { passive: true };
 
 function keyboardEventListener(evt) {
-    if (evt == null) evt = window.event;
-    for (let n of document.querySelectorAll('.shift-on')) n.hidden = !evt.shiftKey;
-    for (let n of document.querySelectorAll('.shift-off')) n.hidden = evt.shiftKey;
+    for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !evt.ctrlKey;
+    for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = evt.ctrlKey;
 }
 window.addEventListener('keydown', keyboardEventListener, passive);
 window.addEventListener('keyup', keyboardEventListener, passive);

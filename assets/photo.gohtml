@@ -21,15 +21,15 @@
         <div id=menu>
             <div class="toolbar">
                 <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
-                <button type=button title="Save" onclick="saveFile()" id=save disabled><i class="fas fas fa-save"></i></button>
-                <button type=button title="Export JPEG (shift-click for options)…" class="shift-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
-                <button type=button title="Export…" class="shift-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
-                <button type=button title="Zoom" disabled><i class="fas fa-search-plus"></i></button>
+                <button type=button title="S̲ave" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fas fa-save"></i></button>
+                <button type=button title="Ex̲port JPEG (ctrl-click for options)" accesskey="x" class="ctrl-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
+                <button type=button title="Export…" class="ctrl-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
+                <button type=button title="Z̲oom" accesskey="z" onclick="zoomMode(this, event)"><i class="fas fa-search-plus"></i><i class="fas fa-search-minus pushed"></i></button>
                 <button type=button title="Crop" disabled><i class="fas fa-crop"></i></button>
-                <button type=button title="Rotate couterclockwise (shift-click to flip horizontally)" class="shift-off" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
-                <button type=button title="Rotate clockwise (shift-click to flip vertically)" class="shift-off" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
-                <button type=button title="Flip horizontally" class="shift-on" onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>
-                <button type=button title="Flip vertically" class="shift-on" onclick="orientationChange('vt')"><i class="fas fa-arrows-alt-v"></i></button>
+                <button type=button title="Rotate couterclockwise (ctrl-click to flip horizontally)" class="ctrl-off" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
+                <button type=button title="Rotate clockwise (ctrl-click to flip vertically)" class="ctrl-off" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
+                <button type=button title="Flip horizontally" class="ctrl-on" onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>
+                <button type=button title="Flip vertically" class="ctrl-on" onclick="orientationChange('vt')"><i class="fas fa-arrows-alt-v"></i></button>
             </div>
         </div>
         <div id=box2>
