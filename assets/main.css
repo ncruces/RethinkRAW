@@ -4,6 +4,11 @@
 body {
     font-family: -apple-system, 'Segoe UI', system-ui, 'Roboto', 'Helvetica Neue', sans-serif;
     margin: 8px;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 [hidden] {

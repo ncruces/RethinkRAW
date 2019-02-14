@@ -3,6 +3,7 @@ void function () {
 let zoom = false;
 let form = document.getElementById('settings');
 let save = document.getElementById('save');
+let photo = document.getElementById('photo');
 let spinner = document.getElementById('spinner');
 
 document.body.onload = async () => {
@@ -60,35 +61,9 @@ window.onbeforeunload = function () {
 }
 
 window.valueChange = function () {
-    let photo = document.getElementById('photo');
-    let done = true;
-    let query;
-
-    function delayed() {
-        query = formQuery();
-        spinner.hidden = false;
-        photo.onload = photo.onerror = loaded;
-        photo.src = `/photo/${encodeURI(template.Path)}?preview&` + query;
-    }
-
-    function loaded() {
-        if (query === formQuery()) {
-            spinner.hidden = true;
-            done = true;
-        } else {
-            done = false;
-            setTimeout(delayed);
-        }
-    }
-
-    return () => {
-        save.disabled = false;
-        if (done) {
-            done = false;
-            setTimeout(delayed);
-        }
-    };
-}();
+    save.disabled = false;
+    updatePhoto();
+}
 
 window.orientationChange = function (op) {
     const table = {
@@ -247,9 +222,13 @@ window.exportFile = async (state) => {
 
 window.zoomMode = function (e, evt) {
     zoom = !zoom;
+
     if (evt.detail) e.blur();
     e.classList.toggle('pushed', zoom);
-};
+
+    if (zoom) updatePhoto();
+    else photo.style.transform = 'unset';
+}
 
 window.exportChange = function (e) {
     let form = e.tagName === 'FORM' ? e : e.form;
@@ -401,9 +380,43 @@ function alertError(src, ex) {
     }
 }
 
+let updatePhoto = function () {
+    let loading, query;
+
+    function load() {
+        loading = true;
+        spinner.hidden = false;
+        setTimeout(() => {
+            query = formQuery();
+            photo.addEventListener('load', loaded, { passive: true, once: true });
+            photo.addEventListener('error', loaded, { passive: true, once: true });
+            photo.src = `/photo/${encodeURI(template.Path)}?preview&` + query;    
+        });
+    }
+
+    function loaded() {
+        loading = false;
+        spinner.hidden = true;
+        if (query !== formQuery()) load();
+    }
+
+    photo.addEventListener('mousemove', (evt) => {
+        if (zoom) {
+            let rect = photo.parentElement.getBoundingClientRect();
+            photo.style.transform = `scale(${Math.max(2, photo.naturalWidth / rect.width, photo.naturalHeight / rect.height)})`;
+            photo.style.transformOrigin = `${evt.clientX - rect.left}px ${evt.clientY - rect.top}px`;
+        }
+    }, { passive: true })
+
+    photo.addEventListener('mouseleave', () => photo.style.transform = 'unset', { passive: true })
+    
+    return () => loading || load();
+}();
+
 function formQuery() {
     let query = [];
 
+    if (zoom) query.push('zoom=1');
     if (form.tone.value === 'Auto') query.push('autoTone=1');
 
     for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
@@ -529,26 +542,24 @@ function formatNumber(value, step) {
     return val.toFixed(fmt.length - i - 1);
 }
 
-let passive = { passive: true };
-
 function keyboardEventListener(evt) {
     for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !evt.ctrlKey;
     for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = evt.ctrlKey;
 }
-window.addEventListener('keydown', keyboardEventListener, passive);
-window.addEventListener('keyup', keyboardEventListener, passive);
+window.addEventListener('keydown', keyboardEventListener, { passive: true });
+window.addEventListener('keyup', keyboardEventListener, { passive: true });
 keyboardEventListener({});
 
 // dialog polyfill, add type=cancel buttons
 for (let d of document.querySelectorAll('dialog')) {
     dialogPolyfill.registerDialog(d);
-    d.addEventListener('cancel', () => d.returnValue = '', passive);
+    d.addEventListener('cancel', () => d.returnValue = '', { passive: true });
     for (let b of d.querySelectorAll('form button[type=cancel]')) {
         b.type = 'button';
         b.addEventListener('click', () => {
             d.dispatchEvent(new Event('cancel'));
             d.close();
-        }, passive);
+        }, { passive: true });
     }
 }
 

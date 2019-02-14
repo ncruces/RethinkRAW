@@ -15,6 +15,7 @@ var exiftoolRegex = regexp.MustCompile(`(?m:^(\w+): (.*))`)
 
 type xmpSettings struct {
 	Filename    string `json:"-"`
+	Zoom        bool   `json:"-"`
 	Orientation int    `json:"orientation,omitempty"`
 
 	Process   float32 `json:"process,omitempty"`

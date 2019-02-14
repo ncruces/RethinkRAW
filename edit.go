@@ -79,27 +79,46 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 	}
 	defer wk.close()
 
-	err = saveXMP(wk.lastXMP(), xmp)
-	if err != nil {
-		return
-	}
+	if xmp.Zoom {
+		err = saveXMP(wk.origXMP(), xmp)
+		if err != nil {
+			return
+		}
 
-	err = os.RemoveAll(wk.temp())
-	if err != nil {
-		return
-	}
+		err = os.RemoveAll(wk.temp())
+		if err != nil {
+			return
+		}
 
-	err = runDNGConverter(wk.last(), wk.temp(), nil)
-	if err != nil {
-		return
-	}
+		err = runDNGConverter(wk.orig(), wk.temp(), &exportSettings{})
+		if err != nil {
+			return
+		}
 
-	err = os.Rename(wk.temp(), wk.edit())
-	if err != nil {
-		return
-	}
+		return previewJPEG(wk.temp())
+	} else {
+		err = saveXMP(wk.lastXMP(), xmp)
+		if err != nil {
+			return
+		}
 
-	return previewJPEG(wk.edit())
+		err = os.RemoveAll(wk.temp())
+		if err != nil {
+			return
+		}
+
+		err = runDNGConverter(wk.last(), wk.temp(), nil)
+		if err != nil {
+			return
+		}
+
+		err = os.Rename(wk.temp(), wk.edit())
+		if err != nil {
+			return
+		}
+
+		return previewJPEG(wk.edit())
+	}
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte, err error) {
