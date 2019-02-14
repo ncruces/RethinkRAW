@@ -23,4 +23,4 @@ You get the familiar knobs,
 and your edits are loaded from, and saved to,
 Adobe compatible XMP sidecars and DNGs.
 
-To achieve this, RethinkRAW leverages the free [Adobe DNG Converter](https://helpx.adobe.com/photoshop/using/adobe-dng-converter.html).
+To achieve this, RethinkRAW leverages the free [Adobe DNG Converter](https://helpx.adobe.com/photoshop/digital-negative.html).

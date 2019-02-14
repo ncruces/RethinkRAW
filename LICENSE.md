@@ -18,14 +18,14 @@ RethinkRAW is made possible by the following software:
 
 * ExifTool by Phil Harvey: https://www.sno.phy.queensu.ca/~phil/exiftool/
 * dcraw by Dave Coffin: https://www.cybercom.net/~dcoffin/dcraw/
-* jpegtran by the Independent JPEG Group: https://libjpeg-turbo.org/ and https://www.ijg.org/
+* jpegtran by the Independent JPEG Group: https://libjpeg-turbo.org/
 * Native File Dialog by Michael Labbe: https://github.com/mlabbe/nativefiledialog/
 * Go by the Go Authors: https://golang.org/
 * Resize by Jan Schlicht: https://github.com/nfnt/resize/
 * Gorilla Schema by Rodrigo Moraes: https://github.com/gorilla/schema/
-* Various packages by Nuno Cruces: https://github.com/ncruces/
+* Strawberry Perl by Larry Wall and others: http://strawberryperl.com/
 
 RethinkRAW also requires:
 
-* Adobe DNG Converter by Adobe: https://helpx.adobe.com/photoshop/digital-negative.html
+* Adobe DNG Converter: https://helpx.adobe.com/photoshop/digital-negative.html
 * A modern browser, we recomend Google Chrome: https://www.google.com/chrome/
