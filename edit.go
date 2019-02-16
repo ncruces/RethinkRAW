@@ -56,7 +56,7 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 			Preview: dngPreview(wk.orig()),
 		}
 
-		err = runDNGConverter(wk.orig(), wk.temp(), &exp)
+		err = runDNGConverter(wk.orig(), wk.temp(), 0, &exp)
 		if err != nil {
 			return
 		}
@@ -72,31 +72,14 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 	return os.Rename(dest+".bak", dest)
 }
 
-func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
+func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []byte, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return
 	}
 	defer wk.close()
 
-	if xmp.Zoom {
-		err = saveXMP(wk.origXMP(), xmp)
-		if err != nil {
-			return
-		}
-
-		err = os.RemoveAll(wk.temp())
-		if err != nil {
-			return
-		}
-
-		err = runDNGConverter(wk.orig(), wk.temp(), &exportSettings{})
-		if err != nil {
-			return
-		}
-
-		return previewJPEG(wk.temp())
-	} else {
+	if pvw.Preview > 0 {
 		err = saveXMP(wk.lastXMP(), xmp)
 		if err != nil {
 			return
@@ -107,17 +90,45 @@ func previewEdit(path string, xmp *xmpSettings) (thumb []byte, err error) {
 			return
 		}
 
-		err = runDNGConverter(wk.last(), wk.temp(), nil)
+		var side int
+		if wk.hasEdit {
+			side = pvw.Preview
+		} else {
+			side = 2560
+		}
+
+		err = runDNGConverter(wk.last(), wk.temp(), side, nil)
 		if err != nil {
 			return
 		}
 
-		err = os.Rename(wk.temp(), wk.edit())
+		if wk.hasEdit {
+			return previewJPEG(wk.temp())
+		} else {
+			err = os.Rename(wk.temp(), wk.edit())
+			if err != nil {
+				return
+			}
+
+			return previewJPEG(wk.edit())
+		}
+	} else {
+		err = saveXMP(wk.origXMP(), xmp)
 		if err != nil {
 			return
 		}
 
-		return previewJPEG(wk.edit())
+		err = os.RemoveAll(wk.temp())
+		if err != nil {
+			return
+		}
+
+		err = runDNGConverter(wk.orig(), wk.temp(), 0, &exportSettings{})
+		if err != nil {
+			return
+		}
+
+		return previewJPEG(wk.temp())
 	}
 }
 
@@ -144,7 +155,7 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 		writer, result = fixMetaJPEGAsync(wk.orig())
 	}
 
-	err = runDNGConverter(wk.orig(), wk.temp(), exp)
+	err = runDNGConverter(wk.orig(), wk.temp(), 0, exp)
 	if err != nil {
 		return
 	}
@@ -176,6 +187,10 @@ func exportHeaders(path string, exp *exportSettings, headers http.Header) {
 		ext = ".jpg"
 	}
 	attachmentHeaders(path, ext, headers)
+}
+
+type previewSettings struct {
+	Preview int
 }
 
 type exportSettings struct {
@@ -492,6 +507,11 @@ func saveSidecar(src string) (string, error) {
 }
 
 func isSidecarForExt(data []byte, ext string) bool {
+	testName := func(name xml.Name) bool {
+		return name.Local == "SidecarForExtension" &&
+			(name.Space == "http://ns.adobe.com/photoshop/1.0/" || name.Space == "photoshop")
+	}
+
 	dec := xml.NewDecoder(bytes.NewBuffer(data))
 	for {
 		t, err := dec.Token()
@@ -500,9 +520,13 @@ func isSidecarForExt(data []byte, ext string) bool {
 		}
 
 		if s, ok := t.(xml.StartElement); ok {
+			if testName(s.Name) {
+				t, _ := dec.Token()
+				v, ok := t.(xml.CharData)
+				return ok && strings.EqualFold(ext, "."+string(v))
+			}
 			for _, a := range s.Attr {
-				if a.Name.Local == "SidecarForExtension" &&
-					strings.HasPrefix(a.Name.Space, "http://ns.adobe.com/photoshop/") {
+				if testName(a.Name) {
 					return strings.EqualFold(ext, "."+a.Value)
 				}
 			}

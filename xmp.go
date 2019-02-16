@@ -15,7 +15,6 @@ var exiftoolRegex = regexp.MustCompile(`(?m:^(\w+): (.*))`)
 
 type xmpSettings struct {
 	Filename    string `json:"-"`
-	Zoom        bool   `json:"-"`
 	Orientation int    `json:"orientation,omitempty"`
 
 	Process   float32 `json:"process,omitempty"`
@@ -74,8 +73,6 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	xmp.WhiteBalance = "As Shot"
 	xmp.Sharpness = 40
 	xmp.ColorNR = 25
-	xmp.LensProfile = true
-	xmp.AutoLateralCA = true
 
 	// orientation
 	loadInt(&xmp.Orientation, m, "Orientation")
@@ -123,10 +120,10 @@ func saveXMP(path string, xmp *xmpSettings) (err error) {
 	// filename
 	if xmp.Filename != "" {
 		name := filepath.Base(xmp.Filename)
-		ext := filepath.Ext(xmp.Filename)
-		opts = append(opts,
-			"-XMP-crs:RawFileName="+name,
-			"-XMP-photoshop:SidecarForExtension="+ext)
+		opts = append(opts, "-XMP-crs:RawFileName="+name)
+		if ext := filepath.Ext(xmp.Filename); ext != "" {
+			opts = append(opts, "-XMP-photoshop:SidecarForExtension="+ext[1:])
+		}
 	}
 
 	// orientation, process, grayscale

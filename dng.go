@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -19,7 +20,7 @@ func testDNGConverter(conv ...string) (err error) {
 	return err
 }
 
-func runDNGConverter(input, output string, exp *exportSettings) error {
+func runDNGConverter(input, output string, side int, exp *exportSettings) error {
 	err := os.RemoveAll(output)
 	if err != nil {
 		return err
@@ -29,10 +30,7 @@ func runDNGConverter(input, output string, exp *exportSettings) error {
 	output = filepath.Base(output)
 
 	opts := []string{}
-	switch {
-	case exp == nil:
-		opts = append(opts, "-p2", "-side", "1920")
-	case exp.DNG:
+	if exp != nil && exp.DNG {
 		if exp.Preview != "" {
 			opts = append(opts, "-"+exp.Preview)
 		}
@@ -42,7 +40,10 @@ func runDNGConverter(input, output string, exp *exportSettings) error {
 		if exp.Embed {
 			opts = append(opts, "-e")
 		}
-	default:
+	} else {
+		if side > 0 {
+			opts = append(opts, "-lossy", "-side", strconv.Itoa(side))
+		}
 		opts = append(opts, "-p2")
 	}
 	opts = append(opts, "-d", dir, "-o", output, input)

@@ -70,12 +70,16 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case preview:
 		var xmp xmpSettings
+		var pvw previewSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
-		if out, err := previewEdit(path, &xmp); err != nil {
+		if err := dec.Decode(&pvw, r.Form); err != nil {
+			return HTTPResult{Error: err}
+		}
+		if out, err := previewEdit(path, &xmp, &pvw); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "image/jpeg")

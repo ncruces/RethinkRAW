@@ -12,7 +12,7 @@ body {
 }
 
 #box2 {
-    height: calc(100% - 52px);
+    height: calc(100% - 62px);
     position: relative;
     margin-top: 8px;
     overflow: hidden;

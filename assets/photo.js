@@ -381,42 +381,51 @@ function alertError(src, ex) {
 }
 
 let updatePhoto = function () {
-    let loading, query;
+    let loading, query, size;
+
+    function calcSize() {
+        if (zoom) return Infinity;
+        return Math.ceil(Math.max(photo.width, photo.height) * devicePixelRatio);
+    }
 
     function load() {
         loading = true;
         spinner.hidden = false;
         setTimeout(() => {
+            size = calcSize();
             query = formQuery();
+            let preview = () => Number.isSafeInteger(size) ? '=' + size : '';
             photo.addEventListener('load', loaded, { passive: true, once: true });
             photo.addEventListener('error', loaded, { passive: true, once: true });
-            photo.src = `/photo/${encodeURI(template.Path)}?preview&` + query;    
+            photo.src = `/photo/${encodeURI(template.Path)}?preview${preview()}&` + query;
         });
     }
 
     function loaded() {
         loading = false;
         spinner.hidden = true;
-        if (query !== formQuery()) load();
+        if (size < calcSize() || query !== formQuery()) load();
     }
 
-    photo.addEventListener('mousemove', (evt) => {
+    photo.addEventListener('mousemove', evt => {
         if (zoom) {
             let rect = photo.parentElement.getBoundingClientRect();
-            photo.style.transform = `scale(${Math.max(2, photo.naturalWidth / rect.width, photo.naturalHeight / rect.height)})`;
+            let width = photo.naturalWidth / rect.width / devicePixelRatio;
+            let height = photo.naturalHeight / rect.height / devicePixelRatio;
+            photo.style.transform = `scale(${Math.max(1.5, width, height)})`;
             photo.style.transformOrigin = `${evt.clientX - rect.left}px ${evt.clientY - rect.top}px`;
         }
     }, { passive: true })
 
     photo.addEventListener('mouseleave', () => photo.style.transform = 'unset', { passive: true })
-    
+    window.addEventListener('resize', () => loading || size < calcSize() && load(), { passive: true })
+
     return () => loading || load();
 }();
 
 function formQuery() {
     let query = [];
 
-    if (zoom) query.push('zoom=1');
     if (form.tone.value === 'Auto') query.push('autoTone=1');
 
     for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
