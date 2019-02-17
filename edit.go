@@ -24,7 +24,7 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	}
 	defer wk.close()
 
-	return loadXMP(wk.loadXmp())
+	return loadXMP(wk.loadXMP())
 }
 
 func saveEdit(path string, xmp *xmpSettings) (err error) {
@@ -34,12 +34,12 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 	}
 	defer wk.close()
 
-	err = saveXMP(wk.origXMP(), xmp)
+	err = editXMP(wk.origXMP(), xmp)
 	if err != nil {
 		return
 	}
 
-	dest, err := saveSidecar(path)
+	dest, err := destSidecar(path)
 	if err != nil {
 		return
 	}
@@ -80,7 +80,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []b
 	defer wk.close()
 
 	if pvw.Preview > 0 {
-		err = saveXMP(wk.lastXMP(), xmp)
+		err = editXMP(wk.lastXMP(), xmp)
 		if err != nil {
 			return
 		}
@@ -113,7 +113,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []b
 			return previewJPEG(wk.edit())
 		}
 	} else {
-		err = saveXMP(wk.origXMP(), xmp)
+		err = editXMP(wk.origXMP(), xmp)
 		if err != nil {
 			return
 		}
@@ -139,7 +139,7 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	}
 	defer wk.close()
 
-	err = saveXMP(wk.origXMP(), xmp)
+	err = editXMP(wk.origXMP(), xmp)
 	if err != nil {
 		return
 	}
@@ -319,7 +319,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return
 	}
 
-	err = copySidecar(path, wk.base+"orig.xmp")
+	err = loadSidecar(path, wk.base+"orig.xmp")
 	if os.IsNotExist(err) {
 		err = nil
 	} else if err == nil {
@@ -350,7 +350,7 @@ func (wk *workspace) origXMP() string {
 	return wk.base + "orig.xmp"
 }
 
-func (wk *workspace) loadXmp() string {
+func (wk *workspace) loadXMP() string {
 	if wk.hasXMP {
 		return wk.base + "orig.xmp"
 	} else {
@@ -368,7 +368,7 @@ func (wk *workspace) last() string {
 
 func (wk *workspace) lastXMP() string {
 	if wk.hasEdit {
-		return wk.base + "edit.xmp"
+		return wk.base + "edit.dng"
 	} else {
 		return wk.base + "orig.xmp"
 	}
@@ -444,7 +444,7 @@ func (wl *workspaceLocker) delete(hash string) (ok bool) {
 	return
 }
 
-func copySidecar(src, dst string) error {
+func loadSidecar(src, dst string) error {
 	var d []byte
 	err := os.ErrNotExist
 	ext := filepath.Ext(src)
@@ -453,16 +453,20 @@ func copySidecar(src, dst string) error {
 		// if NAME.XMP is there for NAME.EXT, use it
 		xmp := strings.TrimSuffix(src, ext) + ".xmp"
 		d, err = ioutil.ReadFile(xmp)
-		if err == nil && !isSidecarForExt(d, ext) {
+		if err == nil && !isSidecarForExt(bytes.NewReader(d), ext) {
 			err = os.ErrNotExist
 		}
 	}
 	if os.IsNotExist(err) {
 		// if NAME.EXT.XMP is there for NAME.EXT, use it
 		d, err = ioutil.ReadFile(src + ".xmp")
-		if err == nil && !isSidecarForExt(d, ext) {
+		if err == nil && !isSidecarForExt(bytes.NewReader(d), ext) {
 			err = os.ErrNotExist
 		}
+	}
+	if os.IsNotExist(err) {
+		// extract embed XMP
+		return extractXMP(src, dst)
 	}
 	if err != nil {
 		return err
@@ -470,7 +474,7 @@ func copySidecar(src, dst string) error {
 	return ioutil.WriteFile(dst, d, 0600)
 }
 
-func saveSidecar(src string) (string, error) {
+func destSidecar(src string) (string, error) {
 	// fallback to NAME.EXT.XMP
 	ret := src + ".xmp"
 	ext := filepath.Ext(src)
@@ -478,8 +482,8 @@ func saveSidecar(src string) (string, error) {
 	if ext != "" {
 		// if NAME.XMP is there for NAME.EXT, use it
 		xmp := strings.TrimSuffix(src, ext) + ".xmp"
-		if d, err := ioutil.ReadFile(xmp); err == nil {
-			if isSidecarForExt(d, ext) {
+		if f, err := os.Open(xmp); err == nil {
+			if isSidecarForExt(f, ext) {
 				return xmp, nil
 			}
 		} else if !os.IsNotExist(err) {
@@ -506,13 +510,13 @@ func saveSidecar(src string) (string, error) {
 	return ret, nil
 }
 
-func isSidecarForExt(data []byte, ext string) bool {
-	testName := func(name xml.Name) bool {
+func isSidecarForExt(r io.Reader, ext string) bool {
+	test := func(name xml.Name) bool {
 		return name.Local == "SidecarForExtension" &&
 			(name.Space == "http://ns.adobe.com/photoshop/1.0/" || name.Space == "photoshop")
 	}
 
-	dec := xml.NewDecoder(bytes.NewBuffer(data))
+	dec := xml.NewDecoder(r)
 	for {
 		t, err := dec.Token()
 		if err != nil {
@@ -520,13 +524,13 @@ func isSidecarForExt(data []byte, ext string) bool {
 		}
 
 		if s, ok := t.(xml.StartElement); ok {
-			if testName(s.Name) {
+			if test(s.Name) {
 				t, _ := dec.Token()
 				v, ok := t.(xml.CharData)
 				return ok && strings.EqualFold(ext, "."+string(v))
 			}
 			for _, a := range s.Attr {
-				if testName(a.Name) {
+				if test(a.Name) {
 					return strings.EqualFold(ext, "."+a.Value)
 				}
 			}

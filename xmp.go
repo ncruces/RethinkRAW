@@ -47,7 +47,7 @@ type xmpSettings struct {
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
 	log.Print("exiftool (load xmp)...")
-	out, err := exifserver.Command("-S", "-n", "-fast2", "-orientation", "-xmp-crs:*", path)
+	out, err := exifserver.Command("-S", "-n", "-fast2", "-Orientation", "-XMP-crs:*", path)
 	if err != nil {
 		return
 	}
@@ -114,7 +114,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	return
 }
 
-func saveXMP(path string, xmp *xmpSettings) (err error) {
+func editXMP(path string, xmp *xmpSettings) (err error) {
 	opts := []string{"-n", "-z"}
 
 	// filename
@@ -205,6 +205,12 @@ func saveXMP(path string, xmp *xmpSettings) (err error) {
 
 	log.Print("exiftool (save xmp)...")
 	_, err = exifserver.Command(opts...)
+	return
+}
+
+func extractXMP(path, dest string) (err error) {
+	log.Print("exiftool (extract xmp)...")
+	_, err = exifserver.Command("-n", "-Orientation=0", "-tagsFromFile", path, "-scanForXMP", "-fast2", "-Orientation", "-all:all", "-overwrite_original", dest)
 	return
 }
 

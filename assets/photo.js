@@ -28,8 +28,8 @@ document.body.onload = async () => {
         processChanged = true;
     }
 
-    form.orientation.value = settings.orientation;
-    form.process.value = settings.process;
+    if (settings.orientation) form.orientation.value = settings.orientation;
+    if (settings.process) form.process.value = settings.process.toFixed(1);
     form.profile.value = settings.profile;
     form.lensProfile.checked = settings.lensProfile;
     form.autoLateralCA.checked = settings.autoLateralCA;
@@ -429,7 +429,7 @@ function formQuery() {
     if (form.tone.value === 'Auto') query.push('autoTone=1');
 
     for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
-        query.push(k + '=' + encodeURIComponent(form[k].value));
+        if (form[k].value) query.push(k + '=' + encodeURIComponent(form[k].value));
     }
     for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
         if (form[k][0].value == 0) continue;
