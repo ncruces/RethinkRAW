@@ -50,7 +50,7 @@ func main() {
 		hideConsole()
 	}
 
-	if time.Now().After(time.Unix(1556668800, 0)) {
+	if time.Now().After(time.Unix(1559347200, 0)) {
 		url.Path = "/expired.html"
 	}
 	if err := testDNGConverter(); err != nil {
