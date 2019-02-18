@@ -471,7 +471,7 @@ func loadSidecar(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dst, d, 0600)
+	return ioutil.WriteFile(dst, d, 0666)
 }
 
 func destSidecar(src string) (string, error) {
@@ -483,9 +483,11 @@ func destSidecar(src string) (string, error) {
 		// if NAME.XMP is there for NAME.EXT, use it
 		xmp := strings.TrimSuffix(src, ext) + ".xmp"
 		if f, err := os.Open(xmp); err == nil {
+			defer f.Close()
 			if isSidecarForExt(f, ext) {
 				return xmp, nil
 			}
+			f.Close()
 		} else if !os.IsNotExist(err) {
 			return "", err
 		} else {

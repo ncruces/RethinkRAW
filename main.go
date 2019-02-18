@@ -101,8 +101,8 @@ func setupChrome(chrome, url string) *exec.Cmd {
 
 	prefs := filepath.Join(data, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(prefs), 0700); err == nil {
-			ioutil.WriteFile(prefs, []byte(`{"download":{"prompt_for_download":true}}`), 0600)
+		if err := os.MkdirAll(filepath.Dir(prefs), 0755); err == nil {
+			ioutil.WriteFile(prefs, []byte(`{"download":{"prompt_for_download":true}}`), 0666)
 		}
 	}
 

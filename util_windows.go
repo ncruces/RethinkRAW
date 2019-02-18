@@ -13,6 +13,8 @@ import (
 	"unsafe"
 )
 
+//go:generate goversioninfo -64 -icon=assets/favicon.ico -manifest=win.manifest
+
 func setupDirs() (err error) {
 	if exe, err := os.Executable(); err != nil {
 		return err
