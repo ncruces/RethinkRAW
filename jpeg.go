@@ -9,8 +9,8 @@ import (
 	"log"
 	"os/exec"
 
-	"github.com/ncruces/rotateflip"
-	"github.com/nfnt/resize"
+	"github.com/ncruces/go-image/resize"
+	"github.com/ncruces/go-image/rotateflip"
 )
 
 const errNotJPEG = constError("not a JPEG file")
