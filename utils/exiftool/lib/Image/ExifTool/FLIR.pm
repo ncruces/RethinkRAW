@@ -24,7 +24,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 
-$VERSION = '1.17';
+$VERSION = '1.18';
 
 sub ProcessFLIR($$;$);
 sub ProcessFLIRText($$$);
@@ -446,6 +446,8 @@ my %float8g = ( Format => 'float', PrintConv => 'sprintf("%.8g",$val)' );
     0x21c => { Name => 'FilterSerialNumber',Format => 'string[32]' },
     0x308 => { Name => 'PlanckO',           Format => 'int32s' }, #1
     0x30c => { Name => 'PlanckR2',          %float8g }, #1
+    0x310 => { Name => 'RawValueRangeMin',  Format => 'int16u', Groups => { 2 => 'Image' } }, #forum10060
+    0x312 => { Name => 'RawValueRangeMax',  Format => 'int16u', Groups => { 2 => 'Image' } }, #forum10060
     0x338 => { Name => 'RawValueMedian',    Format => 'int16u', Groups => { 2 => 'Image' } },
     0x33c => { Name => 'RawValueRange',     Format => 'int16u', Groups => { 2 => 'Image' } },
     0x384 => {
@@ -1339,7 +1341,7 @@ sub GetImageType($$$)
 sub UnescapeFLIR($)
 {
     my $char = shift;
-    return $char unless length $char eq 4; # escaped ASCII char (eg. '\\')
+    return $char unless length $char == 4; # escaped ASCII char (eg. '\\')
     my $val = hex $char;
     return chr($val) if $val < 0x80;   # simple ASCII
     return pack('C0U', $val) if $] >= 5.006001;

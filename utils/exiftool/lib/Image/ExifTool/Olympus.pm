@@ -9,8 +9,8 @@
 # References:   1) http://park2.wakwak.com/~tsuruzoh/Computer/Digicams/exif-e.html
 #               2) http://www.cybercom.net/~dcoffin/dcraw/
 #               3) http://www.ozhiker.com/electronics/pjmt/jpeg_info/olympus_mn.html
-#               4) Markku HŠnninen private communication (tests with E-1)
-#               5) RŽmi Guyomarch from http://forums.dpreview.com/forums/read.asp?forum=1022&message=12790396
+#               4) Markku Hanninen private communication (tests with E-1)
+#               5) Remi Guyomarch from http://forums.dpreview.com/forums/read.asp?forum=1022&message=12790396
 #               6) Frank Ledwon private communication (tests with E/C-series cameras)
 #               7) Michael Meissner private communication
 #               8) Shingo Noguchi, PhotoXP (http://www.daifukuya.com/photoxp/)
@@ -39,7 +39,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::APP12;
 
-$VERSION = '2.57';
+$VERSION = '2.59';
 
 sub PrintLensInfo($$$);
 
@@ -364,6 +364,7 @@ my %olympusCameraTypes = (
     D4587 => 'TG-860',
     D4591 => 'TG-870',
     D4593 => 'TG-5', #IB
+    D4603 => 'TG-6', #IB
     D4809 => 'C2500L',
     D4842 => 'E-10',
     D4856 => 'C-1',
@@ -732,8 +733,8 @@ my %indexInfo = (
         Name => 'CameraID',
         Format => 'string', # this really should have been a string
     },
-    0x020b => { Name => 'EpsonImageWidth',  Writable => 'int16u' }, #PH
-    0x020c => { Name => 'EpsonImageHeight', Writable => 'int16u' }, #PH
+    0x020b => { Name => 'EpsonImageWidth',  Writable => 'int32u' }, #PH
+    0x020c => { Name => 'EpsonImageHeight', Writable => 'int32u' }, #PH
     0x020d => { Name => 'EpsonSoftware',    Writable => 'string' }, #PH
     0x0280 => { #PH
         %Image::ExifTool::previewImageTagInfo,
@@ -756,9 +757,17 @@ my %indexInfo = (
     0x0303 => { Name => 'WhiteBalanceBracket',  Writable => 'int16u' }, #11
     0x0304 => { Name => 'WhiteBalanceBias',     Writable => 'int16u' }, #11
    # 0x0305 => 'PrintMatching', ? #11
+    0x0400 => { #IB
+        Name => 'SensorArea',
+        Condition => '$$self{TIFF_TYPE} eq "ERF"',
+        Writable => 'undef',
+        Format => 'int16u',
+        Count => 4,
+        Notes => 'found in Epson ERF images',
+    },
     0x0401 => { #IB
         Name => 'BlackLevel',
-        Condition => '$format eq "int32u" and $count == 4',
+        Condition => '$$self{TIFF_TYPE} eq "ERF"',
         Writable => 'int32u',
         Count => 4,
         Notes => 'found in Epson ERF images',
@@ -821,6 +830,7 @@ my %indexInfo = (
             TagTable => 'Image::ExifTool::PrintIM::Main',
         },
     },
+    # 0x0e80 - undef[256] - offset 0x30: uint16[2] WB_RGBLevels = val[0]*561,65536,val[1]*431 (ref IB)
     0x0f00 => {
         Name => 'DataDump',
         Writable => 0,
@@ -2453,7 +2463,7 @@ my %indexInfo = (
                 3 => 'Bottom to Top',
                 4 => 'Top to Bottom',
             );
-            return ($a{$a} || "Unknown ($a)") . ', Shot ' . $b;
+            return(($a{$a} || "Unknown ($a)") . ', Shot ' . $b);
         },
     },
     0x603 => { #PH/4
@@ -3922,7 +3932,7 @@ sub ExtenderStatus($$$)
     $lensType =~ / F(\d+(\.\d+)?)/ or return 1;
     # If the maximum aperture at the maximum focal length is greater than the
     # known max/max aperture of the lens, then the extender must be attached
-    return ($maxAperture - $1 > 0.2) ? 1 : 2;
+    return(($maxAperture - $1 > 0.2) ? 1 : 2);
 }
 
 #------------------------------------------------------------------------------

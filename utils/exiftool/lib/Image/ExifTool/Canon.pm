@@ -67,6 +67,7 @@
 #              51) http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,4110.0.html
 #              52) Kai Harrekilde-Petersen private communication
 #              53) Anton Reiser private communication
+#              54) https://github.com/lclevy/canon_cr3
 #              IB) Iliah Borg private communication (LibRaw)
 #              JD) Jens Duttke private communication
 #              JR) Jos Roost private communication
@@ -87,7 +88,7 @@ sub ProcessCTMD($$$);
 sub ProcessExifInfo($$$);
 sub SwapWords($);
 
-$VERSION = '4.07';
+$VERSION = '4.15';
 
 # Note: Removed 'USM' from 'L' lenses since it is redundant - PH
 # (or is it?  Ref 32 shows 5 non-USM L-type lenses)
@@ -144,6 +145,7 @@ $VERSION = '4.07';
     26.2 => 'Tamron SP AF 90mm f/2.8 Di Macro', #15
     26.3 => 'Tamron SP AF 180mm f/3.5 Di Macro', #15
     26.4 => 'Carl Zeiss Planar T* 50mm f/1.4', #PH
+    26.5 => 'Voigtlander APO Lanthar 125mm F2.5 SL Macro', #JR
     27 => 'Canon EF 35-80mm f/4-5.6', #32
     # 27 => 'Carl Zeiss Distagon T* 28mm f/2 ZF', #PH (must be with an adapter, because the ZF version is a Nikon mount)
     # 27 => 'EMF adapter for Canon EOS digital cameras', #50 (reports MaxFocalLength of 65535)
@@ -341,6 +343,7 @@ $VERSION = '4.07';
     180.6 => 'Sigma 24mm f/1.5 FF High-Speed Prime | 017', #IB
     180.7 => 'Sigma 50mm f/1.5 FF High-Speed Prime | 017', #IB
     180.8 => 'Sigma 85mm f/1.5 FF High-Speed Prime | 017', #IB
+    180.9 => 'Tokina Opera 50mm f/1.4 FF', #IB
     181 => 'Canon EF 100-400mm f/4.5-5.6L IS USM + 1.4x or Sigma Lens', #15
     181.1 => 'Sigma 150-600mm f/5-6.3 DG OS HSM | S + 1.4x', #50
     182 => 'Canon EF 100-400mm f/4.5-5.6L IS USM + 2x or Sigma Lens',
@@ -372,6 +375,7 @@ $VERSION = '4.07';
     198.1 => 'Zeiss Otus 55mm f/1.4 ZE', #JR (seen only on Sony camera)
     198.2 => 'Zeiss Otus 85mm f/1.4 ZE', #JR (NC)
     198.3 => 'Zeiss Milvus 25mm f/1.4', #IB
+    198.4 => 'Zeiss Otus 100mm f/1.4', #IB
     199 => 'Canon EF 28-80mm f/3.5-5.6 USM', #32
     200 => 'Canon EF 75-300mm f/4-5.6 USM', #32
     201 => 'Canon EF 28-80mm f/3.5-5.6 USM', #32
@@ -424,10 +428,14 @@ $VERSION = '4.07';
     250 => 'Canon EF 24mm f/1.4L II USM or Sigma Lens', #41
     250.1 => 'Sigma 20mm f/1.4 DG HSM | A', #IB
     250.2 => 'Sigma 20mm f/1.5 FF High-Speed Prime | 017', #IB
+    250.3 => 'Tokina Opera 16-28mm f/2.8 FF', #IB
     251 => 'Canon EF 70-200mm f/2.8L IS II USM',
+    251.1 => 'Canon EF 70-200mm f/2.8L IS III USM', #IB
     252 => 'Canon EF 70-200mm f/2.8L IS II USM + 1.4x', #50 (1.4x Mk II)
+    252.1 => 'Canon EF 70-200mm f/2.8L IS III USM + 1.4x', #PH (NC)
     253 => 'Canon EF 70-200mm f/2.8L IS II USM + 2x', #PH (NC)
-    # 253.1 => 'Tamron SP 70-200mm f/2.8 Di VC USD G2 (A025) + 2x', #forum9367
+    253.1 => 'Canon EF 70-200mm f/2.8L IS III USM + 2x', #PH (NC)
+    # 253.2 => 'Tamron SP 70-200mm f/2.8 Di VC USD G2 (A025) + 2x', #forum9367
     254 => 'Canon EF 100mm f/2.8L Macro IS USM', #42
     255 => 'Sigma 24-105mm f/4 DG OS HSM | A or Other Sigma Lens', #50
     255.1 => 'Sigma 180mm f/2.8 EX DG OS HSM APO Macro', #50
@@ -437,6 +445,7 @@ $VERSION = '4.07';
     368.3 => 'Sigma 40mm f/1.4 DG HSM | A', #IB (018)
     368.4 => 'Sigma 60-600mm f/4.5-6.3 DG OS HSM | S', #IB (018)
     368.5 => 'Sigma 28mm f/1.4 DG HSM | A', #IB (A019)
+    368.6 => 'Sigma 150-600mm f/5-6.3 DG OS HSM | S', #50
     # Note: LensType 488 (0x1e8) is reported as 232 (0xe8) in 7D CameraSettings
     488 => 'Canon EF-S 15-85mm f/3.5-5.6 IS USM', #PH
     489 => 'Canon EF 70-300mm f/4-5.6L IS USM', #Gerald Kapounek
@@ -465,6 +474,7 @@ $VERSION = '4.07';
     507 => 'Canon EF 16-35mm f/4L IS USM', #42
     508 => 'Canon EF 11-24mm f/4L USM or Tamron Lens', #PH
     508.1 => 'Tamron 10-24mm f/3.5-4.5 Di II VC HLD', #PH (B023)
+    624 => 'Sigma 70-200mm F2.8 DG OS HSM | S', #IB (018)
     747 => 'Canon EF 100-400mm f/4.5-5.6L IS II USM or Tamron Lens', #JR
     747.1 => 'Tamron SP 150-600mm f/5-6.3 Di VC USD G2', #50
     748 => 'Canon EF 100-400mm f/4.5-5.6L IS II USM + 1.4x or Tamron Lens', #JR (1.4x Mk III)
@@ -687,6 +697,7 @@ $VERSION = '4.07';
     0x3260000 => 'PowerShot A3400 IS',
     0x3270000 => 'PowerShot A2400 IS',
     0x3280000 => 'PowerShot A2300',
+    0x3320000 => 'PowerShot S100V', #IB
     0x3330000 => 'PowerShot G15', #25
     0x3340000 => 'PowerShot SX50 HS', #25/forum8196
     0x3350000 => 'PowerShot SX160 IS',
@@ -858,6 +869,7 @@ $VERSION = '4.07';
     0x80000424 => 'EOR R', #IB
     0x80000432 => 'EOS Rebel T7 / 2000D / 1500D / Kiss X90', #IB
     0x80000433 => 'EOS RP',
+    0x80000436 => 'EOS SL3 / 250D / Kiss X10', #25
 );
 
 my %canonQuality = (
@@ -2119,6 +2131,10 @@ my %offOn = ( 0 => 'Off', 1 => 'On' );
             60 => 'High-speed Burst HQ', #PH (C='High-speed Burst HQ', same as 59)
             61 => 'Smooth Skin', #51
             62 => 'Soft Focus', #PH (SX260,IXUS240)
+            68 => 'Food', #PH (250D)
+            84 => 'HDR Art Standard', #PH (80D)
+            85 => 'HDR Art Vivid', #PH (80D)
+            93 => 'HDR Art Bold', #PH (80D)
             # 83 - seen for EOS M3 night shot (PH)
             257 => 'Spotlight', #PH
             258 => 'Night 2', #PH
@@ -2219,6 +2235,7 @@ my %offOn = ( 0 => 'Off', 1 => 'On' );
             5 => 'Depth-of-field AE',
             6 => 'M-Dep', #PH
             7 => 'Bulb', #30
+            8 => 'Flexible-priority AE', #ArnoldVanOostrum
         },
     },
     22 => { #4
@@ -6080,8 +6097,8 @@ my %ciMaxFocal = (
             8 => 'AF Point Expansion (4 point)', #46/PH/forum6237
             9 => 'Spot AF', #46
             10 => 'AF Point Expansion (8 point)', #forum6237
-            11 => 'Flexizone Multi', #PH (NC, EOS M, live view)
-            # 12 - also "Flexizone Multi"? (PH)
+            11 => 'Flexizone Multi (49 point)', #PH (NC, EOS M, live view; 750D 49 points)
+            12 => 'Flexizone Multi (9 point)', #PH (750D, 9 points)
             13 => 'Flexizone Single', #PH (EOS M default, live view)
             14 => 'Large Zone AF', #PH/forum6237 (7DmkII)
         },
@@ -6164,7 +6181,7 @@ my %ciMaxFocal = (
                 # DPP shows "On" for any value except 0xffff when bit 0x08 is set
                 my ($val, $inv) = @_;
                 if ($inv) {
-                    $val =~ /(0x[0-9a-f]+)/i or $val =~ /(\d+)/;
+                    $val =~ /(0x[0-9a-f]+)/i or $val =~ /(\d+)/ or return undef;
                     return $1;
                 } else {
                     return sprintf("On (0x%.2x)",$val) if $val & 0x08;
@@ -6607,6 +6624,8 @@ my %ciMaxFocal = (
             2 => '4:3',
             7 => '16:9',
             8 => '4:5',
+            12 => '3:2 (APS-H crop)', #IB
+            13 => '3:2 (APS-C crop)', #IB
         },
     },
     # (could use better names for these, or the Crop tags above, or both)
@@ -6694,7 +6713,15 @@ my %ciMaxFocal = (
     17 => { Name => 'WB_RGGBLevelsTungsten',   Format => 'int16s[4]' },
     21 => { Name => 'WB_RGGBLevelsFluorescent',Format => 'int16s[4]' },
     25 => { Name => 'WB_RGGBLevelsFlash',      Format => 'int16s[4]' },
-    29 => { Name => 'WB_RGGBLevelsCustom',     Format => 'int16s[4]' }, # (actually black levels for D60, ref IB)
+    29 => [{
+        Name => 'WB_RGGBLevelsCustom',
+        Notes => 'black levels for the D60',
+        Condition => '$$self{Model} !~ /EOS D60\b/',
+        Format => 'int16s[4]',
+    },{ # (black levels for D60, ref IB)
+        Name => 'BlackLevels',
+        Format => 'int16s[4]',
+    }],
     33 => { Name => 'WB_RGGBLevelsKelvin',     Format => 'int16s[4]' },
     37 => { Name => 'WB_RGGBBlackLevels',      Format => 'int16s[4]' }, #IB
 );
@@ -7292,7 +7319,7 @@ my %ciMaxFocal = (
     NOTES => q{
         Camera color calibration data.  For the 20D, 350D, 1DmkII and 1DSmkII the
         order of the coefficients is A, B, C, Temperature, but for newer models it
-        is B, C, A, Temperature.  These tags are extracted only when the Unknown
+        is B, C, A, Temperature.  These tags are extracted only when the L<Unknown|../ExifTool.html#Unknown>
         option is used.
     },
     0x00 => { Name => 'CameraColorCalibration01', %cameraColorCalibration },
@@ -8351,6 +8378,7 @@ my %filterConv = (
 # Canon UUID atoms (ref PH, SX280)
 %Image::ExifTool::Canon::uuid = (
     GROUPS => { 0 => 'MakerNotes', 1 => 'Canon', 2 => 'Video' },
+    WRITE_PROC => 'Image::ExifTool::QuickTime::WriteQuickTime',
     NOTES => q{
         Tags extracted from the uuid atom of MP4 videos from cameras such as the
         SX280, and CR3 images from cameras such as the EOS M50.
@@ -8373,12 +8401,13 @@ my %filterConv = (
         },
     },
     # CTBO - (CR3 files) int32u entry count N, N x (int32u index, int64u offset, int64u size)
-    #        index 1=XMP, 2=PRVW, 3=mdat
+    #        index: 1=XMP, 2=PRVW, 3=mdat, 4=?, 5=?
     CMT1 => { # (CR3 files)
         Name => 'IFD0',
         SubDirectory => {
             TagTable => 'Image::ExifTool::Exif::Main',
             ProcessProc => \&Image::ExifTool::ProcessTIFF,
+            WriteProc => \&Image::ExifTool::WriteTIFF,
         },
     },
     CMT2 => { # (CR3 files)
@@ -8386,6 +8415,7 @@ my %filterConv = (
         SubDirectory => {
             TagTable => 'Image::ExifTool::Exif::Main',
             ProcessProc => \&Image::ExifTool::ProcessTIFF,
+            WriteProc => \&Image::ExifTool::WriteTIFF,
         },
     },
     CMT3 => { # (CR3 files)
@@ -8393,6 +8423,7 @@ my %filterConv = (
         SubDirectory => {
             TagTable => 'Image::ExifTool::Canon::Main',
             ProcessProc => \&Image::ExifTool::ProcessTIFF,
+            WriteProc => \&Image::ExifTool::WriteTIFF,
         },
     },
     CMT4 => { # (CR3 files)
@@ -8400,6 +8431,7 @@ my %filterConv = (
         SubDirectory => {
             TagTable => 'Image::ExifTool::GPS::Main',
             ProcessProc => \&Image::ExifTool::ProcessTIFF,
+            WriteProc => \&Image::ExifTool::WriteTIFF,
             DirName => 'GPS',
         },
     },
@@ -8415,6 +8447,18 @@ my %filterConv = (
     },
 );
 
+# Canon top-level uuid atoms (ref PH, written by DPP4)
+%Image::ExifTool::Canon::uuid2 = (
+    WRITE_PROC => 'Image::ExifTool::QuickTime::WriteQuickTime',
+    CNOP => {
+        Name => 'CanonVRD',
+        SubDirectory => {
+            TagTable => 'Image::ExifTool::CanonVRD::Main',
+            WriteProc => 'Image::ExifTool::CanonVRD::WriteCanonDR4',
+        },
+    },
+);
+
 %Image::ExifTool::Canon::UnknownIFD = (
     GROUPS => { 0 => 'MakerNotes', 2 => 'Camera' },
 );
@@ -8425,10 +8469,30 @@ my %filterConv = (
     # CCDT - int32u[3]: 0. 0, 1. decoder type?, 2. 0, 3. index
 );
 
+# 'CMP1' atom information (ref 54, CR3 files)
+%Image::ExifTool::Canon::CMP1 = (
+    PROCESS_PROC => \&Image::ExifTool::ProcessBinaryData,
+    GROUPS => { 0 => 'MakerNotes', 1 => 'Canon', 2 => 'Image' },
+    FORMAT => 'int16u',
+    FIRST_ENTRY => 0,
+    PRIORITY => 0,
+    8  => { Name => 'ImageWidth',  Format => 'int32u' },
+    10 => { Name => 'ImageHeight', Format => 'int32u' },
+    # (the rest of the documented tags don't seem to produced good values with my samples - PH)
+);
+
 # 'CDI1' atom information (ref PH, CR3 files)
 %Image::ExifTool::Canon::CDI1 = (
-    GROUPS => { 0 => 'QuickTime', 1 => 'Canon', 2 => 'Image' },
-    # IAD1 - 32/48 bytes
+    GROUPS => { 0 => 'MakerNotes', 1 => 'Canon', 2 => 'Image' },
+    IAD1 => { Name => 'IAD1', SubDirectory => { TagTable => 'Image::ExifTool::Canon::IAD1' } },
+);
+
+# 'IAD1' atom information (ref 54, CR3 files)
+%Image::ExifTool::Canon::IAD1 = (
+    PROCESS_PROC => \&Image::ExifTool::ProcessBinaryData,
+    GROUPS => { 0 => 'MakerNotes', 1 => 'Canon', 2 => 'Image' },
+    FORMAT => 'int16u',
+    FIRST_ENTRY => 0,
 );
 
 # Canon Timed MetaData (ref PH, CR3 files)
@@ -8436,7 +8500,7 @@ my %filterConv = (
     GROUPS => { 0 => 'MakerNotes', 1 => 'Canon', 2 => 'Image' },
     PROCESS_PROC => \&ProcessCTMD,
     NOTES => q{
-        Canon Timed MetaData tags found in CR3 images.  The ExtractEmbedded option
+        Canon Timed MetaData tags found in CR3 images.  The L<ExtractEmbedded|../ExifTool.html#ExtractEmbedded> option
         is automatically applied when reading CR3 files to be able to extract this
         information.
     },
@@ -8532,6 +8596,9 @@ my %filterConv = (
 
 %Image::ExifTool::Canon::CNTH = (
     GROUPS => { 0 => 'MakerNotes', 1 => 'Canon', 2 => 'Video' },
+    VARS => { IGNORE_BAD_ATOMS => 1 },
+    WRITABLE => 1,
+    WRITE_PROC => 'Image::ExifTool::QuickTime::WriteQuickTime',
     NOTES => q{
         Canon-specific QuickTime tags found in the CNTH atom of MOV videos from some
         cameras such as the PowerShot S95.
@@ -8548,6 +8615,7 @@ my %filterConv = (
             $$self{DOC_NUM} = 0;
             return \$val;
         },
+        RawConvInv => '$val',
     },
 );
 
@@ -8888,9 +8956,10 @@ sub PrintLensID(@)
             }
             @matches = @best if @best;
         }
+        @matches = @likely unless @matches;
+        @matches = @maybe unless @matches;
+        Image::ExifTool::Exif::MatchLensModel(\@matches, $lensModel);
         return join(' or ', @matches) if @matches;
-        return join(' or ', @likely) if @likely;
-        return join(' or ', @maybe) if @maybe;
     } elsif ($lensModel and $lensModel =~ /\d/) {
         # use lens model as written by the camera
         if ($printConv eq \%canonLensTypes) {
@@ -9238,7 +9307,7 @@ sub PrintAFPoints1D($)
         $focusing = "$row$col" if $focus eq $focusPt;
         push @points, "$row$col" if shift @bits;
     }
-    $focusing or $focusing = ($focus eq 0xff) ? 'Auto' : sprintf('Unknown (0x%.2x)',$focus);
+    $focusing or $focusing = ($focus == 0xff) ? 'Auto' : sprintf('Unknown (0x%.2x)',$focus);
     return "$focusing (" . join(',',@points) . ')';
 }
 

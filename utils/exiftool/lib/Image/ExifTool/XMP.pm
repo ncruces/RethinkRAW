@@ -49,7 +49,7 @@ use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 require Exporter;
 
-$VERSION = '3.21';
+$VERSION = '3.23';
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(EscapeXML UnescapeXML);
 
@@ -176,6 +176,8 @@ my %xmpNS = (
     GSpherical=> 'http://ns.google.com/videos/1.0/spherical/',
     GDepth    => 'http://ns.google.com/photos/1.0/depthmap/',
     GFocus    => 'http://ns.google.com/photos/1.0/focus/',
+    GCamera   => 'http://ns.google.com/photos/1.0/camera/',
+    GCreations=> 'http://ns.google.com/photos/1.0/creations/',
     dwc       => 'http://rs.tdwg.org/dwc/index.htm',
     GettyImagesGIFT => 'http://xmp.gettyimages.com/gift/1.0/',
     LImage    => 'http://ns.leiainc.com/photos/1.0/image/',
@@ -745,6 +747,14 @@ my %sRetouchArea = (
     GFocus => {
         Name => 'GFocus',
         SubDirectory => { TagTable => 'Image::ExifTool::XMP::GFocus' },
+    },
+    GCamera => {
+        Name => 'GCamera',
+        SubDirectory => { TagTable => 'Image::ExifTool::XMP::GCamera' },
+    },
+    GCreations => {
+        Name => 'GCreations',
+        SubDirectory => { TagTable => 'Image::ExifTool::XMP::GCreations' },
     },
     dwc => {
         Name => 'dwc',
@@ -2219,6 +2229,7 @@ my %sPantryItem = (
     # (used to set EXIF GPS position from XMP tags)
     GPSLatitudeRef => {
         Require => 'XMP:GPSLatitude',
+        # Note: Do not Inihibit based on EXIF:GPSLatitudeRef (see forum10192)
         ValueConv => q{
             IsFloat($val[0]) and return $val[0] < 0 ? "S" : "N";
             $val[0] =~ /^.*([NS])/;
@@ -2290,11 +2301,11 @@ my %sPantryItem = (
                 my $i = 0;
                 $val[$i++] = $val[5]{$_} foreach qw(Fired Return Mode Function RedEyeMode);
             }
-            return (($val[0] and lc($val[0]) eq 'true') ? 0x01 : 0) |
+            return((($val[0] and lc($val[0]) eq 'true') ? 0x01 : 0) |
                    (($val[1] || 0) << 1) |
                    (($val[2] || 0) << 3) |
                    (($val[3] and lc($val[3]) eq 'true') ? 0x20 : 0) |
-                   (($val[4] and lc($val[4]) eq 'true') ? 0x40 : 0);
+                   (($val[4] and lc($val[4]) eq 'true') ? 0x40 : 0));
         },
         PrintConv => \%Image::ExifTool::Exif::flash,
         WriteAlso => {
@@ -3164,6 +3175,26 @@ NoLoop:
     my $key = $et->FoundTag($tagInfo, $val) or return 0;
     # save original components of rational numbers (used when copying)
     $$et{RATIONAL}{$key} = $rational if defined $rational;
+    # allow read-only subdirectories (eg. embedded base64 XMP/IPTC in NKSC files)
+    if ($$tagInfo{SubDirectory} and not $$et{IsWriting}) {
+        my $subdir = $$tagInfo{SubDirectory};
+        my $dataPt = ref $$et{VALUE}{$key} ? $$et{VALUE}{$key} : \$$et{VALUE}{$key};
+        # process subdirectory information
+        my %dirInfo = (
+            DirName  => $$subdir{DirName} || $$tagInfo{Name},
+            DataPt   => $dataPt,
+            DirLen   => length $$dataPt,
+            IsExtended => 1, # (hack to avoid Duplicate warning for embedded XMP)
+        );
+        my $oldOrder = GetByteOrder();
+        SetByteOrder($$subdir{ByteOrder}) if $$subdir{ByteOrder};
+        my $oldNS = $$et{definedNS};
+        delete $$et{definedNS};
+        my $subTablePtr = GetTagTable($$subdir{TagTable}) || $tagTablePtr;
+        $et->ProcessDirectory(\%dirInfo, $subTablePtr, $$subdir{ProcessProc});
+        SetByteOrder($oldOrder);
+        $$et{definedNS} = $oldNS;
+    }
     # save structure/list information if necessary
     if (@structProps and (@structProps > 1 or defined $structProps[0][1]) and
         not $$et{NO_STRUCT})
@@ -3248,7 +3279,6 @@ sub ParseXMPElement($$$;$$$$)
         # (empty elements end with '/', eg. <a:b/>)
         if ($attrs !~ s/\/$//) {
             my $nesting = 1;
-            my $tok;
             for (;;) {
 # this match fails with perl 5.6.2 (perl bug!), but it works without
 # the '(.*?)', so we must do it differently...
@@ -3853,8 +3883,8 @@ sub ProcessXMP($$;$)
     # extract XMP as a block if specified
     my $blockName = $$dirInfo{BlockInfo} ? $$dirInfo{BlockInfo}{Name} : 'XMP';
     if (($$et{REQ_TAG_LOOKUP}{lc $blockName} or ($$et{TAGS_FROM_FILE} and
-        not $$et{EXCL_TAG_LOOKUP}{lc $blockName})) and
-        ($$dirInfo{DirName} and $$dirInfo{DirName} eq 'XMP'))
+        not $$et{EXCL_TAG_LOOKUP}{lc $blockName})) and ($$et{FileType} eq 'XMP' or
+        ($$dirInfo{DirName} and $$dirInfo{DirName} eq 'XMP')))
     {
         $et->FoundTag($$dirInfo{BlockInfo} || 'XMP', substr($$dataPt, $dirStart, $dirLen));
     }
