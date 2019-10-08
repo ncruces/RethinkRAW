@@ -1,16 +1,15 @@
-// +build !imbed
+// +build memfs
 
 package main
 
 import (
 	"html/template"
-	"net/http"
+
+	"github.com/shurcooL/httpfs/html/vfstemplate"
 )
 
-//go:generate go-imbed assets imbed
-
-var assetHandler = http.FileServer(http.Dir("assets"))
+var assetHandler = assets
 
 func assetTemplates() *template.Template {
-	return template.Must(template.ParseGlob("assets/*.gohtml"))
+	return template.Must(vfstemplate.ParseGlob(assets, nil, "/*.gohtml"))
 }

@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"./exiftool"
+	"rethinkraw/exiftool"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {

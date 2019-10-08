@@ -22,5 +22,5 @@
 /data
 /stuff
 /samples
-/imbed
+/assets_gen.go
 !/utils/*.*

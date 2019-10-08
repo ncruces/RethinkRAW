@@ -5,5 +5,5 @@ IF [%1]==[test] (
     go build
 ) ELSE (
     ECHO Release build...
-    go generate && go build -tags imbed -ldflags -s
+    go clean && go generate && go build -tags memfs -ldflags -s
 )

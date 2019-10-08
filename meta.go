@@ -7,7 +7,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"./exiftool"
+	"rethinkraw/exiftool"
 )
 
 var exifserver *exiftool.Server
