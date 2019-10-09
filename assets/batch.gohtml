@@ -35,9 +35,6 @@
                 <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
                 <span>{{.Title}}</span>
             </div>
-            {{range .Dirs -}}
-            <a href="/gallery/{{.Path}}"><button type=button>{{.Name}}</button></a>
-            {{end}}
         </form>
     </div>
     <div id=gallery>

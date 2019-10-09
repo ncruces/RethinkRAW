@@ -46,8 +46,8 @@
             <legend>Profile</legend>
             Treatment:
             <div style="float:right">
-                <label class="inline"><input type=radio name=grayscale value="false" onchange="treatmentChange(this)"> Color</label>
-                <label class="inline"><input type=radio name=grayscale value="true" onchange="treatmentChange(this)"> B&amp;W</label>
+                <label><input type=radio name=grayscale value="false" onchange="treatmentChange(this)"> Color</label>
+                <label><input type=radio name=grayscale value="true" onchange="treatmentChange(this)"> B&amp;W</label>
             </div>
             <select name=profile class="below" disabled>
                 <option hidden>
@@ -70,15 +70,15 @@
                 <option>Custom</option>
             </select>
             <div class="manualWB">
-                <label for=temperature>Temperature <output for=temperature name=temperature></output>
-                    <input type=range id=temperature value="8.612503" min="7.6009026" max="10.819778" step="0.0223533"
-                        oninput="temperatureInput(this);setCustomWhiteBalance()" onchange="valueChange()">
-                </label>
+                <label for=temperature>Temperature</label>
+                <output for=temperature name=temperature></output>
+                <input type=range id=temperature value="8.612503" min="7.6009026" max="10.819778" step="0.0223533"
+                    oninput="temperatureInput(this);setCustomWhiteBalance()" onchange="valueChange()">
         
-                <label for=tint>Tint <output for=tint name=tint></output>
-                    <input type=range id=tint value="0" min="-150" max="150" step="1"
-                        oninput="rangeInput(this);setCustomWhiteBalance()" onchange="valueChange()">
-                </label>
+                <label for=tint>Tint</label>
+                <output for=tint name=tint></output>
+                <input type=range id=tint value="0" min="-150" max="150" step="1"
+                    oninput="rangeInput(this);setCustomWhiteBalance()" onchange="valueChange()">
             </div>
         </fieldset>
 
@@ -91,86 +91,85 @@
                 <option>Custom</option>
             </select>
             <div class="customTone">
-                <label for=exposure>Exposure <output for=exposure name=exposure></output>
-                    <input type=range id=exposure value="0" min="-5" max="5" step="0.05"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=exposure>Exposure</label>
+                <output for=exposure name=exposure></output>
+                <input type=range id=exposure value="0" min="-5" max="5" step="0.05"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 
-                <label for=contrast>Contrast <output for=contrast name=contrast></output>
-                    <input type=range id=contrast value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=contrast>Contrast</label>
+                <output for=contrast name=contrast></output>
+                <input type=range id=contrast value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 
-                <label for=highlights>Highlights <output for=highlights name=highlights></output>
-                    <input type=range id=highlights value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=highlights>Highlights</label>
+                <output for=highlights name=highlights></output>
+                <input type=range id=highlights value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 
-                <label for=shadows>Shadows <output for=shadows name=shadows></output>
-                    <input type=range id=shadows value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=shadows>Shadows</label>
+                <output for=shadows name=shadows></output>
+                <input type=range id=shadows value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 
-                <label for=whites>Whites <output for=whites name=whites></output>
-                    <input type=range id=whites value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=whites>Whites</label>
+                <output for=whites name=whites></output>
+                <input type=range id=whites value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
                 
-                <label for=blacks>Blacks<output for=blacks name=blacks></output>
-                    <input type=range id=blacks value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=blacks>Blacks</label>
+                <output for=blacks name=blacks></output>
+                <input type=range id=blacks value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
             </div>
         </fieldset>
         
         <fieldset disabled>
             <legend>Presence</legend>
         
-            <label for=clarity>Clarity <output for=clarity name=clarity></output>
-                <input type=range id=clarity value="0" min="-100" max="100" step="1"
-                    oninput="rangeInput(this)" onchange="valueChange()">
-            </label>
+            <label for=clarity>Clarity</label>
+            <output for=clarity name=clarity></output>
+            <input type=range id=clarity value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this)" onchange="valueChange()">
         
-            <label for=dehaze>Dehaze <output for=dehaze name=dehaze></output>
-                <input type=range id=dehaze value="0" min="-100" max="100" step="1"
-                    oninput="rangeInput(this)" onchange="valueChange()">
-            </label>
+            <label for=dehaze>Dehaze</label><output for=dehaze name=dehaze></output>
+            <input type=range id=dehaze value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this)" onchange="valueChange()">
         
             <div class="color customTone">
-                <label for=vibrance>Vibrance <output for=vibrance name=vibrance></output>
-                    <input type=range id=vibrance value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=vibrance>Vibrance</label>
+                <output for=vibrance name=vibrance></output>
+                <input type=range id=vibrance value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
         
-                <label for=saturation>Saturation <output for=saturation name=saturation></output>
-                    <input type=range id=saturation value="0" min="-100" max="100" step="1"
-                        oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
-                </label>
+                <label for=saturation>Saturation</label>
+                <output for=saturation name=saturation></output>
+                <input type=range id=saturation value="0" min="-100" max="100" step="1"
+                    oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
             </div>
         </fieldset>
         
         <fieldset disabled>
             <legend>Detail</legend>
         
-            <label for=sharpness>Sharpness <output for=sharpness name=sharpness></output>
-                <input type=range id=sharpness value="40" min="0" max="150" step="1"
-                    oninput="rangeInput(this)" onchange="valueChange()">
-            </label>
+            <label for=sharpness>Sharpness</label>
+            <output for=sharpness name=sharpness></output>
+            <input type=range id=sharpness value="40" min="0" max="150" step="1"
+                oninput="rangeInput(this)" onchange="valueChange()">
         
-            <label for=luminanceNR>Luminance noise reduction <output for=luminanceNR name=luminanceNR></output>
-                <input type=range id=luminanceNR value="0" min="0" max="100" step="1"
-                    oninput="rangeInput(this)" onchange="valueChange()">
-            </label>
+            <label for=luminanceNR>Luminance noise reduction</label>
+            <output for=luminanceNR name=luminanceNR></output>
+            <input type=range id=luminanceNR value="0" min="0" max="100" step="1"
+                oninput="rangeInput(this)" onchange="valueChange()">
         
-            <label for=colorNR>Color noise reduction <output for=colorNR name=colorNR></output>
-                <input type=range id=colorNR value="25" min="0" max="100" step="1"
-                    oninput="rangeInput(this)" onchange="valueChange()">
-            </label>
+            <label for=colorNR>Color noise reduction</label>
+            <output for=colorNR name=colorNR></output>
+            <input type=range id=colorNR value="25" min="0" max="100" step="1"
+                oninput="rangeInput(this)" onchange="valueChange()">
         </fieldset>
         
         <fieldset disabled>
             <legend>Lens Corrections</legend>
-            <label><input type=checkbox name=lensProfile onchange="valueChange()"> Enable Profile Corrections</label>
+            <label><input type=checkbox name=lensProfile onchange="valueChange()"> Enable Profile Corrections</label><br>
             <label><input type=checkbox name=autoLateralCA onchange="valueChange()"> Remove Chromatic Aberration</label>
         </fieldset>
     </form>
@@ -210,7 +209,7 @@
                     <option>12</option>
                 </select>
         
-                <label style="grid-area: 3/1/auto/span 4" id=fit>Resize to fit:</label>
+                <label style="grid-area: 3/1/auto/span 4" for=fit>Resize to fit:</label>
                 <select style="grid-area: 3/5/auto/span 4" id=fit name=fit onchange="exportChange(this)">
                     <option value=dims>Dimensions</option>
                     <option value=size>Width & Height</option>

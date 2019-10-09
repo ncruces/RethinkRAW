@@ -8,42 +8,43 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
     <script src="/main.js" async></script>
-</head>
 
-<style>
-    body {
-        height: calc(100vh-16px);
-    }
-    form {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -75%);
-        text-align: center;
-    }
-    button {
-        font-weight: bold;
-        font-size: larger;
-        margin: 0 0.2em;
-    }
-    span {
-        position: fixed;
-        bottom: 0;
-        right: 0;
-        margin: 1rem;
-    }
-    a, a:visited, a:hover, a:active {
-        color: unset;
-    }
-</style>
+    <style>
+        body {
+            height: calc(100vh - 16px);
+        }
+        form {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -75%);
+            text-align: center;
+        }
+        button {
+            font-weight: bold;
+            font-size: larger;
+            margin: 0 0.2em;
+        }
+        span {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            margin: 1rem;
+        }
+        a, a:visited, a:hover, a:active {
+            color: unset;
+        }
+    </style>
+</head>
 
 <body>
     <form>
         <h1>What do you want to do?</h1>
-        <button formmethod=post formaction="/gallery/?edit">Edit a photo…</button>
-        <button formmethod=post formaction="/gallery/?browse">Browse photos…</button>
+        <button formmethod=post formaction="/browse?gallery">Browse photos…</button>
+        <button formmethod=post formaction="/browse?photo">Edit a photo…</button>
+        <p><button formmethod=post formaction="/browse?batch">Batch convert photos…</button>
     </form>
-    <span><a href="/about.html">About RethinkRAW</a><span>
+    <span><a href="/about.html">About RethinkRAW</a></span>
 </body>
 
 </html>

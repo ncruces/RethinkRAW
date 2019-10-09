@@ -10,7 +10,7 @@ import (
 )
 
 func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
-	path := r.URL.Path
+	path := fromURLPath(r.URL.Path)
 	r.ParseForm()
 
 	_, meta := r.Form["meta"]
@@ -105,7 +105,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 
 		w.Header().Set("Cache-Control", "max-age=300")
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return HTTPResult{
 			Error: templates.ExecuteTemplate(w, "photo.gohtml", struct {
 				Name, Title, Path string

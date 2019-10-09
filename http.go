@@ -19,9 +19,11 @@ import (
 var templates *template.Template
 
 func setupHTTP() *http.Server {
-	http.Handle("/gallery/", http.StripPrefix("/gallery/", HTTPHandler(galleryHandler)))
-	http.Handle("/photo/", http.StripPrefix("/photo/", HTTPHandler(photoHandler)))
-	http.Handle("/thumb/", http.StripPrefix("/thumb/", HTTPHandler(thumbHandler)))
+	http.Handle("/gallery/", http.StripPrefix("/gallery", HTTPHandler(galleryHandler)))
+	http.Handle("/photo/", http.StripPrefix("/photo", HTTPHandler(photoHandler)))
+	http.Handle("/batch/", http.StripPrefix("/batch", HTTPHandler(batchHandler)))
+	http.Handle("/thumb/", http.StripPrefix("/thumb", HTTPHandler(thumbHandler)))
+	http.Handle("/browse", HTTPHandler(browseHandler))
 	http.Handle("/config", HTTPHandler(configHandler))
 	http.Handle("/", assetHandler)
 	templates = assetTemplates()
@@ -83,9 +85,10 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		w.WriteHeader(status)
-
 		if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.WriteHeader(status)
 			templates.ExecuteTemplate(w, "error.gohtml", struct {
 				Status, Message string
 			}{
@@ -93,6 +96,9 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				message.String(),
 			})
 		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.WriteHeader(status)
 			json.NewEncoder(w).Encode(message.String())
 		}
 
@@ -104,18 +110,22 @@ func cacheHeaders(path string, req, res http.Header) HTTPResult {
 	if fi, err := os.Stat(path); err != nil {
 		return HTTPResult{Error: err}
 	} else {
-		ims := req.Get("If-Modified-Since")
-		if ims != "" {
+		res.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
+		if ims := req.Get("If-Modified-Since"); ims != "" {
 			if t, err := http.ParseTime(ims); err == nil {
 				if fi.ModTime().Before(t.Add(1 * time.Second)) {
 					for k := range res {
-						delete(res, k)
+						switch k {
+						case "Cache-Control", "Last-Modified":
+							// keep
+						default:
+							delete(res, k)
+						}
 					}
 					return HTTPResult{Status: http.StatusNotModified}
 				}
 			}
 		}
-		res.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
 	}
 	return HTTPResult{}
 }
@@ -146,8 +156,18 @@ func attachmentHeaders(path, ext string, headers http.Header) {
 }
 
 func toURLPath(path string) string {
+	if strings.HasPrefix(path, `/`) {
+		return path[1:]
+	}
 	if strings.HasPrefix(path, `\\`) {
 		return `\\` + filepath.ToSlash(path[2:])
 	}
 	return filepath.ToSlash(path)
+}
+
+func fromURLPath(path string) string {
+	if filepath.Separator != '/' {
+		return filepath.FromSlash(strings.TrimPrefix(path, "/"))
+	}
+	return path
 }

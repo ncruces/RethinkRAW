@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := fromURLPath(r.URL.Path)
 
 	if files, err := ioutil.ReadDir(path); err != nil {
@@ -20,8 +20,8 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 
 		data := struct {
-			Title        string
-			Dirs, Photos []struct{ Name, Path string }
+			Title  string
+			Photos []struct{ Name, Path string }
 		}{}
 		data.Title = filepath.Clean(path)
 
@@ -33,15 +33,13 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			name := i.Name()
 			item := struct{ Name, Path string }{name, toURLPath(filepath.Join(path, name))}
 
-			if i.IsDir() {
-				data.Dirs = append(data.Dirs, item)
-			} else if _, ok := extensions[strings.ToUpper(filepath.Ext(name))]; ok {
+			if _, ok := extensions[strings.ToUpper(filepath.Ext(name))]; ok && !i.IsDir() {
 				data.Photos = append(data.Photos, item)
 			}
 		}
 
 		return HTTPResult{
-			Error: templates.ExecuteTemplate(w, "gallery.gohtml", data),
+			Error: templates.ExecuteTemplate(w, "batch.gohtml", data),
 		}
 	}
 }
