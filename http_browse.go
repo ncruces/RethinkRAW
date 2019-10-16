@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	nfd "github.com/ncruces/go-nativefiledialog"
 )
@@ -49,7 +50,8 @@ func browseHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	bringToTop()
 	if _, photo := r.Form["photo"]; photo {
-		if res, err := nfd.OpenDialog(filter, path); err != nil {
+		f := strings.Join(append([]string{filter}, strings.Split(filter, ",")...), ";")
+		if res, err := nfd.OpenDialog(f, path); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			path = res

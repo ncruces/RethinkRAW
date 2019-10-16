@@ -31,7 +31,7 @@ func NewServer(path, arg1 string, commonArg ...string) (*Server, error) {
 		e.args = append(e.args, arg1)
 	}
 
-	e.args = append(e.args, "-stay_open", "True", "-@", "-", "-common_args", "-echo4", "{ready"+boundary+"}", "-charset", "filename=utf8")
+	e.args = append(e.args, "-stay_open", "true", "-@", "-", "-common_args", "-echo4", "{ready"+boundary+"}", "-charset", "filename=utf8")
 	e.args = append(e.args, commonArg...)
 
 	return e, e.start()

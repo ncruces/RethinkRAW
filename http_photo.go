@@ -29,7 +29,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Cache-Control", "max-age=60")
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.Write(out)
 			return HTTPResult{}
 		}
