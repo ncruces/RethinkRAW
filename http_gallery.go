@@ -10,15 +10,15 @@ import (
 func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	path := fromURLPath(r.URL.Path)
 
+	w.Header().Set("Cache-Control", "max-age=10")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
+		return r
+	}
+
 	if files, err := ioutil.ReadDir(path); err != nil {
 		return HTTPResult{Error: err}
 	} else {
-		w.Header().Set("Cache-Control", "max-age=10")
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
-			return r
-		}
-
 		data := struct {
 			Title        string
 			Dirs, Photos []struct{ Name, Path string }

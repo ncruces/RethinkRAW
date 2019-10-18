@@ -23,7 +23,7 @@ func setupHTTP() *http.Server {
 	http.Handle("/photo/", http.StripPrefix("/photo", HTTPHandler(photoHandler)))
 	http.Handle("/batch/", http.StripPrefix("/batch", HTTPHandler(batchHandler)))
 	http.Handle("/thumb/", http.StripPrefix("/thumb", HTTPHandler(thumbHandler)))
-	http.Handle("/browse", HTTPHandler(browseHandler))
+	http.Handle("/dialog", HTTPHandler(dialogHandler))
 	http.Handle("/config", HTTPHandler(configHandler))
 	http.Handle("/", assetHandler)
 	templates = assetTemplates()
@@ -56,10 +56,7 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, res.Location, res.Status)
 
 	case res.Status >= 400:
-		if res.Message == "" {
-			res.Message = http.StatusText(res.Status)
-		}
-		http.Error(w, res.Message, res.Status)
+		sendError(w, r, res.Status, res.Message)
 
 	case res.Status != 0:
 		w.WriteHeader(res.Status)
@@ -85,24 +82,27 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Header().Set("X-Content-Type-Options", "nosniff")
-			w.WriteHeader(status)
-			templates.ExecuteTemplate(w, "error.gohtml", struct {
-				Status, Message string
-			}{
-				http.StatusText(status),
-				message.String(),
-			})
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			w.Header().Set("X-Content-Type-Options", "nosniff")
-			w.WriteHeader(status)
-			json.NewEncoder(w).Encode(message.String())
-		}
-
+		sendError(w, r, status, message.String())
 		log.Print(message.String())
+	}
+}
+
+func sendError(w http.ResponseWriter, r *http.Request, status int, message string) {
+	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(status)
+		templates.ExecuteTemplate(w, "error.gohtml", struct {
+			Status, Message string
+		}{
+			http.StatusText(status),
+			message,
+		})
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(status)
+		json.NewEncoder(w).Encode(message)
 	}
 }
 
