@@ -24,6 +24,7 @@ func setupExifTool() *exiftool.Server {
 func getMeta(path string) ([]byte, error) {
 	log.Print("exiftool (get meta)...", path)
 	return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-htmlFormat", "-groupHeadings", "-long", path)
+	//return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-json", "-groupHeadings", "-long", path)
 }
 
 func fixMetaDNG(orig, dest, name string) (err error) {

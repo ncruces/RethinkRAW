@@ -355,6 +355,14 @@ window.exportChange = function (e) {
     function formatElement(e) { if (e.value !== '') e.value = formatNumber(e.value, e.step); }
 }
 
+window.showMetadata = async () => {
+    let html = await htmlRequest('GET', `/photo/${encodeURI(template.Path)}?meta`);
+    let dialog = document.getElementById('meta-dialog');
+    dialog.onclick = () => dialog.close();
+    dialog.innerHTML = html;
+    dialog.showModal();
+}
+
 function disableInputs(n) {
     let disabled = n.className.includes('disabled');
     for (let i of n.querySelectorAll('input')) {
@@ -463,6 +471,30 @@ function exportQuery() {
     }
 
     return query.join('&');
+}
+
+function htmlRequest(method, url, body) {
+    return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.onload = () => {
+            if (200 <= xhr.status && xhr.status < 300) {
+                resolve(xhr.response);
+            } else {
+                reject({
+                    status: xhr.status,
+                    message: xhr.statusText,
+                    response: xhr.response,
+                });
+            }
+        };
+        xhr.onerror = () => reject({
+            status: xhr.status,
+            message: xhr.statusText,
+        });
+        xhr.setRequestHeader('Accept', 'text/html');
+        xhr.send(body);
+    });
 }
 
 function jsonRequest(method, url, body) {

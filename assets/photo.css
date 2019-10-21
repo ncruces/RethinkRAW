@@ -98,6 +98,13 @@ form#settings div[class*=disabled] output {
     visibility: hidden;
 }
 
+dialog#meta-dialog {
+    overflow-y: auto;
+    font-size: small;
+    max-width: 50rem;
+    max-height: 30rem;
+}
+
 dialog#progress-dialog {
     width: 10rem;
 }
