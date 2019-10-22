@@ -6,13 +6,11 @@
 #
 # Revisions:    Nov. 12/03 - P. Harvey Created
 #               (See html/history.html for revision history)
-#
-# References:   ATV - Alexander Vonk, private communication
 #------------------------------------------------------------------------------
 use strict;
 require 5.004;
 
-my $version = '11.50';
+my $version = '11.70';
 
 # add our 'lib' directory to the include list BEFORE 'use Image::ExifTool'
 my $exeDir;
@@ -140,6 +138,7 @@ my $deleteOrig;     # 0=restore original files, 1=delete originals, 2=delete w/o
 my $disableOutput;  # flag to disable normal output
 my $doSetFileName;  # flag set if FileName may be written
 my $doUnzip;        # flag to extract info from .gz and .bz2 files
+my $escapeC;        # C-style escape
 my $escapeHTML;     # flag to escape printed values for html
 my $evalWarning;    # warning from eval
 my $executeID;      # -execute ID number
@@ -219,6 +218,11 @@ my $isCRLF = { MSWin32 => 1, os2 => 1, dos => 1 }->{$^O};
 
 # lookup for JSON characters that we escape specially
 my %jsonChar = ( '"'=>'"', '\\'=>'\\', "\t"=>'t', "\n"=>'n', "\r"=>'r' );
+
+# lookup for C-style escape sequences
+my %escC = ( "\n" => '\n', "\r" => '\r', "\t" => '\t', '\\' => '\\\\');
+my %unescC = ( a => "\a", b => "\b", f => "\f", n => "\n", r => "\r",
+               t => "\t", 0 => "\0", '\\' => '\\' );
 
 # options requiring additional arguments
 # (used only to skip over these arguments when reading -stay_open ARGFILE)
@@ -429,6 +433,7 @@ undef $disableOutput;
 undef $doSetFileName;
 undef $doUnzip;
 undef $escapeHTML;
+undef $escapeC;
 undef $evalWarning;
 undef $executeID;
 undef $failCondition;
@@ -827,6 +832,7 @@ for (;;) {
     (/^e$/ or $a eq '-composite') and $mt->Options(Composite => 0), next;
     (/^-e$/ or $a eq 'composite') and $mt->Options(Composite => 1), next;
     (/^E$/ or $a eq 'escapehtml') and require Image::ExifTool::HTML and $escapeHTML = 1, next;
+    ($a eq 'ec' or $a eq 'escapec') and $escapeC = 1, next; # (undocumented) added in 11.54
     ($a eq 'ex' or $a eq 'escapexml') and $escapeXML = 1, next;
     if (/^echo(\d)?$/i) {
         my $n = $1 || 1;
@@ -1005,7 +1011,7 @@ for (;;) {
     /^(m|ignoreminorerrors)$/i and $mt->Options(IgnoreMinorErrors => 1), next;
     /^(n|-printconv)$/i and $mt->Options(PrintConv => 0), next;
     /^(-n|printconv)$/i and $mt->Options(PrintConv => 1), next;
-    $a eq 'nop' and $helped=1, next; # undocumented; no operation
+    $a eq 'nop' and $helped=1, next; # (undocumented) no operation, added in 11.25
     if (/^o(ut)?$/i) {
         $outOpt = shift;
         defined $outOpt or Error("Expected output file or directory name for -o option\n"), $badCmd=1, next;
@@ -1048,7 +1054,7 @@ for (;;) {
     }
     /^q(uiet)?$/i and ++$quiet, next;
     /^r(ecurse)?(\.?)$/i and $recurse = ($2 ? 2 : 1), next;
-    if ($a eq 'require') { # undocumented, added in version 8.65
+    if ($a eq 'require') { # (undocumented) added in version 8.65
         my $ver = shift;
         unless (defined $ver and Image::ExifTool::IsFloat($ver)) {
             Error("Expecting version number for -require option\n");
@@ -1573,6 +1579,9 @@ if (@newValues) {
             $opts{$addDelOpt{$1}} = 1;  # set AddValue or DelValue option
             # set $newVal to '' if deleting nothing
             $newVal = '' if $1 eq '-' and not defined $newVal;
+        }
+        if ($escapeC and defined $newVal) {
+            $newVal =~ s/\\(x([0-9a-fA-F]{2})|.)/$2 ? chr(hex($2)) : $unescC{$1} || $1/seg;
         }
         my ($rtn, $wrn) = $mt->SetNewValue($tag, $newVal, %opts);
         $needSave = 1;
@@ -2439,10 +2448,14 @@ TAG:    foreach $tag (@foundTags) {
                 }
             }
 
-            # translate unprintable chars in value and remove trailing spaces
-            $val =~ tr/\x01-\x1f\x7f/./;
-            $val =~ s/\x00//g;
-            $val =~ s/\s+$//;
+            if ($escapeC) {
+                $val =~ s/([\0-\x1f\\\x7f])/$escC{$1} || sprintf('\x%.2x', ord $1)/eg;
+            } else {
+                # translate unprintable chars in value and remove trailing spaces
+                $val =~ tr/\x01-\x1f\x7f/./;
+                $val =~ s/\x00//g;
+                $val =~ s/\s+$//;
+            }
 
             if ($html) {
                 print $fp "<tr>";
@@ -3070,6 +3083,7 @@ sub EncodeXML($)
     {
         # encode binary data and non-UTF8 with special characters as base64
         $$strPt = Image::ExifTool::XMP::EncodeBase64($$strPt);
+        # #ATV = Alexander Vonk, private communication
         return 'http://www.w3.org/2001/XMLSchema#base64Binary'; #ATV
     } elsif ($escapeHTML) {
         $$strPt = Image::ExifTool::HTML::EscapeHTML($$strPt, $altEnc);
@@ -3486,7 +3500,7 @@ sub ScanDir($$;$)
 {
     local $_;
     my ($et, $dir, $list) = @_;
-    my (@fileList, $done, $file, $utf8Name);
+    my (@fileList, $done, $file, $utf8Name, $winSurrogate);
     my $enc = $et->Options('CharsetFileName');
     # recode as UTF-8 if necessary
     if ($enc) {
@@ -3515,6 +3529,7 @@ sub ScanDir($$;$)
                     chomp $evalWarning;
                     $evalWarning =~ s/ at .*//s;
                     Warn "Warning: [Win32::FindFile] $evalWarning - $dir\n";
+                    $winSurrogate = 1 if $evalWarning =~ /surrogate/;
                 } else {
                     $et->Options(CharsetFileName => 'UTF8');    # now using UTF8
                     $utf8Name = 1;  # ReadDir returns UTF-8 file names
@@ -3574,6 +3589,16 @@ sub ScanDir($$;$)
                 next unless $doUnzip;
                 next unless $file =~ /\.(gz|bz2)$/i;
             }
+        }
+        # Windows patch to avoid replacing filename containing Unicode surrogate with 8.3 name
+        if ($winSurrogate and $isWriting and
+            (not $overwriteOrig or $overwriteOrig != 2) and
+            not $doSetFileName and $file =~ /~/)   # (8.3 name will contain a tilde)
+        {
+            Warn("Not writing $path\n");
+            WarnOnce("Use -overwrite_original_in_place to write files with Unicode surrogate characters\n");
+            ++$countBad;
+            next;
         }
         $utf8FileName{$path} = 1 if $utf8Name;
         if ($list) {
@@ -3762,6 +3787,8 @@ sub SuggestedExtension($$$)
         $ext = 'vrd';
     } elsif ($$valPt =~ /^IIII\x04\0\x04\0/) {
         $ext = 'dr4';
+    } elsif ($$valPt =~ /^(.{10}|.{522})(\x11\x01|\x00\x11)/) {
+        $ext = 'pict';
     } else {
         $ext = 'dat';
     }
@@ -4249,8 +4276,8 @@ directory are processed (in write mode only writable types are processed).
 However, files may be specified by name, or the B<-ext> option may be used
 to force processing of files with any extension.  Hidden files in the
 directory are also processed.  Adding the B<-r> option causes subdirectories
-to be processed recursively, but those with names beginning with "." are
-skipped unless B<-r.> is used.
+to be processed recursively, but subdirectories with names beginning with
+"." are skipped unless B<-r.> is used.
 
 Below is a list of file types and meta information formats currently
 supported by ExifTool (r = read, w = write, c = create):
@@ -4936,14 +4963,17 @@ B<-csv>=I<CSVFILE> feature.
 
 Organize output by tag group.  I<NUM> specifies a group family number, and
 may be 0 (general location), 1 (specific location), 2 (category), 3
-(document number) or 4 (instance number).  B<-g0> is assumed if a family
-number is not specified, and family numbers may be added wherever B<-g> is
-mentioned in the documentation.  Multiple families may be specified by
-separating them with colons.  By default the resulting group name is
-simplified by removing any leading C<Main:> and collapsing adjacent
-identical group names, but this can be avoided by placing a colon before the
-first family number (eg. B<-g:3:1>).  Use the B<-listg> option to list group
-names for a specified family.
+(document number), 4 (instance number), 5 (metadata path) or 6 (EXIF/TIFF
+format).  B<-g0> is assumed if a family number is not specified, and family
+numbers may be added wherever B<-g> is mentioned in the documentation. 
+Multiple families may be specified by separating them with colons.  By
+default the resulting group name is simplified by removing any leading
+C<Main:> and collapsing adjacent identical group names, but this can be
+avoided by placing a colon before the first family number (eg. B<-g:3:1>). 
+Use the B<-listg> option to list group names for a specified family.  The
+SavePath and SaveFormat API options are automatically enabled if the
+respective family 5 or 6 group names are requested.  See the
+L<API GetGroup documentation|Image::ExifTool/GetGroup> for more information.
 
 =item B<-G>[I<NUM>][:I<NUM>...] (B<-groupNames>)
 
@@ -5039,18 +5069,42 @@ been implemented.  May also be combined with B<-listx> to output
 descriptions in one language only.
 
 By default, ExifTool uses UTF-8 encoding for special characters, but the
-the B<-L> or B<-charset> option may be used to invoke other encodings.
-
-Currently, the language support is not complete, but users are welcome to
-help improve this by submitting their own translations.  To submit a set of
-translations, first use the B<-listx> option and redirect the output to a
-file to generate an XML tag database, then add entries for other languages,
-zip this file, and email it to phil at owl.phy.queensu.ca for inclusion in
-ExifTool.
-
-Note:  ExifTool uses Unicode::LineBreak if available to help preserve the
+the B<-L> or B<-charset> option may be used to invoke other encodings.  Note
+that ExifTool uses Unicode::LineBreak if available to help preserve the
 column alignment of the plain text output for languages with a
 variable-width character set.
+
+Currently, the language support is not complete, but users are welcome to
+help improve this by submitting their own translations.  To submit a
+translation, follow these steps (you must have Perl installed for this):
+
+1. Download and unpack the latest Image-ExifTool full distribution.
+
+2. 'cd' into the Image-ExifTool directory.
+
+3. Run this command to make an XML file of the desired tags (eg. EXIF):
+
+   ./exiftool -listx -exif:all > out.xml
+
+4. Copy this text into a file called 'import.pl' in the exiftool directory:
+
+    push @INC, 'lib';
+    require Image::ExifTool::TagInfoXML;
+    my $file = shift or die "Expected XML file name\n";
+    $Image::ExifTool::TagInfoXML::makeMissing = shift;
+    Image::ExifTool::TagInfoXML::BuildLangModules($file,8);
+
+5. Run the 'import.pl' script to Import the XML file, generating the
+'MISSING' entries for your language (eg. Russian):
+
+   perl import.pl out.xml ru
+
+6. Edit the generated language module lib/Image/ExifTool/Lang/ru.pm, and
+search and replace all 'MISSING' strings in the file with your translations.
+
+7. Email the module ('ru.pm' in this example) to phil at owl.phy.queensu.ca
+
+8. Thank you!!
 
 =item B<-listItem> I<INDEX>
 
@@ -5119,7 +5173,7 @@ with this command:
 
 produces output like this:
 
-    -- Generated by ExifTool 11.50 --
+    -- Generated by ExifTool 11.70 --
     File: a.jpg - 2003:10:31 15:44:19
     (f/5.6, 1/60s, ISO 100)
     File: b.jpg - 2006:05:23 11:57:38
@@ -5788,7 +5842,7 @@ available).  When writing, causes compressed information to be written if
 supported by the metadata format (eg. compressed textual metadata in PNG),
 disables the recommended padding in embedded XMP (saving 2424 bytes when
 writing XMP in a file), and writes XMP in shorthand format -- the equivalent
-of setting the API Compress, Compact and XMPShorthand options to 1.
+of setting the API Compress and Compact="Padding,Shorthand".
 
 =back
 
@@ -5886,12 +5940,12 @@ include directories.
 =item B<-geotag> I<TRKFILE>
 
 Geotag images from the specified GPS track log file.  Using the B<-geotag>
-option is equivalent to writing a value to the C<Geotag> tag.  After the
-B<-geotag> option has been specified, the value of the C<Geotime> tag is
-written to define a date/time for the position interpolation.  If C<Geotime>
-is not specified, the value is copied from C<DateTimeOriginal#> (the C<#> is
-added to copy the unformatted value, avoiding potential conflicts with the
-B<-d> option).  For example, the following two commands are equivalent:
+option is equivalent to writing a value to the C<Geotag> tag.  The GPS
+position is interpolated from the track at a time specified by the value
+written to the C<Geotime> tag.  If C<Geotime> is not specified, the value is
+copied from C<DateTimeOriginal#> (the C<#> is added to copy the unformatted
+value, avoiding potential conflicts with the B<-d> option).  For example,
+the following two commands are equivalent:
 
     exiftool -geotag trk.log image.jpg
     exiftool -geotag trk.log "-Geotime<DateTimeOriginal#" image.jpg
@@ -5903,11 +5957,11 @@ from the track log, and they are supported by the destination metadata
 format):  GPSLatitude, GPSLatitudeRef, GPSLongitude, GPSLongitudeRef,
 GPSAltitude, GPSAltitudeRef, GPSDateStamp, GPSTimeStamp, GPSDateTime,
 GPSTrack, GPSTrackRef, GPSSpeed, GPSSpeedRef, GPSImgDirection,
-GPSImgDirectionRef, GPSPitch and GPSRoll.  By default, tags are created in
-EXIF, and updated in XMP only if they already exist.  However,
-C<EXIF:Geotime> or C<XMP:Geotime> may be specified to write only EXIF or XMP
-tags respectively.  Note that GPSPitch and GPSRoll are non-standard, and
-require user-defined tags in order to be written.
+GPSImgDirectionRef, GPSPitch, GPSRoll and AmbientTemperature.  By default,
+tags are created in EXIF, and updated in XMP only if they already exist. 
+However, C<EXIF:Geotime> or C<XMP:Geotime> may be specified to write only
+EXIF or XMP tags respectively.  Note that GPSPitch and GPSRoll are
+non-standard, and require user-defined tags in order to be written.
 
 The C<Geosync> tag may be used to specify a time correction which is applied
 to each C<Geotime> value for synchronization with GPS time.  For example,
@@ -5916,7 +5970,6 @@ seconds behind GPS:
 
     exiftool -geosync=+1:20 -geotag a.log DIR
 
-C<Geosync> must be set before C<Geotime> (if specified) to be effective.
 Advanced C<Geosync> features allow a linear time drift correction and
 synchronization from previously geotagged images.  See "geotag.html" in the
 full ExifTool distribution for more information.
@@ -5930,9 +5983,9 @@ Windows) to prevent filename expansion.  For example:
     exiftool -geotag "TRACKDIR/*.log" IMAGEDIR
 
 Currently supported track file formats are GPX, NMEA RMC/GGA/GLL, KML, IGC,
-Garmin XML and TCX, Magellan PMGNTRK, Honeywell PTNTHPR, Winplus Beacon
-text, and Bramor gEO log files.  See L</GEOTAGGING EXAMPLES> for examples. 
-Also see "geotag.html" in the full ExifTool distribution and the
+Garmin XML and TCX, Magellan PMGNTRK, Honeywell PTNTHPR, Bramor gEO, Winplus
+Beacon TXT, and GPS/IMU CSV files.  See L</GEOTAGGING EXAMPLES> for
+examples. Also see "geotag.html" in the full ExifTool distribution and the
 L<Image::ExifTool Options|Image::ExifTool/Options> for more details and for
 information about geotag configuration options.
 
@@ -6066,9 +6119,10 @@ previews in a directory where other JPG images may exist:
 
     exiftool -ext nef -tagsfromfile @ -srcfile %d%f.jpg dir
 
-If than one B<-srcfile> option is specified, the files are tested in order
-and the first existing source file is processed.  If none of the source
-files already exist, then exiftool uses the first B<-srcfile> specified.
+If more than one B<-srcfile> option is specified, the files are tested in
+order and the first existing source file is processed.  If none of the
+source files already exist, then exiftool uses the first B<-srcfile>
+specified.
 
 A I<FMT> of C<@> may be used to represent the original I<FILE>, which may be
 useful when specifying multiple B<-srcfile> options (eg. to fall back to

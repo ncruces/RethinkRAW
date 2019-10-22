@@ -32,6 +32,8 @@
 #   20) https://developer.apple.com/legacy/library/documentation/quicktime/reference/QT7-1_Update_Reference/QT7-1_Update_Reference.pdf
 #   21) Francois Bonzon private communication
 #   22) https://developer.apple.com/library/mac/documentation/QuickTime/QTFF/Metadata/Metadata.html
+#   23) http://atomicparsley.sourceforge.net/mpeg-4files.html
+#   24) https://github.com/sergiomb2/libmp4v2/wiki/iTunesMetadata
 #------------------------------------------------------------------------------
 
 package Image::ExifTool::QuickTime;
@@ -42,7 +44,7 @@ use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 use Image::ExifTool::GPS;
 
-$VERSION = '2.32';
+$VERSION = '2.37';
 
 sub ProcessMOV($$;$);
 sub ProcessKeys($$$);
@@ -382,6 +384,7 @@ my %channelLabel = (
 # properties which don't get inherited from the parent
 my %dontInherit = (
     ispe => 1,  # size of parent may be different
+    hvcC => 1,  # (likely redundant)
 );
 
 # tags that may be duplicated and directories that may contain duplicate tags
@@ -514,6 +517,7 @@ my %eeBox = (
             Name => 'XMP',
             # *** this is where ExifTool writes XMP in MP4 videos (as per XMP spec) ***
             Condition => '$$valPt=~/^\xbe\x7a\xcf\xcb\x97\xa9\x42\xe8\x9c\x71\x99\x94\x91\xe3\xaf\xac/',
+            WriteGroup => 'XMP',    # (write main XMP tags here)
             SubDirectory => {
                 TagTable => 'Image::ExifTool::XMP::Main',
                 Start => 16,
@@ -991,6 +995,7 @@ my %eeBox = (
     },
     trak => {
         Name => 'Track',
+        CanCreate => 0, # don't create this atom
         SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::Track' },
     },
     udta => {
@@ -1196,11 +1201,12 @@ my %eeBox = (
         { #https://github.com/google/spatial-media/blob/master/docs/spherical-video-rfc.md
             Name => 'SphericalVideoXML',
             Condition => '$$valPt=~/^\xff\xcc\x82\x63\xf8\x55\x4a\x93\x88\x14\x58\x7a\x02\x52\x1f\xdd/',
-            Flags => [ 'Binary', 'BlockExtract' ],
-            Writable => 0,
+            WriteGroup => 'GSpherical', # write only GSpherical XMP tags here
+            HandlerType => 'vide',      # only write in video tracks
             SubDirectory => {
                 TagTable => 'Image::ExifTool::XMP::Main',
                 Start => 16,
+                WriteProc => 'Image::ExifTool::XMP::WriteGSpherical',
             },
         },
         {
@@ -1331,8 +1337,8 @@ my %eeBox = (
         L<ItemList|Image::ExifTool::TagNames/QuickTime ItemList Tags> tags are
         preferred over these, so to create the tag when a same-named ItemList tag
         exists, either "UserData" must be specified (eg. C<-UserData:Artist=Monet>
-        on the command line), or the PREFERRED level must be changed via the config
-        file.
+        on the command line), or the PREFERRED level must be changed via
+        L<the config file|../config.html#PREF>.
     },
     "\xa9cpy" => { Name => 'Copyright',  Groups => { 2 => 'Author' } },
     "\xa9day" => {
@@ -1473,6 +1479,7 @@ my %eeBox = (
     hinv => 'HintVersion', #PH (guess)
     XMP_ => { #PH (Adobe CS3 Bridge)
         Name => 'XMP',
+        WriteGroup => 'XMP',    # (write main tags here)
         # *** this is where ExifTool writes XMP in MOV videos (as per XMP spec) ***
         SubDirectory => { TagTable => 'Image::ExifTool::XMP::Main' },
     },
@@ -1606,6 +1613,7 @@ my %eeBox = (
     },
     date => { # (NC)
         Name => 'DateTimeOriginal',
+        Description => 'Date/Time Original',
         Groups => { 2 => 'Time' },
         Shift => 'Time',
         ValueConv => q{
@@ -1851,6 +1859,7 @@ my %eeBox = (
     # free (all zero)
     "\xa9TSC" => 'StartTimeScale', # (Hero6)
     "\xa9TSZ" => 'StartTimeSampleSize', # (Hero6)
+    "\xa9TIM" => 'StartTimecode', #PH (NC)
     # --- HTC ----
     htcb => {
         Name => 'HTCBinary',
@@ -2045,6 +2054,8 @@ my %eeBox = (
     # kgrf - 8 bytes all zero ? (in udta inside trak atom)
     # kgcg - 128 bytes 0's and 1's
     # kgsi - 4 bytes "00 00 00 80"
+    # FIEL - 18 bytes "FIEL\0\x01\0\0\0..."
+    
 #
 # other 3rd-party tags
 # (ref http://code.google.com/p/mp4parser/source/browse/trunk/isoparser/src/main/resources/isoparser-default.properties?r=814)
@@ -2364,7 +2375,7 @@ my %eeBox = (
     }],
    'xml ' => {
         Name => 'XML',
-        Flags => [ 'Binary', 'Protected', 'BlockExtract' ],
+        Flags => [ 'Binary', 'Protected' ],
         SubDirectory => {
             TagTable => 'Image::ExifTool::XMP::XML',
             IgnoreProp => { NonRealTimeMeta => 1 }, # ignore container for Sony 'nrtm'
@@ -2515,8 +2526,122 @@ my %eeBox = (
     },
     hvcC => {
         Name => 'HEVCConfiguration',
-        Flags => ['Binary','Unknown'],
+        SubDirectory => { TagTable => 'Image::ExifTool::QuickTime::HEVCConfig' },
     },
+);
+
+# HEVC configuration (ref https://github.com/MPEGGroup/isobmff/blob/master/IsoLib/libisomediafile/src/HEVCConfigAtom.c)
+%Image::ExifTool::QuickTime::HEVCConfig = (
+    PROCESS_PROC => \&Image::ExifTool::ProcessBinaryData,
+    GROUPS => { 2 => 'Video' },
+    FIRST_ENTRY => 0,
+    0 => 'HEVCConfigurationVersion',
+    1 => {
+        Name => 'GeneralProfileSpace',
+        Mask => 0xc0,
+        BitShift => 6,
+        PrintConv => { 0 => 'Conforming' },
+    },
+    1.1 => {
+        Name => 'GeneralTierFlag',
+        Mask => 0x20,
+        BitShift => 5,
+        PrintConv => {
+            0 => 'Main Tier',
+            1 => 'High Tier',
+        },
+    },
+    1.2 => {
+        Name => 'GeneralProfileIDC',
+        Mask => 0x1f,
+        PrintConv => {
+            0 => 'No Profile',
+            1 => 'Main Profile',
+            2 => 'Main 10 Profile',
+            3 => 'Main Still Picture Profile',
+        },
+    },
+    2 => {
+        Name => 'GenProfileCompatibilityFlags',
+        Format => 'int32u',
+        PrintConv => { BITMASK => {
+            31 => 'No Profile',         # (bit 0 in stream)
+            30 => 'Main',               # (bit 1 in stream)
+            29 => 'Main 10',            # (bit 2 in stream)
+            28 => 'Main Still Picture', # (bit 3 in stream)
+        }},
+    },
+    6 => {
+        Name => 'ConstraintIndicatorFlags',
+        Format => 'int8u[6]',
+    },
+    12 => {
+        Name => 'GeneralLevelIDC',
+        PrintConv => 'sprintf("%d (level %.1f)", $val, $val/30)',
+    },
+    13 => {
+        Name => 'MinSpatialSegmentationIDC',
+        Format => 'int16u',
+        Mask => 0x0fff,
+    },
+    15 => {
+        Name => 'ParallelismType',
+        Mask => 0x03,
+    },
+    16 => {
+        Name => 'ChromaFormat',
+        Mask => 0x03,
+        PrintConv => {
+            0 => 'Monochrome',
+            1 => '4:2:0',
+            2 => '4:2:2',
+            3 => '4:4:4',
+        },
+    },
+    17 => {
+        Name => 'BitDepthLuma',
+        Mask => 0x07,
+        ValueConv => '$val + 8',
+    },
+    18 => {
+        Name => 'BitDepthChroma',
+        Mask => 0x07,
+        ValueConv => '$val + 8',
+    },
+    19 => {
+        Name => 'AverageFrameRate',
+        Format => 'int16u',
+        ValueConv => '$val / 256',
+    },
+    21 => {
+        Name => 'ConstantFrameRate',
+        Mask => 0xc0,
+        BitShift => 6,
+        PrintConv => {
+            0 => 'Unknown',
+            1 => 'Constant Frame Rate',
+            2 => 'Each Temporal Layer is Constant Frame Rate',
+        },
+    },
+    21.1 => {
+        Name => 'NumTemporalLayers',
+        Mask => 0x38,
+        BitShift => 3,
+    },
+    21.2 => {
+        Name => 'TemporalIDNested',
+        Mask => 0x04,
+        BitShift => 2,
+        PrintConv => { 0 => 'No', 1 => 'Yes' },
+    },
+    #21.3 => {
+    #    Name => 'NALUnitLengthSize',
+    #    Mask => 0x03,
+    #    ValueConv => '$val + 1',
+    #    PrintConv => { 1 => '8-bit', 2 => '16-bit', 4 => '32-bit' },
+    #},
+    #22 => 'NumberOfNALUnitArrays',
+    # (don't decode the NAL unit arrays)
 );
 
 %Image::ExifTool::QuickTime::ItemRef = (
@@ -2669,6 +2794,7 @@ my %eeBox = (
     covr => { Name => 'CoverArt',    Groups => { 2 => 'Preview' } },
     cpil => { #10
         Name => 'Compilation',
+        Format => 'int8u', #23
         PrintConv => { 0 => 'No', 1 => 'Yes' },
     },
     disk => {
@@ -2679,6 +2805,7 @@ my %eeBox = (
     },
     pgap => { #10
         Name => 'PlayGap',
+        Format => 'int8u', #23
         PrintConv => {
             0 => 'Insert Gap',
             1 => 'No Gap',
@@ -2700,6 +2827,7 @@ my %eeBox = (
 #
     akID => { #10
         Name => 'AppleStoreAccountType',
+        Format => 'int8u', #24
         PrintConv => {
             0 => 'iTunes',
             1 => 'AOL',
@@ -2723,6 +2851,7 @@ my %eeBox = (
     gnre => { #10
         Name => 'Genre',
         Avoid => 1,
+        # (Note: not written as int16u if numerical, although it should be)
         PrintConv => q{
             return $val unless $val =~ /^\d+$/;
             require Image::ExifTool::ID3;
@@ -5116,12 +5245,14 @@ my %eeBox = (
     grup => { Name => 'Grouping', Avoid => 1 }, #10
     hdvd => { #10
         Name => 'HDVideo',
+        Format => 'int8u', #24
         PrintConv => { 0 => 'No', 1 => 'Yes' },
     },
     keyw => 'Keyword', #7
     ldes => 'LongDescription', #10
     pcst => { #7
         Name => 'Podcast',
+        Format => 'int8u', #23
         PrintConv => { 0 => 'No', 1 => 'Yes' },
     },
     perf => 'Performer',
@@ -5133,6 +5264,7 @@ my %eeBox = (
     purl => 'PodcastURL', #7
     rtng => { #10
         Name => 'Rating',
+        Format => 'int8u', #23
         PrintConv => {
             0 => 'none',
             1 => 'Explicit',
@@ -5310,6 +5442,7 @@ my %eeBox = (
     sosn => 'SortShow', #10
     stik => { #10
         Name => 'MediaType',
+        Format => 'int8u', #23
         PrintConvColumns => 2,
         PrintConv => { #(http://weblog.xanga.com/gryphondwb/615474010/iphone-ringtones---what-did-itunes-741-really-do.html)
             0 => 'Movie (old)', #forum9059 (was Movie)
@@ -5341,6 +5474,7 @@ my %eeBox = (
     yrrc => 'Year', #(ffmpeg source)
     itnu => { #PH (iTunes 10.5)
         Name => 'iTunesU',
+        Format => 'int8s',
         Description => 'iTunes U',
         PrintConv => { 0 => 'No', 1 => 'Yes' },
     },
@@ -5434,7 +5568,7 @@ my %eeBox = (
         preferred when writing, so to create a tag when a same-named tag exists in
         either of these tables, either the "Keys" location must be specified (eg.
         C<-Keys:Author=Phil> on the command line), or the PREFERRED level must be
-        changed via the config file.
+        changed via L<the config file|../config.html#PREF>.
     },
     version     => 'Version',
     album       => 'Album',
@@ -5887,7 +6021,7 @@ my %eeBox = (
         Format => 'int16u',
         RawConv => '$val ? $val : undef',
         # allow both Macintosh (for MOV files) and ISO (for MP4 files) language codes
-        ValueConv => '$val < 0x400 ? $val : pack "C*", map { (($val>>$_)&0x1f)+0x60 } 10, 5, 0',
+        ValueConv => '($val < 0x400 or $val == 0x7fff) ? $val : pack "C*", map { (($val>>$_)&0x1f)+0x60 } 10, 5, 0',
         PrintConv => q{
             return $val unless $val =~ /^\d+$/;
             require Image::ExifTool::Font;
@@ -6648,6 +6782,7 @@ my %eeBox = (
 #   data         -       -
 #
     ftab => { Name => 'FontTable',  Format => 'undef', ValueConv => 'substr($val, 5)' },
+    name => { Name => 'OtherName',  Format => 'undef', ValueConv => 'substr($val, 4)' },
 );
 
 # MP4 data information box (ref 5)
@@ -8072,7 +8207,7 @@ sub ProcessMOV($$;$)
     my $dirID = $$dirInfo{DirID} || '';
     my $charsetQuickTime = $et->Options('CharsetQuickTime');
     my ($buff, $tag, $size, $track, $isUserData, %triplet, $doDefaultLang, $index);
-    my ($dirEnd, $ee, $unkOpt, %saveOptions);
+    my ($dirEnd, $ee, $unkOpt, %saveOptions, $atomCount);
 
     my $topLevel = not $$et{InQuickTime};
     $$et{InQuickTime} = 1;
@@ -8141,9 +8276,13 @@ sub ProcessMOV($$;$)
         $unkOpt = $$et{OPTIONS}{Unknown};
         require 'Image/ExifTool/QuickTimeStream.pl';
     }
-    $index = $$tagTablePtr{VARS}{START_INDEX} if $$tagTablePtr{VARS};
+    if ($$tagTablePtr{VARS}) {
+        $index = $$tagTablePtr{VARS}{START_INDEX};
+        $atomCount = $$tagTablePtr{VARS}{ATOM_COUNT};
+    }
     for (;;) {
         my ($eeTag, $ignore);
+        last if defined $atomCount and --$atomCount < 0;
         if ($size < 8) {
             if ($size == 0) {
                 if ($dataPt) {
@@ -8519,13 +8658,19 @@ ItemID:         foreach $id (keys %$items) {
                         next if not $len and $pos;
                         my $str = substr($val, $pos, $len);
                         my $langInfo;
-                        if ($lang < 0x400 and $str !~ /^\xfe\xff/) {
+                        if (($lang < 0x400 or $lang == 0x7fff) and $str !~ /^\xfe\xff/) {
                             # this is a Macintosh language code
                             # a language code of 0 is Macintosh english, so treat as default
                             if ($lang) {
-                                # use Font.pm to look up language string
-                                require Image::ExifTool::Font;
-                                $lang = $Image::ExifTool::Font::ttLang{Macintosh}{$lang};
+                                if ($lang == 0x7fff) {
+                                    # technically, ISO 639-2 doesn't have a 2-character
+                                    # equivalent for 'und', but use 'un' anyway
+                                    $lang = 'un';
+                                } else {
+                                    # use Font.pm to look up language string
+                                    require Image::ExifTool::Font;
+                                    $lang = $Image::ExifTool::Font::ttLang{Macintosh}{$lang};
+                                }
                             }
                             # the spec says only "Macintosh text encoding", but
                             # allow this to be configured by the user
@@ -8576,10 +8721,8 @@ ItemID:         foreach $id (keys %$items) {
                 Extra => sprintf(' at offset 0x%.4x', $raf->Tell()),
             ) if $verbose;
             if ($size and (not $raf->Seek($size-1, 1) or $raf->Read($buff, 1) != 1)) {
-                unless ($$tagTablePtr{VARS} and $$tagTablePtr{VARS}{IGNORE_BAD_ATOMS}) {
-                    my $t = PrintableTagID($tag);
-                    $et->Warn("Truncated '${t}' data");
-                }
+                my $t = PrintableTagID($tag);
+                $et->Warn("Truncated '${t}' data");
                 last;
             }
         }

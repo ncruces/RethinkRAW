@@ -19,6 +19,7 @@
 #               10) Albert Shan private communication
 #               11) http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,8377.0.html
 #               12) http://u88.n24.queensu.ca/exiftool/forum/index.php/topic,9607.0.html
+#               13) http://u88.n24.queensu.ca/exiftool/forum/index.php/topic=10481.0.html
 #               IB) Iliah Borg private communication (LibRaw)
 #               JD) Jens Duttke private communication
 #------------------------------------------------------------------------------
@@ -30,12 +31,13 @@ use vars qw($VERSION);
 use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
 
-$VERSION = '1.71';
+$VERSION = '1.75';
 
 sub ProcessFujiDir($$$);
 sub ProcessFaceRec($$$);
 
 # the following RAF version numbers have been tested for writing:
+# (as of ExifTool 11.70, this lookup is no longer used if the version number is numerical)
 my %testedRAF = (
     '0100' => 'E550, E900, F770, S5600, S6000fd, S6500fd, HS10/HS11, HS30, S200EXR, X100, XF1, X-Pro1, X-S1, XQ2 Ver1.00, X-T100, GFX 50R, XF10',
     '0101' => 'X-E1, X20 Ver1.01, X-T3',
@@ -53,8 +55,10 @@ my %testedRAF = (
     '0212' => 'S3Pro Ver2.12',
     '0216' => 'S3Pro Ver2.16', # (NC)
     '0218' => 'S3Pro Ver2.18',
+    '0240' => 'X-E1 Ver2.40',
     '0264' => 'F700 Ver2.00',
     '0266' => 'S9500 Ver1.01',
+    '0261' => 'X-E1 Ver2.61',
     '0269' => 'S9500 Ver1.02',
     '0271' => 'S3Pro Ver2.71', # UV/IR model?
     '0300' => 'X-E2',
@@ -261,10 +265,22 @@ my %faceCategories = (
             16 => 'Commander',
             0x8000 => 'Not Attached', #10 (X-T2) (or external flash off)
             0x8120 => 'TTL', #10 (X-T2)
+            0x8320 => 'TTL Auto - Did not fire',
             0x9840 => 'Manual', #10 (X-T2)
+            0x9860 => 'Flash Commander', #13
             0x9880 => 'Multi-flash', #10 (X-T2)
             0xa920 => '1st Curtain (front)', #10 (EF-X500 flash)
+            0xaa20 => 'TTL Slow - 1st Curtain (front)', #13
+            0xab20 => 'TTL Auto - 1st Curtain (front)', #13
+            0xad20 => 'TTL - Red-eye Flash - 1st Curtain (front)', #13
+            0xae20 => 'TTL Slow - Red-eye Flash - 1st Curtain (front)', #13
+            0xaf20 => 'TTL Auto - Red-eye Flash - 1st Curtain (front)', #13
             0xc920 => '2nd Curtain (rear)', #10
+            0xca20 => 'TTL Slow - 2nd Curtain (rear)', #13
+            0xcb20 => 'TTL Auto - 2nd Curtain (rear)', #13
+            0xcd20 => 'TTL - Red-eye Flash - 2nd Curtain (rear)', #13
+            0xce20 => 'TTL Slow - Red-eye Flash - 2nd Curtain (rear)', #13
+            0xcf20 => 'TTL Auto - Red-eye Flash - 2nd Curtain (rear)', #13
             0xe920 => 'High Speed Sync (HSS)', #10
         },
     },
@@ -451,8 +467,9 @@ my %faceCategories = (
     0x104d => { #forum9634
         Name => 'CropMode',
         Writable => 'int16u',
-        PrintConv => {
+        PrintConv => { # (perhaps this is a bit mask?)
             0 => 'n/a',
+            1 => 'Full-frame on GFX', #IB
             2 => 'Sports Finder Mode', # (mechanical shutter)
             4 => 'Electronic Shutter 1.25x Crop', # (continuous high)
         },
@@ -636,7 +653,7 @@ my %faceCategories = (
     },
     # 0x1408 - values: '0100', 'S100', 'VQ10'
     # 0x1409 - values: same as 0x1408
-    # 0x140a - values: 0, 1, 3, 5, 7 (bit 2=red-eye detection, ref 11)
+    # 0x140a - values: 0, 1, 3, 5, 7 (bit 2=red-eye detection, ref 11/13)
     0x140b => { #6
         Name => 'AutoDynamicRange',
         Writable => 'int16u',
@@ -759,6 +776,12 @@ my %faceCategories = (
         Name => 'FrameHeight',
         Writable => 'int16u',
         Groups => { 2 => 'Video' },
+    },
+    0x3824 => { #forum10480 (X series)
+        Name => 'FullHDHighSpeedRec',
+        Writable => 'int32u',
+        Groups => { 2 => 'Video' },
+        PrintConv => { 1 => 'Off', 2 => 'On' },
     },
     0x4005 => { #forum9634
         Name => 'FaceElementSelected', # (could be face or eye)
@@ -1446,9 +1469,10 @@ sub WriteRAF($$)
         return 1;
     }
     # check to make sure this version of RAF has been tested
-    unless ($testedRAF{$ver}) {
-        $et->Warn("RAF version $ver not yet tested", 1);
-    }
+    #(removed in ExifTool 11.70)
+    #unless ($testedRAF{$ver}) {
+    #    $et->Warn("RAF version $ver not yet tested", 1);
+    #}
     # read the embedded JPEG
     unless ($raf->Seek($jpos, 0) and $raf->Read($jpeg, $jlen) == $jlen) {
         $et->Error('Error reading RAF meta information');

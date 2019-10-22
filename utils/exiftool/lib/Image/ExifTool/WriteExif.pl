@@ -38,7 +38,7 @@ my %mandatory = (
         0x0128 => 2,        # ResolutionUnit (inches)
     },
     ExifIFD => {
-        0x9000 => '0231',   # ExifVersion
+        0x9000 => '0232',   # ExifVersion
         0x9101 => "1 2 3 0",# ComponentsConfiguration
         0xa000 => '0100',   # FlashpixVersion
         0xa001 => 0xffff,   # ColorSpace (uncalibrated)
@@ -367,9 +367,11 @@ sub ValidateImageData($$$;$)
         my $minor;
         $minor = 1 if $$et{DOC_NUM} or $$et{FILE_TYPE} ne 'TIFF';
         unless (@bitsPerSample == $samplesPerPix) {
-            # (just a warning for this problem)
-            my $s = $samplesPerPix eq '1' ? '' : 's';
-            $et->Warn("$dirName BitsPerSample should have $samplesPerPix value$s", $minor);
+            unless ($$et{FILE_TYPE} eq 'EPS' and @bitsPerSample == 1) {
+                # (just a warning for this problem)
+                my $s = $samplesPerPix eq '1' ? '' : 's';
+                $et->Warn("$dirName BitsPerSample should have $samplesPerPix value$s", $minor);
+            }
             push @bitsPerSample, $bitsPerSample[0] while @bitsPerSample < $samplesPerPix;
             foreach (@bitsPerSample) {
                 $et->WarnOnce("$dirName BitsPerSample values are different", $minor) if $_ ne $bitsPerSample[0];
@@ -1321,7 +1323,7 @@ NoOverwrite:            next if $isNew > 0;
                     unless (defined $offsetData{$dataTag} or $dataTag eq 'LeicaTrailer') {
                         # prefer tag from Composite table if it exists (otherwise
                         # PreviewImage data would be taken from Extra tag)
-                        my $compInfo = $Image::ExifTool::Composite{$dataTag};
+                        my $compInfo = Image::ExifTool::GetCompositeTagInfo($dataTag);
                         $offsetData{$dataTag} = $et->GetNewValue($compInfo || $dataTag);
                         my $err;
                         if (defined $offsetData{$dataTag}) {
@@ -1772,7 +1774,7 @@ NoOverwrite:            next if $isNew > 0;
                         # - I'm going out of my way here to preserve data which is
                         #   invalidated anyway by our edits
                         my $odd;
-                        my $oddInfo = $Image::ExifTool::Composite{OriginalDecisionData};
+                        my $oddInfo = Image::ExifTool::GetCompositeTagInfo('OriginalDecisionData');
                         if ($oddInfo and $$et{NEW_VALUE}{$oddInfo}) {
                             $odd = $et->GetNewValue($dataTag);
                             if ($verbose > 1) {

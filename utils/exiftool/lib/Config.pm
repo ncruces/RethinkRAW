@@ -85,7 +85,7 @@ sub AUTOLOAD {
 # tie returns the object, so the value returned to require will be true.
 tie %Config, 'Config', {
     archlibexp => 'C:\\strawberry\\perl\\lib',
-    archname => 'MSWin32-x64-multi-thread',
+    archname => 'MSWin32-x86-multi-thread-64int',
     cc => 'gcc',
     d_readlink => undef,
     d_symlink => undef,
@@ -96,7 +96,7 @@ tie %Config, 'Config', {
     inc_version_list => '',
     intsize => '4',
     ldlibpthname => '',
-    libpth => 'C:\\strawberry\\c\\lib C:\\strawberry\\c\\x86_64-w64-mingw32\\lib C:\\strawberry\\c\\lib\\gcc\\x86_64-w64-mingw32\\8.3.0',
+    libpth => 'C:\\strawberry\\c\\lib C:\\strawberry\\c\\i686-w64-mingw32\\lib C:\\strawberry\\c\\lib\\gcc\\i686-w64-mingw32\\8.3.0',
     osname => 'MSWin32',
     osvers => '10.0.17763.529',
     path_sep => ';',

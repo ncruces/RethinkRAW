@@ -529,12 +529,22 @@ without recoding.  Default is 0.
 
 =item Compact
 
-Option to write compact XMP output.  The XMP specification suggests that the
-data be padded with blanks to allow in-place editing. With this flag set to
-1, the 2 kB of padding is not written.  Note that this only effects embedded
-XMP since padding is never written for stand-alone XMP files.  When set to
-2, spaces to indent XMP for readability are also dropped.  Default is undef.
-Also see the XMPShorthand option for reducing the size of XMP.
+Comma-delimited list of settings for writing compact XMP.  Below is a list
+of available settings.  Note that 'NoPadding' effects only embedded XMP
+since padding is never written for stand-alone XMP files.  Also note that
+'OneDesc' is not recommended when writing XMP larger than 64 kB to a JPG
+file because it interferes with ExifTool's technique of splitting off the
+large description elements into the extended XMP.  Case is not significant
+for any of these options.  Default is undef.
+
+  NoPadding - Avoid 2 kB of recommended padding at end of XMP
+  NoIndent  - Avoid spaces to indent lines for readability
+  NoNewline - Avoid unnecessary newlines
+  Shorthand - Use XMP Shorthand format
+  OneDesc   - Combine XMP properties into a single rdf:Description
+  AllSpace  - Equivalent to 'NoPadding,NoIndent,NoNewline'
+  AllFormat - Equivalent to 'Shorthand,OneDesc'
+  All       - Equivalent to 'AllSpace,AllFormat'
 
 =item Composite
 
@@ -603,10 +613,10 @@ GUID specified by the HasExtendedXMP tag, so by default ExifTool will ignore
 other extended XMP, but this option allows full control over the extended
 XMP to be extracted.
 
-     0   - ignore all extended XMP
-     1   - read extended XMP with valid GUID only (default)
-     2   - read extended XMP with any GUID
-  <guid> - read extended XMP with a specific GUID
+     0   - Ignore all extended XMP
+     1   - Read extended XMP with valid GUID only (default)
+     2   - Read extended XMP with any GUID
+  <guid> - Read extended XMP with a specific GUID
 
 =item ExtractEmbedded
 
@@ -617,20 +627,23 @@ fork of Mac OS files.  Default is undef.
 
 =item FastScan
 
-Flag to increase speed of extracting information from JPEG images.  With
-this option set to 1, ExifTool will not scan to the end of a JPEG image to
-check for an AFCP, CanonVRD, FotoStation, PhotoMechanic, MIE or PreviewImage
-trailer.  This also stops the parsing after the first comment in GIF images,
-and at the audio/video data with RIFF-format files (AVI, WAV, etc), so any
-trailing metadata (eg. XMP written by some utilities) may be missed.  Also
-disables input buffering for some types of files to reduce memory usage when
-reading from a non-seekable stream.  When combined with the ScanForXMP
-option, prevents scanning for XMP in recognized file types.  With a value of
-2, ExifTool will also avoid extracting any EXIF MakerNote information.  When
-set to 3 or 4, only pseudo system tags and FileType are generated.  For 3,
-the file header is read to provide an educated guess at FileType.  For 4,
-the file is not read at all and FileType is determined based on the file's
-extension.  Default is undef.
+Flag to increase speed when reading files by avoiding extraction of some
+types of metadata.  With this option set to 1, ExifTool will not scan to the
+end of a JPEG image to check for an AFCP, CanonVRD, FotoStation,
+PhotoMechanic, MIE or PreviewImage trailer.  This also stops the parsing
+after the first comment in GIF images, and at the audio/video data of
+RIFF-format files (AVI, WAV, etc), so any trailing metadata (eg. XMP written
+by some utilities) may be missed.  Also disables input buffering for some
+types of files to reduce memory usage when reading from a non-seekable
+stream.  When combined with the ScanForXMP option, prevents scanning for XMP
+in recognized file types.  With a value of 2, ExifTool will also avoid
+extracting any EXIF MakerNote information, and will stop parsing at the IDAT
+chunk of PNG images.  (By the PNG specification, metadata is allowed after
+IDAT, but ExifTool always writes it before because some utilities will
+ignore it otherwise.)  When set to 3 or 4, only pseudo system tags and
+FileType are generated.  For 3, the file header is read to provide an
+educated guess at FileType.  For 4, the file is not read at all and FileType
+is determined based on the file's extension.  Default is undef.
 
 =item Filter
 
@@ -639,6 +652,13 @@ the value of the Perl default variable ($_), and changes the value of this
 variable as required.  The value is not changed if $_ is set to undef.  List
 items are filtered individually.  Applies to all returned values unless
 PrintConv option is disabled.
+
+=item FilterW
+
+Perl expression used to filter PrintConv values when writing.  The
+expression acts on the value of the Perl default variable ($_), and changes
+the value of this variable as required.  The value is not changed if $_ is
+set to undef.
 
 =item FixBase
 
@@ -664,8 +684,9 @@ it is within GeoMaxExtSecs, otherwise geotagging fails).  Default is 1800.
 
 Maximum extrapolation time in seconds for geotagging.  Geotagging fails if
 the Geotime value lies outside a GPS track by a number of seconds greater
-than this.  Otherwise, the coordinates of the nearest fix are taken. 
-Default is 1800.
+than this.  Otherwise, for an extrapolation the coordinates of the nearest
+fix are taken (ie. it is assumed that you weren't moving during this
+period).  Default is 1800.
 
 =item GeoMaxHDOP
 
@@ -795,23 +816,6 @@ Password for reading/writing password-protected PDF documents.  Ignored if a
 password is not required.  Character encoding of the password is determined
 by the value of the Charset option at processing time.  Default is undef.
 
-=item PNGEarlyXMP
-
-Flag to write XMP in PNG images before the IDAT (image data) chunk.  By
-default, ExifTool adds new XMP to the end of a PNG file (just before IEND).
-This is allowed by the PNG and XMP specifications, but some utilities seem
-to ignore XMP if it comes after the image data.  The PNGEarlyXMP option
-causes ExifTool to instead add new XMP before the PNG IDAT chunk.  However,
-since ExifTool uses a single-pass writing algorithm, it has no way to tell
-if XMP already exists later in the file before writing the new XMP in this
-location.  If this happens, a minor error is issued when the extra XMP is
-encountered, and the file is not written.  Adding the L</IgnoreMinorErrors>
-option causes the XMP after IDAT to be deleted, thus resolving the conflict
-(at the expense of possible metadata loss), and allowing the file to be
-written.  The PNGEarlyXMP option is applied automatically when deleting all
-XMP and writing new XMP back in one step.  When reading, this option causes
-a warning to be issued if standard XMP is found after the IDAT chunk.
-
 =item PrintConv
 
 Flag to enable automatic print conversion.  Also enables inverse
@@ -852,6 +856,19 @@ delimited string of names (any delimiter is allowed), or undef to clear the
 current RequestTags list.  Groups are requested by adding a colon after the
 name (eg. "MacOS:").  Names are converted to lower case as they are added to
 the list.  Default is undef.
+
+=item SaveFormat
+
+Flag to save EXIF/TIFF format type as the family 6 group name when
+extracting information.  Without this option set, the family 6 group names
+are not generated.  Default is undef.  See the L</GetGroup> option for more
+details.
+
+=item SavePath
+
+Flag to save the metadata path as the family 5 group name when extracting
+information.  Without this option set, the family 5 group names are not
+generated.  Default is undef.  See the L</GetGroup> option for more details.
 
 =item ScanForXMP
 
@@ -996,10 +1013,6 @@ and L<Image::ExifTool::TagNames/MacOS XAttr Tags> for more information).
 Flag to enable automatic conversion for unknown XMP tags with values that
 look like rational numbers or dates.  Default is 1.
 
-=item XMPShorthand
-
-Flag set to write xmp in shorthand format.  Default is undef.
-
 =back
 
 =item Return Values:
@@ -1047,9 +1060,9 @@ Binary, Charset, CharsetEXIF, CharsetFileName, CharsetID3, CharsetIPTC,
 CharsetPhotoshop, CharsetQuickTime, CharsetRIFF, Composite, ExtendedXMP,
 ExtractEmbedded, FastScan, FixBase, HtmlDump, HtmlDumpBase,
 IgnoreMinorErrors, Lang, LargeFileSupport, MakerNotes, MDItemTags,
-NoPDFList, Password, PNGEarlyXMP, QuickTimeUTC (enforced 1904 time zero),
-RequestAll, RequestTags, ScanForXMP, Struct, TextOut, Unknown, Verbose,
-XAttrTags and XMPAutoConv.
+NoPDFList, Password, QuickTimeUTC (enforced 1904 time zero), RequestAll,
+RequestTags, SaveFormat, SavePath, ScanForXMP, Struct, TextOut, Unknown,
+Verbose, XAttrTags and XMPAutoConv.
 
 =item Return Value:
 
@@ -1180,8 +1193,8 @@ called with a source file name.
 The following ExifTool options are effective in the call to L</WriteInfo>:
 
 ByteOrder, Charset, CharsetEXIF, CharsetFileName, CharsetIPTC, Compact,
-Compress, FixBase, IgnoreMinorErrors, Password, PNGEarlyXMP,
-QuickTimeHandler, Verbose, WriteMode and XMPShorthand.
+Compress, FixBase, IgnoreMinorErrors, Password, QuickTimeHandler, Verbose
+and WriteMode.
 
 =head2 GetTagList
 
@@ -1455,9 +1468,9 @@ hash reference or a serialized string (see the last two examples above).
 =item AddValue
 
 Specifies that the value be added to an existing list in a file rather than
-overwriting.  Valid settings are 0 (overwrite any existing tag value), 1
-(add to an existing list and warn for non-list tags) or 2 (add to existing
-list and overwrite non-list tags).  Default is 0.
+overwriting the existing values.  Valid settings are 0 (overwrite any
+existing tag value), 1 (add to an existing list and warn for non-list tags)
+or 2 (add to existing list and overwrite non-list tags).  Default is 0.
 
 =item DelValue
 
@@ -1519,8 +1532,8 @@ Flag to replace the previous new values for this tag (ie. replace the values
 set in previous calls to L</SetNewValue>).  This option is most commonly
 used to replace previously-set new values for list-type tags.  Valid values
 are 0 (set new value normally -- adds to new values for list-type tags), 1
-(reset previous new values for this tag and replace with the specified new
-value) or 2 (reset previous new values only).
+(reset any previous new values before setting new value) or 2 (reset
+previous new values only; new value argument is ignored).  Default is 0.
 
 =item Shift
 
@@ -2003,6 +2016,8 @@ The group family numbers are currently available:
     2) Category                 (eg. Author, Time)
     3) Document Number          (eg. Main, Doc1, Doc3-2)
     4) Instance Number          (eg. Copy1, Copy2, Copy3...)
+    5) Metadata Path            (eg. JPEG-APP1-IFD0-ExifIFD)
+    6) EXIF/TIFF Format         (eg. int8u, int32u, undef, string)
 
 Families 0 and 1 are based on the file structure, and are similar except
 that family 1 is more specific and sub-divides some groups to give more
@@ -2037,6 +2052,14 @@ tag extracted when the Duplicates option is disabled and no group is
 specified) has no family 4 group name, but additional instances have have
 family 4 group names of 'Copy1', 'Copy2', 'Copy3', etc.  For convenience,
 the primary tag may also be accessed using a group name of 'Copy0'.
+
+Family 5 is experimental, and gives the complete path for the metadata in
+the file.  Generated only if the L</SavePath> option is used when
+extracting.
+
+Family 6 is currently used only for EXIF/TIFF metadata, and gives the format
+type of the extracted value.  Generated only if the L</SaveFormat> option is
+used when extracting.
 
 See L</GetAllGroups [static]> for complete lists of group names.
 
@@ -2270,6 +2293,15 @@ Doc#, Main
 =item Family 4 (Instance Number):
 
 Copy#
+
+=item Family 5 (Metadata Path):
+
+eg. JPEG-APP1-IFD0-ExifIFD
+
+=item Family 6 (EXIF/TIFF Format):
+
+int8u, string, int16u, int32u, rational64u, int8s, undef, int16s, int32s,
+rational64s, float, double, ifd, unicode, complex, int64u, int64s, ifd64
 
 =back
 

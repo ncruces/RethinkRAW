@@ -12,7 +12,7 @@ use strict;
 use vars qw($VERSION);
 use Image::ExifTool::Exif;
 
-$VERSION = '1.50';
+$VERSION = '1.51';
 
 my %coordConv = (
     ValueConv    => 'Image::ExifTool::GPS::ToDegrees($val)',
@@ -96,13 +96,13 @@ my %coordConv = (
         Name => 'GPSAltitudeRef',
         Writable => 'int8u',
         Notes => q{
-            ExifTool will also accept a signed number when writing this tag, beginning
-            with "+" for above sea level, or "-" for below
+            ExifTool will also accept number when writing this tag, with negative
+            numbers indicating below sea level
         },
         PrintConv => {
             OTHER => sub {
                 my ($val, $inv) = @_;
-                return undef unless $inv and $val =~ /^([-+])/;
+                return undef unless $inv and $val =~ /^([-+0-9])/;
                 return($1 eq '-' ? 1 : 0);
             },
             0 => 'Above Sea Level',
@@ -534,6 +534,7 @@ sub ToDMS($$;$$)
 sub ToDegrees($;$)
 {
     my ($val, $doSign) = @_;
+    return '' if $val =~ /\b(inf|undef)\b/; # ignore invalid values
     # extract decimal or floating point values out of any other garbage
     my ($d, $m, $s) = ($val =~ /((?:[+-]?)(?=\d|\.\d)\d*(?:\.\d*)?(?:[Ee][+-]\d+)?)/g);
     return '' unless defined $d;

@@ -42,6 +42,7 @@
 #              29) http://www.libtiff.org
 #              30) http://geotiff.maptools.org/spec/geotiffhome.html
 #              31) https://android.googlesource.com/platform/external/dng_sdk/+/refs/heads/master/source/dng_tag_codes.h
+#              32) Jeffry Friedl private communication
 #              IB) Iliah Borg private communication (LibRaw)
 #              JD) Jens Duttke private communication
 #------------------------------------------------------------------------------
@@ -55,7 +56,7 @@ use vars qw($VERSION $AUTOLOAD @formatSize @formatName %formatNumber %intFormat
 use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::MakerNotes;
 
-$VERSION = '4.16';
+$VERSION = '4.24';
 
 sub ProcessExif($$$);
 sub WriteExif($$$);
@@ -530,7 +531,7 @@ my %sampleFormat = (
             # (APP1 IFD2 is for Leica JPEG preview)
             Condition => q[
                 not ($$self{TIFF_TYPE} eq 'CR2' and $$self{DIR_NAME} eq 'IFD0') and
-                not ($$self{TIFF_TYPE} eq 'DNG' and $$self{Compression} eq '7' and $$self{SubfileType} ne '0') and
+                not ($$self{TIFF_TYPE} =~ /^(DNG|TIFF)$/ and $$self{Compression} eq '7' and $$self{SubfileType} ne '0') and
                 not ($$self{TIFF_TYPE} eq 'APP1' and $$self{DIR_NAME} eq 'IFD2')
             ],
             Name => 'StripOffsets',
@@ -616,7 +617,7 @@ my %sampleFormat = (
             # (APP1 IFD2 is for Leica JPEG preview)
             Condition => q[
                 not ($$self{TIFF_TYPE} eq 'CR2' and $$self{DIR_NAME} eq 'IFD0') and
-                not ($$self{TIFF_TYPE} eq 'DNG' and $$self{Compression} eq '7' and $$self{SubfileType} ne '0') and
+                not ($$self{TIFF_TYPE} =~ /^(DNG|TIFF)$/ and $$self{Compression} eq '7' and $$self{SubfileType} ne '0') and
                 not ($$self{TIFF_TYPE} eq 'APP1' and $$self{DIR_NAME} eq 'IFD2')
             ],
             Name => 'StripByteCounts',
@@ -1809,14 +1810,14 @@ my %sampleFormat = (
     0x87af => { #30
         Name => 'GeoTiffDirectory',
         Format => 'undef',
-        Binary => 1,
+        Writable => 'int16u',
         Notes => q{
             these "GeoTiff" tags may read and written as a block, but they aren't
             extracted unless specifically requested.  Byte order changes are handled
             automatically when copying between TIFF images with different byte order
         },
-        Writable => 'undef',
         WriteGroup => 'IFD0',
+        Binary => 1,
         RawConv => '$val . GetByteOrder()', # save byte order
         # swap byte order if necessary
         RawConvInv => q{
@@ -1831,9 +1832,9 @@ my %sampleFormat = (
     0x87b0 => { #30
         Name => 'GeoTiffDoubleParams',
         Format => 'undef',
-        Binary => 1,
-        Writable => 'undef',
+        Writable => 'double',
         WriteGroup => 'IFD0',
+        Binary => 1,
         RawConv => '$val . GetByteOrder()', # save byte order
         # swap byte order if necessary
         RawConvInv => q{
@@ -1848,6 +1849,7 @@ my %sampleFormat = (
     },
     0x87b1 => { #30
         Name => 'GeoTiffAsciiParams',
+        Format => 'undef',
         Writable => 'string',
         WriteGroup => 'IFD0',
         Binary => 1,
@@ -1975,7 +1977,8 @@ my %sampleFormat = (
         Writable => 'undef',
         Mandatory => 1,
         RawConv => '$val=~s/\0+$//; $val',  # (some idiots add null terminators)
-        PrintConvInv => '$val=~tr/.//d; $val=~/^\d{4}$/ ? $val : undef',
+        # (allow strings like "2.31" when writing)
+        PrintConvInv => '$val=~tr/.//d; $val=~/^\d{4}$/ ? $val : $val =~ /^\d{3}$/ ? "0$val" : undef',
     },
     0x9003 => {
         Name => 'DateTimeOriginal',
@@ -2551,11 +2554,11 @@ my %sampleFormat = (
         PrintConv => {
             0 => 'Normal',
             1 => 'Custom',
-            # 2 - also seen (Apple iOS)
-            3 => 'HDR',      # non-standard (Apple iOS)
-            # 4 - also seen (Apple iOS) - normal image from iOS Camera app (ref http://regex.info/blog/lightroom-goodies/metadata-presets)
+            2 => 'HDR (no original saved)', #32 non-standard (Apple iOS)
+            3 => 'HDR (original saved)',    #32 non-standard (Apple iOS)
+            4 => 'Original (for HDR)',      #32 non-standard (Apple iOS)
             6 => 'Panorama', # non-standard (Apple iOS, horizontal or vertical)
-            # 7 - also seen (Apple iOS)
+            7 => 'Portrait HDR',            #32 non-standard (Apple iOS)
             8 => 'Portrait', # non-standard (Apple iOS, blurred background)
             # 9 - also seen (Apple iOS) (HDR Portrait?)
         },
@@ -2699,6 +2702,75 @@ my %sampleFormat = (
     0xa433 => { Name => 'LensMake',         Writable => 'string' }, #24
     0xa434 => { Name => 'LensModel',        Writable => 'string' }, #24
     0xa435 => { Name => 'LensSerialNumber', Writable => 'string' }, #24
+    0xa460 => { #Exif2.32
+        Name => 'CompositeImage',
+        Writable => 'int16u',
+        PrintConv => {
+            0 => 'Unknown',
+            1 => 'Not a Composite Image',
+            2 => 'General Composite Image',
+            3 => 'Composite Image Captured While Shooting',
+        },
+    },
+    0xa461 => { #Exif2.32
+        Name => 'CompositeImageCount',
+        Notes => q{
+            2 values: 1. Number of source images, 2. Number of images used.  Called
+            SourceImageNumberOfCompositeImage by the EXIF spec.
+        },
+        Writable => 'int16u',
+        Count => 2,
+    },
+    0xa462 => { #Exif2.32
+        Name => 'CompositeImageExposureTimes',
+        Notes => q{
+            11 or more values: 1. Total exposure time period, 2. Total exposure of all
+            source images, 3. Total exposure of all used images, 4. Max exposure time of
+            source images, 5. Max exposure time of used images, 6. Min exposure time of
+            source images, 7. Min exposure of used images, 8. Number of sequences, 9.
+            Number of source images in sequence. 10-N. Exposure times of each source
+            image. Called SourceExposureTimesOfCompositeImage by the EXIF spec.
+        },
+        Writable => 'undef',
+        RawConv => sub {
+            my $val = shift;
+            my @v;
+            my $i = 0;
+            for (;;) {
+                if ($i == 56 or $i == 58) {
+                    last if $i + 2 > length $val;
+                    push @v, Get16u(\$val, $i);
+                    $i += 2;
+                } else {
+                    last if $i + 8 > length $val;
+                    push @v, Image::ExifTool::GetRational64u(\$val, $i);
+                    $i += 8;
+                }
+            }
+            return join ' ', @v;
+        },
+        RawConvInv => sub {
+            my $val = shift;
+            my @v = split ' ', $val;
+            my $i;
+            for ($i=0; ; ++$i) {
+                last unless defined $v[$i];
+                $v[$i] = ($i == 7 or $i == 8) ? Set16u($v[$i]) : Image::ExifTool::SetRational64u($v[$i]);
+            }
+            return join '', @v;
+        },
+        PrintConv => sub {
+            my $val = shift;
+            my @v = split ' ', $val;
+            my $i;
+            for ($i=0; ; ++$i) {
+                last unless defined $v[$i];
+                $v[$i] = PrintExposureTime($v[$i]) unless $i == 7 or $i == 8;
+            }
+            return join ' ', @v;
+        },
+        PrintConvInv => '$val',
+    },
     0xa480 => { Name => 'GDALMetadata',     Writable => 'string', WriteGroup => 'IFD0' }, #3
     0xa481 => { Name => 'GDALNoData',       Writable => 'string', WriteGroup => 'IFD0' }, #3
     0xa500 => { Name => 'Gamma',            Writable => 'rational64u' },
@@ -2708,6 +2780,7 @@ my %sampleFormat = (
     0xafc3 => 'ExpandFilterLens', #JD (Opanda)
     0xafc4 => 'ExpandScanner', #JD (Opanda)
     0xafc5 => 'ExpandFlashLamp', #JD (Opanda)
+    0xb4c3 => { Name => 'HasselbladRawImage', Format => 'undef', Binary => 1 }, #IB
 #
 # Windows Media Photo / HD Photo (WDP/HDP) tags
 #
@@ -2869,6 +2942,16 @@ my %sampleFormat = (
             TagTable => 'Image::ExifTool::PrintIM::Main',
         },
         PrintConvInv => '$val =~ /^PrintIM/ ? $val : undef',    # quick validation
+    },
+    0xc51b => { # (Hasselblad H3D)
+        Name => 'HasselbladExif',
+        Format => 'undef',
+        RawConv => q{
+            $$self{DOC_NUM} = ++$$self{DOC_COUNT};
+            $self->ExtractInfo(\$val, { ReEntry => 1 });
+            $$self{DOC_NUM} = 0;
+            return undef;
+        },
     },
     0xc573 => { #PH
         Name => 'OriginalFileName',
@@ -5082,7 +5165,7 @@ sub MatchLensModel($$)
         # filter by aperture
         if (@$try > 1 and $lensModel =~ m{(?:F/?|1:)(\d+(\.\d+)?)}i) {
             my $fnum = $1;
-            @filt = grep m{(F/?|1:)$fnum\b}i, @$try;
+            @filt = grep m{(F/?|1:)$fnum(\b|[A-Z])}i, @$try;
             @$try = @filt if @filt and @filt < @$try;
         }
         # filter by model version, and other lens parameters
@@ -5101,6 +5184,7 @@ sub MatchLensModel($$)
 #         3) LensSpec print value, 4) LensType numerical value, 5) FocalLength,
 #         6) MaxAperture, 7) MaxApertureValue, 8) MinFocalLength, 9) MaxFocalLength,
 #         10) LensModel, 11) LensFocalRange, 12) LensSpec
+my %sonyEtype;
 sub PrintLensID($$@)
 {
     my ($et, $lensTypePrt, $printConv, $lensSpecPrt, $lensType, $focalLength,
@@ -5135,12 +5219,27 @@ sub PrintLensID($$@)
         ($shortFocal, $longFocal) = ($1, $2 || $1);
     }
     if ($$et{Make} eq 'SONY') {
-        # Patch for Metabones or other adapters on Sony E-mount cameras (ref Jos Roost)
-        # Metabones Canon EF to E-mount adapters add 0xef00, 0xbc00 or 0x7700 to the
-        # high byte for 2-byte Canon LensType values, so we need to adjust for these.
-        # Offset 0xef00 is also used by Sigma MC-11, Fotodiox and Viltrox EF-E adapters.
-        # Have to exclude A-mount Sigma Filtermatic with 'odd' LensType=0xff00.
-        if ($lensType != 0xffff and $lensType != 0xff00) {
+        if ($lensType eq 65535) {
+            # handle Sony E-type lenses when LensType2 isn't valid (NEX/ILCE models only)
+            if ($$et{Model} =~ /NEX|ILCE/) {
+                unless (%sonyEtype) {
+                    my ($index, $i, %did, $lens);
+                    require Image::ExifTool::Sony;
+                    foreach (sort keys %Image::ExifTool::Sony::sonyLensTypes2) {
+                        ($lens = $Image::ExifTool::Sony::sonyLensTypes2{$_}) =~ s/ or .*//;
+                        next if $did{$lens};
+                        ($i, $index) = $index ? ("65535.$index", $index + 1) : (65535, 1);
+                        $did{$sonyEtype{$i} = $lens} = 1;
+                    }
+                }
+                $printConv = \%sonyEtype;
+            }
+        } elsif ($lensType != 0xff00) {
+            # Patch for Metabones or other adapters on Sony E-mount cameras (ref Jos Roost)
+            # Metabones Canon EF to E-mount adapters add 0xef00, 0xbc00 or 0x7700 to the
+            # high byte for 2-byte Canon LensType values, so we need to adjust for these.
+            # Offset 0xef00 is also used by Sigma MC-11, Fotodiox and Viltrox EF-E adapters.
+            # Have to exclude A-mount Sigma Filtermatic with 'odd' LensType=0xff00.
             require Image::ExifTool::Minolta;
             if ($Image::ExifTool::Minolta::metabonesID{$lensType & 0xff00}) {
                 $lensType -= ($lensType >= 0xef00 ? 0xef00 : $lensType >= 0xbc00 ? 0xbc00 : 0x7700);
@@ -5157,7 +5256,8 @@ sub PrintLensID($$@)
                 $lensTypePrt = $$printConv{$lensType} if $$printConv{$lensType};
             }
         }
-    } elsif ($shortFocal and $longFocal) {
+    # (Min/MaxFocalLength may report the current focal length for Tamron zoom lenses)
+    } elsif ($shortFocal and $longFocal and (not $lensModel or $lensModel !~ /^TAMRON.*-\d+mm/)) {
         # Canon (and some other makes) include makernote information
         # which allows better lens identification
         require Image::ExifTool::Canon;
@@ -5193,7 +5293,7 @@ sub PrintLensID($$@)
             # excluding any part between () at the end, and preceded by a space (the space
             # ensures that e.g. Zeiss Loxia 21mm having LensSpec "E 21mm F2.8" will not be
             # identified as "Sony FE 21mm F2.8 (SEL28F20 + SEL075UWC)")
-            $lensSpecPrt and $lens =~ / \Q$lensSpecPrt\E( \(|$)/ and @best = ( $lens ), last;
+            $lensSpecPrt and $lens =~ / \Q$lensSpecPrt\E( \(| GM$|$)/ and @best = ( $lens ), last;
             # exactly-matching Sony lens should have been found above, so only add non-Sony lenses
             push @best, $lens unless $lens =~ /^Sony /;
             next;

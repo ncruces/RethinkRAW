@@ -31,14 +31,17 @@ use Image::ExifTool::IPTC;
 use Image::ExifTool::XMP;
 use Image::ExifTool::Canon;
 use Image::ExifTool::Nikon;
+use Image::ExifTool::Sony;
 use Image::ExifTool::Validate;
 use Image::ExifTool::MacOS;
 
-$VERSION = '3.23';
+$VERSION = '3.30';
 @ISA = qw(Exporter);
 
 sub NumbersFirst($$);
 sub SortedTagTablekeys($);
+
+my $createDate = 'Feb 15, 2005';
 
 # global variables to control sorting order of table entries
 my $numbersFirst = 1;   # set to -1 to sort numbers last, or 2 to put negative numbers last
@@ -67,7 +70,8 @@ my %tweakOrder = (
     Composite => 'Extra',
     GeoTiff => 'GPS',
     CanonVRD=> 'CanonCustom',
-    FLIR    => 'Casio',
+    DJI     => 'Casio',
+    FLIR    => 'DJI',
     FujiFilm => 'FLIR',
     Kodak   => 'JVC',
     Leaf    => 'Kodak',
@@ -167,7 +171,9 @@ is the identifier that is actually stored in the file.  B<Index#> refers to
 the offset of a value when found at a fixed position within a data block
 (B<#> is the multiplier for calculating a byte offset: B<1>, B<2>, B<4> or
 B<8>).  These offsets may have a decimal part which is used only to
-differentiate tags with values stored at the same position.  B<Sequence>
+differentiate tags with values stored at the same position.  (Note that
+writable tags within binary data blocks are not individually deletable,
+and the usual alternative is to set them to a value of zero.)  B<Sequence>
 gives the order of values for a serial data stream.
 
 A B<Tag Name> is the handle by which the information is accessed in
@@ -184,11 +190,11 @@ instead of the descriptions, use C<exiftool -s>.
 The B<Writable> column indicates whether the tag is writable by ExifTool.
 Anything but a C<no> in this column means the tag is writable.  A C<yes>
 indicates writable information that is either unformatted or written using
-the existing format.  Other expressions give details about the information
-format, and vary depending on the general type of information.  The format
-name may be followed by a number in square brackets to indicate the number
-of values written, or the number of characters in a fixed-length string
-(including a null terminator which is added if required).
+the existing format.  Other expressions give details about the format of the
+stored value, and vary depending on the general type of information.  The
+format name may be followed by a number in square brackets to indicate the
+number of values written, or the number of characters in a fixed-length
+string (including a null terminator which is added if required).
 
 A plus sign (C<+>) after an entry in the B<Writable> column indicates a
 I<List> tag which supports multiple values and allows individual values to
@@ -207,12 +213,13 @@ writable directly, but is written automatically by ExifTool (often when a
 corresponding L<Composite|Image::ExifTool::TagNames/Composite Tags> or
 L<Extra|Image::ExifTool::TagNames/Extra Tags> tag is written). A colon
 (C<:>) indicates a I<Mandatory> tag which may be added automatically when
-writing.
+writing.  Normally MakerNotes tags may not be deleted individually, but a
+caret (C<^>) indicates a I<Deletable> MakerNotes tag.
 
 The HTML version of these tables also lists possible B<Values> for
 discrete-valued tags, as well as B<Notes> for some tags.  The B<Values> are
-listed as the computer-readable and human-readable values on the left and
-right hand side of an equals sign (C<=>) respectively.  The human-readable
+listed with the computer-readable values on the left of the equals sign
+(C<=>), and the human-readable values on the right.  The human-readable
 values are used by default when reading and writing, but the
 computer-readable values may be accessed by disabling the value conversion
 with the -n option on the command line, by setting the L<PrintConv|../ExifTool.html#PrintConv> option to 0
@@ -253,11 +260,11 @@ tags remain.
 
 The table below lists all EXIF tags.  Also listed are TIFF, DNG, HDP and
 other tags which are not part of the EXIF specification, but may co-exist
-with EXIF tags in some images.  Tags which are part of the EXIF 2.31
+with EXIF tags in some images.  Tags which are part of the EXIF 2.32
 specification have an underlined B<Tag Name> in the HTML version of this
 documentation.  See
-L<http://www.cipa.jp/std/documents/e/DC-008-Translation-2016-E.pdf> for the
-official EXIF 2.31 specification.
+L<http://www.cipa.jp/std/documents/e/DC-008-Translation-2019-E.pdf> for the
+official EXIF 2.32 specification.
 },
     GPS => q{
 These GPS tags are part of the EXIF standard, and are stored in a separate
@@ -819,7 +826,8 @@ sub new
         $hexID = $$vars{HEX_ID};
         my $processBinaryData = ($$table{PROCESS_PROC} and (
             $$table{PROCESS_PROC} eq \&Image::ExifTool::ProcessBinaryData or
-            $$table{PROCESS_PROC} eq \&Image::ExifTool::Nikon::ProcessNikonEncrypted));
+            $$table{PROCESS_PROC} eq \&Image::ExifTool::Nikon::ProcessNikonEncrypted or
+            $$table{PROCESS_PROC} eq \&Image::ExifTool::Sony::ProcessEnciphered));
         if ($$vars{ID_LABEL} or $processBinaryData) {
             my $s = $$table{FORMAT} ? Image::ExifTool::FormatSize($$table{FORMAT}) || 1 : 1;
             $binaryTable = 1;
@@ -956,6 +964,11 @@ TagID:  foreach $tagID (@keys) {
                 } elsif ($name =~ /DateTime(?!Stamp)/ and (not $$tagInfo{Groups}{2} or
                     $$tagInfo{Groups}{2} ne 'Time') and $short ne 'DICOM') {
                     warn "$short $name should be in 'Time' group!\n";
+                }
+                if ($name eq 'DateTimeOriginal' and (not $$tagInfo{Description} or
+                    $$tagInfo{Description} ne 'Date/Time Original'))
+                {
+                    warn "Need Description for $short DateTimeOriginal\n";
                 }
                 # validate Description (can't contain special characters)
                 if ($$tagInfo{Description} and
@@ -1253,6 +1266,11 @@ TagID:  foreach $tagID (@keys) {
                     $writable = '-' . ($tw ? $writable : '');
                     $writable .= '!' if $tw and ($$tagInfo{Protected} || 0) & 0x01;
                     $writable .= '+' if $$tagInfo{List};
+                    if (defined $$tagInfo{Permanent}) {
+                        $writable .= '^' unless $$tagInfo{Permanent};
+                    } elsif (defined $$table{PERMANENT}) {
+                        $writable .= '^' unless $$table{PERMANENT};
+                    }
                 } else {
                     # not writable if we can't do the inverse conversions
                     my $noPrintConvInv;
@@ -1300,6 +1318,11 @@ TagID:  foreach $tagID (@keys) {
                     $writable .= '_' if defined $$tagInfo{Flat};
                     $writable .= '+' if $$tagInfo{List};
                     $writable .= ':' if $$tagInfo{Mandatory};
+                    if (defined $$tagInfo{Permanent}) {
+                        $writable .= '^' unless $$tagInfo{Permanent};
+                    } elsif (defined $$table{PERMANENT}) {
+                        $writable .= '^' unless $$table{PERMANENT};
+                    }
                     # separate tables link like subdirectories (flagged with leading '-')
                     $writable = "-$writable" if $subdir;
                 }
@@ -1423,11 +1446,13 @@ TagID:  foreach $tagID (@keys) {
                 if ($$table{$var}) {
                     foreach $tagID (@{$$table{$var}}) {
                         $$hash{$tagID} and delete($$hash{$tagID}), next;
-                        warn "Warning: Extra $var for $short tag $tagID\n";
+                        warn sprintf("Warning: Extra %s for %s tag %d (0x%.4x)\n",
+                                     $var, $short, $tagID, $tagID);
                     }
                 }
                 foreach $tagID (sort keys %$hash) {
-                    warn "Warning: Missing $var for $short $$hash{$tagID}\n";
+                    warn sprintf("Warning: Missing %s for %s %s, tag %d (0x%.4x)\n",
+                                 $var, $short, $$hash{$tagID}, $tagID, $tagID);
                 }
             }
         }
@@ -1953,6 +1978,7 @@ sub CloseHtmlFiles($)
         # write the trailers
         print HTMLFILE "<hr>\n";
         print HTMLFILE "(This document generated automatically by Image::ExifTool::BuildTagLookup)\n";
+        print HTMLFILE "<br><i>Created $createDate</i>\n" if $htmlFile eq 'html/TagNames/index.html';
         print HTMLFILE "<br><i>Last revised $fileDate</i>\n";
         print HTMLFILE "<p class=lf><a href=";
         if ($htmlFile =~ /index\.html$/) {
@@ -2499,10 +2525,11 @@ sub WriteTagNames($$)
                 '!' => 'Unsafe',
                 '*' => 'Protected',
                 ':' => 'Mandatory',
+                '^' => 'Deletable',
             );
             my ($wstr, %hasAttr, @hasAttr);
             foreach $wstr (@$writable) {
-                next unless $wstr =~ m{([+/~!*:_]+)$};
+                next unless $wstr =~ m{([+/~!*:_^]+)$};
                 my @a = split //, $1;
                 foreach (@a) {
                     next if $hasAttr{$_};
@@ -2533,6 +2560,7 @@ sub WriteTagNames($$)
                     my ($smallNote, @values);
                     foreach (@$values) {
                         if (/^\(/) {
+                            $_ = Doc2Html($_);
                             # set the note font
                             $smallNote = 1 if $numTags < 2;
                             push @values, ($smallNote ? $noteFontSmall : $noteFont) . "$_</span>";
@@ -2543,6 +2571,7 @@ sub WriteTagNames($$)
                             if (s/^\[!HTML\]//) {
                                 push @values, $_;
                             } else {
+                                $_ = Doc2Html($_);
                                 push @values, "<span class=s>$_</span>";
                             }
                             next;
