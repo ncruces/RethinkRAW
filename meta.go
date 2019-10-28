@@ -22,7 +22,7 @@ func setupExifTool() *exiftool.Server {
 }
 
 func getMeta(path string) ([]byte, error) {
-	log.Print("exiftool (get meta)...", path)
+	log.Print("exiftool (get meta)...")
 	return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-htmlFormat", "-groupHeadings", "-long", path)
 	//return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-json", "-groupHeadings", "-long", path)
 }

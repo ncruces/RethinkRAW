@@ -45,7 +45,7 @@ img#photo:after {
     text-align: center;
     background-color: #fff;
     content: 'Preview failed to load.';
-  }
+}
 
 form#settings {
     font-size: small;
@@ -103,6 +103,10 @@ dialog#meta-dialog {
     font-size: small;
     max-width: 50rem;
     max-height: 30rem;
+}
+
+dialog#meta-dialog td {
+    min-width: 25ch;
 }
 
 dialog#progress-dialog {

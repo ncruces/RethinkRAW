@@ -7,9 +7,10 @@ import (
 	"net/http"
 )
 
-//go:generate memfsgen -tag memfs -pkg main assets assets_gen.go
+//go:generate memfsgen -tag memfs -pkg main -minify assets assets_gen.go
 
-var assetHandler = http.FileServer(http.Dir("assets"))
+var assets = http.Dir("assets")
+var assetHandler = http.FileServer(assets)
 
 func assetTemplates() *template.Template {
 	return template.Must(template.ParseGlob("assets/*.gohtml"))

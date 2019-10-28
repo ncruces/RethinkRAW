@@ -30,7 +30,7 @@
 
 <body>
     <div id=box>
-        <form id=menu>
+        <div id=menu>
             <div class="toolbar">
                 <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
                 <span>{{.Title}}</span>
@@ -38,7 +38,7 @@
             {{- range .Dirs}}
             <a href="/gallery/{{.Path}}"><button type=button>{{.Name}}</button></a>
             {{- end}}
-        </form>
+        </div>
     </div>
     <div id=gallery>
         {{- range .Photos}}
