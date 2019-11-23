@@ -66,8 +66,8 @@ func main() {
 	}
 
 	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
 	handleConsoleCtrl(sigs)
-	signal.Notify(sigs)
 
 	if chrome != "" {
 		cmd := setupChrome(chrome, url.String())

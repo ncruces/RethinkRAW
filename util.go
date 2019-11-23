@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -145,4 +146,40 @@ func lnkyFile(src, dst string) error {
 		return copyFile(src, dst)
 	}
 	return err
+}
+
+func setupDirs() (err error) {
+	if exe, err := os.Executable(); err != nil {
+		return err
+	} else {
+		baseDir = filepath.Dir(exe)
+	}
+
+	dataDir = filepath.Join(baseDir, "data")
+	tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
+
+	tempDir, err = getANSIPath(tempDir)
+	if err != nil {
+		return
+	}
+
+	testDir := func() error {
+		if err := os.MkdirAll(dataDir, 0700); err != nil {
+			return err
+		}
+		if f, err := os.Create(filepath.Join(dataDir, "lastrun")); err != nil {
+			return err
+		} else {
+			return f.Close()
+		}
+	}
+	if testDir() == nil {
+		return
+	}
+	if data, err := os.UserConfigDir(); err != nil {
+		return err
+	} else {
+		dataDir = filepath.Join(data, "RethinkRAW")
+	}
+	return testDir()
 }

@@ -15,47 +15,6 @@ import (
 
 //go:generate goversioninfo -64 -icon=assets/favicon.ico -manifest=win.manifest
 
-func setupDirs() (err error) {
-	if exe, err := os.Executable(); err != nil {
-		return err
-	} else {
-		baseDir = filepath.Dir(exe)
-	}
-
-	baseDir, err = getANSIPath(baseDir)
-	if err != nil {
-		return
-	}
-
-	tempDir, err = getANSIPath(filepath.Join(os.TempDir(), "RethinkRAW"))
-	if err != nil {
-		return
-	}
-
-	dataDir, err = getANSIPath(filepath.Join(os.Getenv("APPDATA"), "RethinkRAW"))
-	if err != nil {
-		return
-	}
-
-	data := filepath.Join(baseDir, "data")
-	if err = testDataDir(data); err == nil {
-		dataDir = data
-		return nil
-	}
-	return testDataDir(dataDir)
-}
-
-func testDataDir(dir string) error {
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return err
-	}
-	if f, err := os.Create(filepath.Join(dir, "lastrun")); err != nil {
-		return err
-	} else {
-		return f.Close()
-	}
-}
-
 func findChrome() string {
 	versions := []string{`Google\Chrome`, `Google\Chrome SxS`, "Chromium"}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//go:generate memfsgen -tag memfs -pkg main -minify assets assets_gen.go
+//go:generate go run github.com/ncruces/go-fs/memfsgen -minify -mimetype gohtml:text/html -tag memfs -pkg main assets assets_gen.go
 
 var assets = http.Dir("assets")
 var assetHandler = http.FileServer(assets)
