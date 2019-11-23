@@ -126,16 +126,20 @@ func editXMP(path string, xmp *xmpSettings) (err error) {
 		}
 	}
 
-	// orientation, process, grayscale
-	opts = append(opts,
-		"-Orientation="+strconv.Itoa(xmp.Orientation),
-		"-XMP-crs:ProcessVersion="+fmt.Sprintf("%.1f", xmp.Process),
-		"-XMP-crs:ConvertToGrayscale="+strconv.FormatBool(xmp.Grayscale))
-
+	// orientation
+	if xmp.Orientation != 0 {
+		opts = append(opts, "-Orientation="+strconv.Itoa(xmp.Orientation))
+	}
+	// process
+	if xmp.Process != 0 {
+		opts = append(opts, "-XMP-crs:ProcessVersion="+fmt.Sprintf("%.1f", xmp.Process))
+	}
 	// profile
 	if xmp.Profile != "" {
 		opts = append(opts, "-XMP-crs:CameraProfile="+xmp.Profile)
 	}
+	// grayscale
+	opts = append(opts, "-XMP-crs:ConvertToGrayscale="+strconv.FormatBool(xmp.Grayscale))
 
 	// white balance
 	opts = append(opts, "-XMP-crs:WhiteBalance="+xmp.WhiteBalance)
@@ -162,7 +166,15 @@ func editXMP(path string, xmp *xmpSettings) (err error) {
 			"-XMP-crs:Exposure=",
 			"-XMP-crs:Contrast=",
 			"-XMP-crs:Shadows=",
-			"-XMP-crs:Brightness=")
+			"-XMP-crs:Brightness=",
+			"-XMP-crs:Exposure2012=",
+			"-XMP-crs:Contrast2012=",
+			"-XMP-crs:Highlights2012=",
+			"-XMP-crs:Shadows2012=",
+			"-XMP-crs:Whites2012=",
+			"-XMP-crs:Blacks2012=",
+			"-XMP-crs:Vibrance=",
+			"-XMP-crs:Saturation=")
 	} else {
 		opts = append(opts,
 			"-XMP-crs:AutoTone=",
@@ -179,15 +191,15 @@ func editXMP(path string, xmp *xmpSettings) (err error) {
 			"-XMP-crs:Highlights2012="+strconv.Itoa(xmp.Highlights),
 			"-XMP-crs:Shadows2012="+strconv.Itoa(xmp.Shadows),
 			"-XMP-crs:Whites2012="+strconv.Itoa(xmp.Whites),
-			"-XMP-crs:Blacks2012="+strconv.Itoa(xmp.Blacks))
+			"-XMP-crs:Blacks2012="+strconv.Itoa(xmp.Blacks),
+			"-XMP-crs:Vibrance="+strconv.Itoa(xmp.Vibrance),
+			"-XMP-crs:Saturation="+strconv.Itoa(xmp.Saturation))
 	}
 
 	// presence
 	opts = append(opts,
 		"-XMP-crs:Clarity="+strconv.Itoa(xmp.oldClarity()),
 		"-XMP-crs:Dehaze="+strconv.Itoa(xmp.Dehaze),
-		"-XMP-crs:Vibrance="+strconv.Itoa(xmp.Vibrance),
-		"-XMP-crs:Saturation="+strconv.Itoa(xmp.Saturation),
 		"-XMP-crs:Clarity2012="+strconv.Itoa(xmp.Clarity))
 
 	// detail

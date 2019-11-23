@@ -116,7 +116,7 @@ var openMulti OpenMulti
 
 type OpenMulti struct {
 	lock  sync.Mutex
-	queue [4]struct {
+	queue [16]struct {
 		id    string
 		paths []string
 	}

@@ -16,11 +16,11 @@ if ("IntersectionObserver" in window) {
 
     for (let img of images) {
         observer.observe(img);
-    };    
+    };
 } else {
     for (let img of images) {
         img.src = img.dataset.src;
-    };    
+    };
 }
 
 }()

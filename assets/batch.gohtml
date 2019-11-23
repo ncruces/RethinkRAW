@@ -7,42 +7,42 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="/batch.css">
+    <link rel="stylesheet" href="/raw-editor.css">
+    <link rel="stylesheet" href="/dialog-polyfill.css">
     <link rel="preload" as="style" href="/fontawesome.css">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/webfonts/fa-solid-900.woff2">
-    <script src="/main.js" async></script>
+    <script src="/dialog-polyfill.js" defer></script>
+    <script src="/raw-editor.js" defer></script>
     <script src="/gallery.js" defer></script>
-
-    <style>
-        body {
-            margin-top: 0;
-        }
-        #box {
-            position: -webkit-sticky;
-            position: sticky;
-            top: 0;
-            background: white;
-            padding-top: 8px;
-            padding-bottom: 2px;
-            margin-bottom: -2px;
-        }
-    </style>
+    <script>const template = {{.}}</script>
+    <script src="/main.js" async></script>
 </head>
 
 <body>
-    <div id=box>
-        <form id=menu>
-            <div class="toolbar">
-                <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+    <div id=box1>
+        <div id=menu-sticker>
+            <div id=menu>
+                <div class="toolbar">
+                    <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                    <button type=button title="S̲ave" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fas fa-save"></i></button>
+                    <button type=button title="Ex̲port JPEG (ctrl-click for options)" accesskey="x" class="ctrl-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
+                    <button type=button title="Export…" class="ctrl-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
+                </div>
             </div>
-        </form>
+        </div>
+        <div id=box2>
+            <div id=gallery>
+                {{- range .Photos}}
+                <a href="/photo/{{.Path}}"><img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
+                {{- else}}
+                <span>No RAW files here.</span>
+                {{- end}}
+            </div>
+        </div>
     </div>
-    <div id=gallery>
-        {{- range .Photos}}
-        <a href="/photo/{{.Path}}"><img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
-        {{- else}}
-        <span>No RAW files here.</span>
-        {{- end}}
-    </div>
+
+    {{- template "raw-editor.gohtml" }}
 </body>
 
 </html>

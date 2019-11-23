@@ -1,0 +1,50 @@
+form#settings {
+    font-size: small;
+    flex-shrink: 0;
+    width: 15rem;
+    overflow-y: scroll;
+}
+
+@supports (overflow: overlay) {
+    form#settings {
+        padding-right: 1rem;
+        overflow: overlay;
+    }
+}
+
+form#settings fieldset {
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+}
+
+form#settings select {
+    width: 100%;
+    margin-bottom: 0.3rem;
+}
+
+form#settings select.below {
+    margin-top: 0.3rem;
+    margin-bottom: initial;
+}
+
+form#settings output {
+    float: right;
+}
+
+form#settings input[type=range] {
+    display: block;
+    margin-top: 0;
+    width: 100%;
+}
+
+form#settings fieldset[disabled] {
+    color: #ccc;
+}
+
+form#settings div[class*=disabled] {
+    color: #ccc;
+}
+
+form#settings div[class*=disabled] output {
+    visibility: hidden;
+}

@@ -1,0 +1,219 @@
+<form id=settings>
+    <input type=hidden name=orientation>
+    <input type=hidden name=process>
+
+    <fieldset disabled>
+        <legend>Profile</legend>
+        Treatment:
+        <div style="float:right">
+            <label><input type=radio name=grayscale value="false" onchange="treatmentChange(this)"> Color</label>
+            <label><input type=radio name=grayscale value="true" onchange="treatmentChange(this)"> B&amp;W</label>
+        </div>
+        <select name=profile class="below" disabled>
+            <option hidden>
+            <option>Adobe Standard</option>
+        </select>
+    </fieldset>
+
+    <fieldset disabled>
+        <legend>White Balance</legend>
+        <select name=whiteBalance onchange="whiteBalanceChange(this)">
+            <option hidden>
+            <option>As Shot</option>
+            <option>Auto</option>
+            <option>Daylight</option>
+            <option>Cloudy</option>
+            <option>Shade</option>
+            <option>Tungsten</option>
+            <option>Fluorescent</option>
+            <option>Flash</option>
+            <option>Custom</option>
+        </select>
+        <div class="manualWB">
+            <label for=temperature>Temperature</label>
+            <output for=temperature name=temperature></output>
+            <input type=range id=temperature value="8.612503" min="7.6009026" max="10.819778" step="0.0223533"
+                oninput="temperatureInput(this);setCustomWhiteBalance()" onchange="valueChange()">
+
+            <label for=tint>Tint</label>
+            <output for=tint name=tint></output>
+            <input type=range id=tint value="0" min="-150" max="150" step="1"
+                oninput="rangeInput(this);setCustomWhiteBalance()" onchange="valueChange()">
+        </div>
+    </fieldset>
+
+    <fieldset disabled>
+        <legend>Tone</legend>
+        <select name=tone onchange="toneChange(this)">
+            <option hidden>
+            <option>Auto</option>
+            <option>Default</option>
+            <option>Custom</option>
+        </select>
+        <div class="customTone">
+            <label for=exposure>Exposure</label>
+            <output for=exposure name=exposure></output>
+            <input type=range id=exposure value="0" min="-5" max="5" step="0.05"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+
+            <label for=contrast>Contrast</label>
+            <output for=contrast name=contrast></output>
+            <input type=range id=contrast value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+
+            <label for=highlights>Highlights</label>
+            <output for=highlights name=highlights></output>
+            <input type=range id=highlights value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+
+            <label for=shadows>Shadows</label>
+            <output for=shadows name=shadows></output>
+            <input type=range id=shadows value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+
+            <label for=whites>Whites</label>
+            <output for=whites name=whites></output>
+            <input type=range id=whites value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+
+            <label for=blacks>Blacks</label>
+            <output for=blacks name=blacks></output>
+            <input type=range id=blacks value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+        </div>
+    </fieldset>
+
+    <fieldset disabled>
+        <legend>Presence</legend>
+
+        <label for=clarity>Clarity</label>
+        <output for=clarity name=clarity></output>
+        <input type=range id=clarity value="0" min="-100" max="100" step="1"
+            oninput="rangeInput(this)" onchange="valueChange()">
+
+        <label for=dehaze>Dehaze</label><output for=dehaze name=dehaze></output>
+        <input type=range id=dehaze value="0" min="-100" max="100" step="1"
+            oninput="rangeInput(this)" onchange="valueChange()">
+
+        <div class="color customTone">
+            <label for=vibrance>Vibrance</label>
+            <output for=vibrance name=vibrance></output>
+            <input type=range id=vibrance value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+
+            <label for=saturation>Saturation</label>
+            <output for=saturation name=saturation></output>
+            <input type=range id=saturation value="0" min="-100" max="100" step="1"
+                oninput="rangeInput(this);setCustomTone()" onchange="valueChange()">
+        </div>
+    </fieldset>
+
+    <fieldset disabled>
+        <legend>Detail</legend>
+
+        <label for=sharpness>Sharpness</label>
+        <output for=sharpness name=sharpness></output>
+        <input type=range id=sharpness value="40" min="0" max="150" step="1"
+            oninput="rangeInput(this)" onchange="valueChange()">
+
+        <label for=luminanceNR>Luminance noise reduction</label>
+        <output for=luminanceNR name=luminanceNR></output>
+        <input type=range id=luminanceNR value="0" min="0" max="100" step="1"
+            oninput="rangeInput(this)" onchange="valueChange()">
+
+        <label for=colorNR>Color noise reduction</label>
+        <output for=colorNR name=colorNR></output>
+        <input type=range id=colorNR value="25" min="0" max="100" step="1"
+            oninput="rangeInput(this)" onchange="valueChange()">
+    </fieldset>
+
+    <fieldset disabled>
+        <legend>Lens Corrections</legend>
+        <label><input type=checkbox name=lensProfile onchange="valueChange()"> Enable Profile Corrections</label><br>
+        <label><input type=checkbox name=autoLateralCA onchange="valueChange()"> Remove Chromatic Aberration</label>
+    </fieldset>
+</form>
+
+<dialog id=progress-dialog>
+    <br>
+    <progress></progress>
+</dialog>
+
+<dialog id=export-dialog>
+    <form id=export-form method=dialog>
+        <div>
+            <label style="grid-column: auto/span 4">Image format:</label>
+            <select style="grid-column: auto/span 2" name=format onchange="exportChange(this)">
+                <option>JPEG</option>
+                <option>DNG</option>
+            </select>
+        </div>
+        <div id=export-jpeg>
+            <label style="grid-area: 1/1/auto/span 4" for=resample>Export for web/print:</label>
+            <input style="grid-area: 1/5/auto/span 1" type=checkbox id=resample name=resample onchange="exportChange(this)">
+
+            <label style="grid-area: 2/1/auto/span 4" for=quality>Quality:</label>
+            <select style="grid-area: 2/5/auto/span 2" id=quality name=quality>
+                <option>0</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option selected>10</option>
+                <option>11</option>
+                <option>12</option>
+            </select>
+
+            <label style="grid-area: 3/1/auto/span 4" for=fit>Resize to fit:</label>
+            <select style="grid-area: 3/5/auto/span 4" id=fit name=fit onchange="exportChange(this)">
+                <option value=dims>Dimensions</option>
+                <option value=size>Width & Height</option>
+                <option value=mpix>Pixel count</option>
+            </select>
+
+            <input style="grid-area: 4/1/auto/span 2" type=number name=long placeholder="long" min="80" max="5120" onchange="exportChange(this)">
+            <input style="grid-area: 4/3/auto/span 2" type=number name=short placeholder="short" min="80" max="5120" onchange="exportChange(this)">
+            <input style="grid-area: 4/1/auto/span 2" type=number name=width placeholder="width" min="80" max="5120" onchange="exportChange(this)">
+            <input style="grid-area: 4/3/auto/span 2" type=number name=height placeholder="height" min="80" max="5120" onchange="exportChange(this)">
+            <select style="grid-area: 4/5/auto/span 4" name=dimunit onchange="exportChange(this)">
+                <option value="px">pixels</option>
+                <option value="in">inches</option>
+                <option value="cm">cm</option>
+            </select>
+
+            <input style="grid-area: 5/3/auto/span 2" type=number name=density value="300" min="72" max="600" onchange="exportChange(this)">
+            <select style="grid-area: 5/5/auto/span 4" name=denunit onchange="exportChange(this)">
+                <option value="ppi">pixels per inch</option>
+                <option value="ppc">pixels per cm</option>
+            </select>
+
+            <input style="grid-area: 6/3/auto/span 2" type=number name=mpixels value="2.0" min="1" max="20" step="0.5" onchange="exportChange(this)">
+            <span style="grid-area: 6/5/auto/span 4">megapixels</span>
+        </div>
+
+        <div id=export-dng>
+            <label style="grid-area: 1/1/auto/span 4" for=preview>JPEG preview:</label>
+            <select style="grid-area: 1/5/auto/span 4" id=preview name=preview>
+                <option value="p0">None</option>
+                <option value="p1" selected>Medium size</option>
+                <option value="p2">Full size</option>
+            </select>
+
+            <label style="grid-area: 2/1/auto/span 4" for=lossy>Use lossy compression:</label>
+            <input style="grid-area: 2/5/auto/span 1" type=checkbox id=lossy name=lossy>
+
+            <label style="grid-area: 3/1/auto/span 4" for=embed>Embed original raw file:</label>
+            <input style="grid-area: 3/5/auto/span 1" type=checkbox id=embed name=embed>
+        </div>
+
+        <div>
+            <button style="grid-column: 3/span 3" type=submit value="export">Export…</button>
+            <button style="grid-column: 6/span 3" type=cancel>Cancel</button>
+        </div>
+    </form>
+</dialog>

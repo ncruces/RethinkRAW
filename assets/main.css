@@ -76,6 +76,16 @@ body {
     }
 }
 
+#menu-sticker {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    background: white;
+    padding-top: 8px;
+    padding-bottom: 2px;
+    margin-bottom: -2px;
+}
+
 #gallery {
     display: flex;
     flex-flow: row wrap;

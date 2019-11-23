@@ -6,10 +6,10 @@ let save = document.getElementById('save');
 let photo = document.getElementById('photo');
 let spinner = document.getElementById('spinner');
 
-document.body.onload = async () => {
+window.addEventListener('DOMContentLoaded', async () => {
     let settings;
     try {
-        settings = await jsonRequest('GET', `/photo/${encodeURI(template.Path)}?settings`);
+        settings = await jsonRequest('GET', `?settings`);
     } catch (e) {
         alertError('Load failed', e);
         spinner.hidden = true;
@@ -54,11 +54,14 @@ document.body.onload = async () => {
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }
-}
+}, { passive: true, once: true })
 
-window.onbeforeunload = function () {
-    if (!save.disabled) return 'Leave this page? Changes that you made may not be saved.';
-}
+window.addEventListener('beforeunload', evt => {
+    if (!save.disabled) {
+        evt.returnValue = 'Leave this page? Changes that you made may not be saved.';
+        evt.preventDefault();
+    }
+})
 
 window.valueChange = function () {
     save.disabled = false;
@@ -80,13 +83,13 @@ window.orientationChange = function (op) {
     valueChange();
 }
 
-window.treatmentChange = function (e, v) {
+window.treatmentChange = function (e, val) {
     const profiles = [
         ['Adobe Standard'],
         ['Adobe Standard'],
     ];
 
-    if (v !== void 0) e.value = v;
+    if (val !== void 0) e.value = val;
     let color = e.value === 'false';
     if (e.length === 2) e = e[0];
 
@@ -103,7 +106,7 @@ window.treatmentChange = function (e, v) {
     valueChange();
 }
 
-window.whiteBalanceChange = function (e, v) {
+window.whiteBalanceChange = function (e, val) {
     const presets = {
         Daylight:   { temperature: 5500, tint: 10 },
         Cloudy:     { temperature: 6500, tint: 10 },
@@ -113,7 +116,7 @@ window.whiteBalanceChange = function (e, v) {
         Flash:      { temperature: 5500, tint:  0 },
     }
 
-    if (v !== void 0) e.value = v;
+    if (val !== void 0) e.value = val;
 
     let temp = e.form.temperature;
     let tint = e.form.tint;
@@ -136,8 +139,8 @@ window.whiteBalanceChange = function (e, v) {
     valueChange();
 }
 
-window.toneChange = function (e, v) {
-    if (v !== void 0) e.value = v;
+window.toneChange = function (e, val) {
+    if (val !== void 0) e.value = val;
 
     if (e.value === 'Default') {
         for (let i of e.form.querySelectorAll('div.customTone input')) {
@@ -154,9 +157,9 @@ window.toneChange = function (e, v) {
     valueChange();
 }
 
-window.temperatureInput = function (e, v) {
+window.temperatureInput = function (e, val) {
     if (e.length === 2) e = e[1];
-    if (v !== void 0) e.value = Math.log(v);
+    if (val !== void 0) e.value = Math.log(val);
 
     let n = Math.exp(Number(e.value));
 
@@ -168,9 +171,9 @@ window.temperatureInput = function (e, v) {
     e.previousElementSibling.value = Math.round(n / r) * r;
 }
 
-window.rangeInput = function (e, v) {
+window.rangeInput = function (e, val) {
     if (e.length === 2) e = e[1];
-    if (v !== void 0) e.value = v;
+    if (val !== void 0) e.value = val;
 
     let n = Number(e.value);
     let s = formatNumber(e.value, e.step);
@@ -188,13 +191,18 @@ window.saveFile = async () => {
     dialog.firstChild.textContent = 'Saving…';
     dialog.showModal();
     try {
-        await jsonRequest('POST', `/photo/${encodeURI(template.Path)}?save&` + query);
-        pingRequest(`/thumb/${encodeURI(template.Path)}`)
+        await jsonRequest('POST', `?save&` + query);
         save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
     }
     dialog.close();
+
+    if (template.Path) {
+        pingRequest(`/thumb/${encodeURI(template.Path)}`);
+    } else for (let photo of template.Photos) {
+        pingRequest(`/thumb/${encodeURI(photo.Path)}`);
+    }
 }
 
 window.exportFile = async (state) => {
@@ -213,14 +221,14 @@ window.exportFile = async (state) => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await blobRequest('POST', `/photo/${encodeURI(template.Path)}?export&` + query);
+        await blobRequest('POST', `?export&` + query);
     } catch (e) {
         alertError('Export failed', e);
     }
     dialog.close();
 }
 
-window.zoomMode = function (e, evt) {
+window.toggleZoom = function (e, evt) {
     zoom = !zoom;
 
     if (evt.detail) e.blur();
@@ -228,6 +236,14 @@ window.zoomMode = function (e, evt) {
 
     if (zoom) updatePhoto();
     else photo.style.transform = 'unset';
+}
+
+window.showMeta = async () => {
+    let html = await htmlRequest('GET', `?meta`);
+    let dialog = document.getElementById('meta-dialog');
+    dialog.onclick = () => dialog.close();
+    dialog.innerHTML = html;
+    dialog.showModal();
 }
 
 window.exportChange = function (e) {
@@ -355,14 +371,6 @@ window.exportChange = function (e) {
     function formatElement(e) { if (e.value !== '') e.value = formatNumber(e.value, e.step); }
 }
 
-window.showMetadata = async () => {
-    let html = await htmlRequest('GET', `/photo/${encodeURI(template.Path)}?meta`);
-    let dialog = document.getElementById('meta-dialog');
-    dialog.onclick = () => dialog.close();
-    dialog.innerHTML = html;
-    dialog.showModal();
-}
-
 function disableInputs(n) {
     let disabled = n.className.includes('disabled');
     for (let i of n.querySelectorAll('input')) {
@@ -389,6 +397,7 @@ function alertError(src, ex) {
 }
 
 let updatePhoto = function () {
+    if (!photo) return () => {};
     let loading, query, size;
 
     function calcSize() {
@@ -402,19 +411,23 @@ let updatePhoto = function () {
         setTimeout(() => {
             size = calcSize();
             query = formQuery();
-            let preview = () => Number.isSafeInteger(size) ? '=' + size : '';
             photo.addEventListener('load', loaded, { passive: true, once: true });
             photo.addEventListener('error', loaded, { passive: true, once: true });
-            photo.src = `/photo/${encodeURI(template.Path)}?preview${preview()}&` + query;
+            photo.src = `?preview${Number.isSafeInteger(size) ? '=' + size : ''}&` + query;
         });
     }
 
     function loaded() {
         loading = false;
         spinner.hidden = true;
+        photo.removeEventListener('load', loaded);
+        photo.removeEventListener('error', loaded);
         if (size < calcSize() || query !== formQuery()) load();
     }
 
+    window.addEventListener('resize', () => loading || size < calcSize() && load(), { passive: true })
+
+    photo.addEventListener('mouseleave', () => photo.style.transform = 'unset', { passive: true })
     photo.addEventListener('mousemove', evt => {
         if (zoom) {
             let rect = photo.parentElement.getBoundingClientRect();
@@ -424,9 +437,6 @@ let updatePhoto = function () {
             photo.style.transformOrigin = `${evt.clientX - rect.left}px ${evt.clientY - rect.top}px`;
         }
     }, { passive: true })
-
-    photo.addEventListener('mouseleave', () => photo.style.transform = 'unset', { passive: true })
-    window.addEventListener('resize', () => loading || size < calcSize() && load(), { passive: true })
 
     return () => loading || load();
 }();
@@ -473,30 +483,6 @@ function exportQuery() {
     return query.join('&');
 }
 
-function htmlRequest(method, url, body) {
-    return new Promise((resolve, reject) => {
-        let xhr = new XMLHttpRequest();
-        xhr.open(method, url);
-        xhr.onload = () => {
-            if (200 <= xhr.status && xhr.status < 300) {
-                resolve(xhr.response);
-            } else {
-                reject({
-                    status: xhr.status,
-                    message: xhr.statusText,
-                    response: xhr.response,
-                });
-            }
-        };
-        xhr.onerror = () => reject({
-            status: xhr.status,
-            message: xhr.statusText,
-        });
-        xhr.setRequestHeader('Accept', 'text/html');
-        xhr.send(body);
-    });
-}
-
 function jsonRequest(method, url, body) {
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
@@ -526,21 +512,22 @@ function jsonRequest(method, url, body) {
     });
 }
 
-function blobRequest(method, url, body) {
+function blobRequest(method, url) {
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
         xhr.responseType = 'blob';
         xhr.open(method, url);
         xhr.onload = () => {
             if (200 <= xhr.status && xhr.status < 300) {
-                let match, name;
-                let disposition = xhr.getResponseHeader('content-disposition');
-                if (match = disposition.match(/\bfilename=([^,;]+)/)) name = match[1];
-                if (match = disposition.match(/\bfilename="([^"\\]+)"/)) name = match[1];
-                if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) name = decodeURIComponent(match[1]);
                 let a = document.createElement('a');
+                let disposition = xhr.getResponseHeader('content-disposition');
+                if (disposition) {
+                    let match;
+                    if (match = disposition.match(/\bfilename=([^,;]+)/)) a.download = match[1];
+                    if (match = disposition.match(/\bfilename="([^"\\]+)"/)) a.download = match[1];
+                    if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) a.download = decodeURIComponent(match[1]);
+                }
                 a.href = URL.createObjectURL(xhr.response);
-                if (name) a.download = name;
                 a.dispatchEvent(new MouseEvent('click'));
                 resolve();
             } else {
@@ -559,7 +546,31 @@ function blobRequest(method, url, body) {
             status: xhr.status,
             message: xhr.statusText,
         });
-        xhr.send(body);
+        xhr.send();
+    });
+}
+
+function htmlRequest(method, url) {
+    return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.onload = () => {
+            if (200 <= xhr.status && xhr.status < 300) {
+                resolve(xhr.response);
+            } else {
+                reject({
+                    status: xhr.status,
+                    message: xhr.statusText,
+                    response: xhr.response,
+                });
+            }
+        };
+        xhr.onerror = () => reject({
+            status: xhr.status,
+            message: xhr.statusText,
+        });
+        xhr.setRequestHeader('Accept', 'text/html');
+        xhr.send();
     });
 }
 
@@ -570,22 +581,22 @@ function pingRequest(url) {
     xhr.send();
 }
 
-function formatNumber(value, step) {
+function formatNumber(val, step) {
     step = Number(step);
-    if (!Number.isFinite(step)) return value.toString();
+    if (!Number.isFinite(step)) return val.toString();
 
     let fmt = step.toString();
-    if (fmt.indexOf('e') >= 0) return value.toString();
+    if (fmt.indexOf('e') >= 0) return val.toString();
 
-    let val = Number(value);
+    let n = Number(val);
     let i = fmt.indexOf('.');
-    if (i < 0) return val.toFixed(0);
-    return val.toFixed(fmt.length - i - 1);
+    if (i < 0) return n.toFixed(0);
+    return n.toFixed(fmt.length - i - 1);
 }
 
-function keyboardEventListener(evt) {
-    for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !evt.ctrlKey;
-    for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = evt.ctrlKey;
+function keyboardEventListener(e) {
+    for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !e.ctrlKey;
+    for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = e.ctrlKey;
 }
 window.addEventListener('keydown', keyboardEventListener, { passive: true });
 window.addEventListener('keyup', keyboardEventListener, { passive: true });
@@ -602,22 +613,6 @@ for (let d of document.querySelectorAll('dialog')) {
             d.close();
         }, { passive: true });
     }
-}
-
-// RadioNodeList polyfill (Edge)
-if (typeof RadioNodeList === 'undefined') {
-    Object.defineProperty(HTMLCollection.prototype, 'value', {
-        get: function () {
-            for (let i of Array.from(this)) {
-                if (i.type === 'radio' && i.checked) return i.value;
-            }
-        },
-        set: function (value) {
-            for (let i of Array.from(this)) {
-                if (i.type === 'radio') i.checked = i.value == String(value);
-            }
-        }
-    });
 }
 
 }()

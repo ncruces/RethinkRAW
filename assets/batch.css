@@ -9,6 +9,7 @@ body {
     flex: auto;
     height: 100%;
     margin: 8px;
+    margin-top: 0;
 }
 
 #box2 {
@@ -18,44 +19,15 @@ body {
     overflow: hidden;
 }
 
-#spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    font-size: 1.5rem;
-    color: whitesmoke;
-    pointer-events: none;
-}
-
-img#photo {
+#gallery {
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    transition: transform .5s ease-out;
+    max-height: 100%;
+    overflow: auto;
+    margin-top: 0;
 }
 
-img#photo:after {
-    position: absolute;
-    display: block;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding-top: 32px;
-    text-align: center;
-    background-color: #fff;
-    content: 'Preview failed to load.';
-}
-
-dialog#meta-dialog {
-    overflow-y: auto;
-    font-size: small;
-    max-width: 50rem;
-    max-height: 30rem;
-}
-
-dialog#meta-dialog td {
-    min-width: 25ch;
+#gallery::-webkit-scrollbar {
+    display: none;
 }
 
 dialog#progress-dialog {
