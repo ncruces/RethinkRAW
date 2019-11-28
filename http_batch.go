@@ -10,6 +10,14 @@ import (
 	"github.com/gorilla/schema"
 )
 
+type multiStatus struct {
+	Code  int         `json:"code"`
+	Text  string      `json:"text"`
+	Body  interface{} `json:"response,omitempty"`
+	Done  int         `json:"done,omitempty"`
+	Total int         `json:"total,omitempty"`
+}
+
 func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	id := strings.TrimPrefix(r.URL.Path, "/")
 	files := openMulti.get(id)
@@ -33,12 +41,28 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Orientation = 0
 
-		for _, path := range files {
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.WriteHeader(http.StatusMultiStatus)
+
+		enc := json.NewEncoder(w)
+		flush, _ := w.(http.Flusher)
+		for i, path := range files {
+			var status multiStatus
 			if err := saveEdit(path, &xmp); err != nil {
-				return HTTPResult{Error: err}
+				status.Code, status.Body = errorStatus(err)
+				status.Text = http.StatusText(status.Code)
+				enc.Encode(status)
+				break
+			}
+			status.Code, status.Text = http.StatusOK, "OK"
+			status.Done, status.Total = i+1, len(files)
+			enc.Encode(status)
+			if flush != nil {
+				flush.Flush()
 			}
 		}
-		return HTTPResult{Status: http.StatusNoContent}
+
+		return HTTPResult{}
 
 	case export:
 		var xmp xmpSettings

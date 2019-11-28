@@ -62,29 +62,32 @@ func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(res.Status)
 
 	case res.Error != nil:
-		var status int
-		var message strings.Builder
-
-		switch {
-		case os.IsNotExist(res.Error):
-			status = http.StatusNotFound
-		case os.IsPermission(res.Error):
-			status = http.StatusForbidden
-		default:
-			status = http.StatusInternalServerError
-		}
-
-		message.WriteString(strings.TrimSpace(res.Error.Error()))
-		if err, ok := res.Error.(*exec.ExitError); ok {
-			if msg := bytes.TrimSpace(err.Stderr); len(msg) > 0 {
-				message.WriteByte('\n')
-				message.Write(msg)
-			}
-		}
-
-		sendError(w, r, status, message.String())
-		log.Print(message.String())
+		status, message := errorStatus(res.Error)
+		sendError(w, r, status, message)
+		log.Print(message)
 	}
+}
+
+func errorStatus(err error) (status int, message string) {
+	switch {
+	case os.IsNotExist(err):
+		status = http.StatusNotFound
+	case os.IsPermission(err):
+		status = http.StatusForbidden
+	default:
+		status = http.StatusInternalServerError
+	}
+
+	var buf strings.Builder
+	buf.WriteString(strings.TrimSpace(err.Error()))
+	if err, ok := err.(*exec.ExitError); ok {
+		if msg := bytes.TrimSpace(err.Stderr); len(msg) > 0 {
+			buf.WriteByte('\n')
+			buf.Write(msg)
+		}
+	}
+
+	return status, buf.String()
 }
 
 func sendError(w http.ResponseWriter, r *http.Request, status int, message string) {

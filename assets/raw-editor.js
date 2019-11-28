@@ -9,7 +9,7 @@ let spinner = document.getElementById('spinner');
 window.addEventListener('DOMContentLoaded', async () => {
     let settings;
     try {
-        settings = await jsonRequest('GET', `?settings`);
+        settings = await restRequest('GET', `?settings`);
     } catch (e) {
         alertError('Load failed', e);
         spinner.hidden = true;
@@ -191,7 +191,7 @@ window.saveFile = async () => {
     dialog.firstChild.textContent = 'Saving…';
     dialog.showModal();
     try {
-        await jsonRequest('POST', `?save&` + query);
+        await restRequest('POST', `?save&` + query, void 0, dialog.querySelector('progress'));
         save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
@@ -221,7 +221,7 @@ window.exportFile = async (state) => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await blobRequest('POST', `?export&` + query);
+        await restRequest('POST', `?export&` + query);
     } catch (e) {
         alertError('Export failed', e);
     }
@@ -378,20 +378,26 @@ function disableInputs(n) {
     }
 }
 
+function titleize(name) {
+    return name.replace(/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=\D)(?=\d)|(?<=\d)(?=\D)|[\W_]+/g, ' ');
+}
+
 let lastError = 0;
 
-function alertError(src, ex) {
+function alertError(src, err) {
     let thisError = Date.now();
     if (thisError - lastError > 5000) {
         lastError = thisError;
-        if (ex != null && ex.message) {
-            if (ex.response) {
-                alert(ex.message + '\n' + src + ' with:\n' + ex.response);
-            } else {
-                alert(ex.message + '\n' + src + '.');
-            }
+
+        let name = err && err.name;
+        let message = err && err.message;
+        name = name ? titleize(name) : 'Error';
+        if (message) {
+            let end = /\w$/.test(message) ? '.' : '';
+            let sep = message.length > 25 ? '\n' : ' ';
+            alert(name + '\n' + src + ' with:' + sep + message + end);
         } else {
-            alert('Error\n' + src + '.');
+            alert(name + '\n' + src + '.');
         }
     }
 }
@@ -483,70 +489,101 @@ function exportQuery() {
     return query.join('&');
 }
 
-function jsonRequest(method, url, body) {
+function restRequest(method, url, body, progress) {
+    function lastStatus(ndjson) {
+        let end = ndjson.lastIndexOf('\n');
+        if (end < 0) return void 0;
+        let start = ndjson.lastIndexOf('\n', end-1);
+        return JSON.parse(ndjson.substring(start, end));
+    }
+
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
-        xhr.responseType = 'json';
         xhr.open(method, url);
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === xhr.HEADERS_RECEIVED) {
+                if (xhr.getResponseHeader('Content-Disposition')) {
+                    xhr.responseType = 'blob';
+                    return;
+                }
+                if (xhr.getResponseHeader('Content-Type') === 'application/json') {
+                    xhr.responseType = 'json';
+                    return;
+                }
+            }
+        };
         xhr.onload = () => {
-            if (200 <= xhr.status && xhr.status < 300) {
-                resolve(xhr.response);
+            if (xhr.responseType === 'blob') {
+                if (200 <= xhr.status && xhr.status < 300) {
+                    let a = document.createElement('a');
+                    let disposition = xhr.getResponseHeader('Content-Disposition');
+                    if (disposition) {
+                        let match;
+                        if (match = disposition.match(/\bfilename=([^,;]+)/)) a.download = match[1];
+                        if (match = disposition.match(/\bfilename="([^"\\]+)"/)) a.download = match[1];
+                        if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) a.download = decodeURIComponent(match[1]);
+                    }
+                    a.href = URL.createObjectURL(xhr.response);
+                    a.dispatchEvent(new MouseEvent('click'));
+                    resolve();
+                } else {
+                    var reader = new FileReader();
+                    reader.onload = () => {
+                        reject({
+                            status: xhr.status,
+                            name: xhr.statusText,
+                            message: JSON.parse(reader.result),
+                        });
+                    };
+                    reader.readAsText(xhr.response);
+                }
             } else {
-                reject({
-                    status: xhr.status,
-                    message: xhr.statusText,
-                    response: xhr.response,
-                });
+                if (xhr.status === 207 && xhr.getResponseHeader('Content-Type') === 'application/x-ndjson') {
+                    let last = lastStatus(xhr.responseText);
+                    xhr = {
+                        status: last.code,
+                        statusText: last.text,
+                        response: last.body,
+                    };
+                }
+                if (200 <= xhr.status && xhr.status < 300) {
+                    resolve(xhr.response);
+                } else {
+                    reject({
+                        status: xhr.status,
+                        name: xhr.statusText,
+                        message: xhr.response,
+                    });
+                }
             }
         };
         xhr.onerror = () => reject({
             status: xhr.status,
-            message: xhr.statusText,
+            name: xhr.statusText,
         });
+        if (progress !== void 0) {
+            xhr.onprogress = e => {
+                if (xhr.status === 207 && xhr.getResponseHeader('Content-Type') === 'application/x-ndjson') {
+                    let last = lastStatus(xhr.responseText);
+                    if (isFinite(last.done) && isFinite(last.total)) {
+                        progress.value = last.done;
+                        progress.max = last.total;
+                    }
+                    return;
+                }
+                if (e.lengthComputable) {
+                    progress.value = pe.loaded;
+                    progress.max = pe.total;
+                    return;
+                }
+            };
+        }
         if (body !== void 0) {
             xhr.setRequestHeader('Content-Type', 'application/json');
             body = JSON.stringify(body);
         }
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.send(body);
-    });
-}
-
-function blobRequest(method, url) {
-    return new Promise((resolve, reject) => {
-        let xhr = new XMLHttpRequest();
-        xhr.responseType = 'blob';
-        xhr.open(method, url);
-        xhr.onload = () => {
-            if (200 <= xhr.status && xhr.status < 300) {
-                let a = document.createElement('a');
-                let disposition = xhr.getResponseHeader('content-disposition');
-                if (disposition) {
-                    let match;
-                    if (match = disposition.match(/\bfilename=([^,;]+)/)) a.download = match[1];
-                    if (match = disposition.match(/\bfilename="([^"\\]+)"/)) a.download = match[1];
-                    if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) a.download = decodeURIComponent(match[1]);
-                }
-                a.href = URL.createObjectURL(xhr.response);
-                a.dispatchEvent(new MouseEvent('click'));
-                resolve();
-            } else {
-                var reader = new FileReader();
-                reader.onload = () => {
-                    reject({
-                        status: xhr.status,
-                        message: xhr.statusText,
-                        response: JSON.parse(reader.result),
-                    });
-                };
-                reader.readAsText(xhr.response);
-            }
-        };
-        xhr.onerror = () => reject({
-            status: xhr.status,
-            message: xhr.statusText,
-        });
-        xhr.send();
     });
 }
 
@@ -560,14 +597,14 @@ function htmlRequest(method, url) {
             } else {
                 reject({
                     status: xhr.status,
-                    message: xhr.statusText,
-                    response: xhr.response,
+                    name: xhr.statusText,
+                    message: xhr.response,
                 });
             }
         };
         xhr.onerror = () => reject({
             status: xhr.status,
-            message: xhr.statusText,
+            name: xhr.statusText,
         });
         xhr.setRequestHeader('Accept', 'text/html');
         xhr.send();
