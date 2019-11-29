@@ -133,25 +133,14 @@ func cacheHeaders(path string, req, res http.Header) HTTPResult {
 	return HTTPResult{}
 }
 
-func attachmentHeaders(path, ext string, headers http.Header) {
-	if ext == "" {
-		ext = filepath.Ext(path)
-	}
-	path = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-
+func attachmentHeaders(path string, headers http.Header) {
+	ext := filepath.Ext(path)
 	utf := filename(path)
 	ascii := filename(toASCII(path))
 
-	if utf == "" {
-		utf = "download"
-	}
-	if ascii == "" {
-		ascii = "download"
-	}
-
-	disposition := `attachment;filename="` + ascii + ext + `"`
+	disposition := `attachment;filename="` + ascii + `"`
 	if ascii != utf {
-		disposition += `;filename*=UTF-8''` + url.PathEscape(utf+ext)
+		disposition += `;filename*=UTF-8''` + url.PathEscape(utf)
 	}
 
 	headers.Set("Content-Disposition", disposition)

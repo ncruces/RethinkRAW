@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -179,14 +178,14 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 	}
 }
 
-func exportHeaders(path string, exp *exportSettings, headers http.Header) {
+func exportName(path string, exp *exportSettings) string {
 	var ext string
 	if exp.DNG {
 		ext = ".dng"
 	} else {
 		ext = ".jpg"
 	}
-	attachmentHeaders(path, ext, headers)
+	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)) + ext
 }
 
 type previewSettings struct {
@@ -280,7 +279,7 @@ type workspace struct {
 }
 
 func openWorkspace(path string) (wk workspace, err error) {
-	wk.hash = md5sum(filepath.Clean(path))
+	wk.hash = sumMD5(filepath.Clean(path))
 	wk.base = filepath.Join(tempDir, wk.hash) + string(filepath.Separator)
 	wk.ext = filepath.Ext(path)
 

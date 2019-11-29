@@ -188,10 +188,12 @@ window.saveFile = async () => {
     let query = formQuery();
 
     let dialog = document.getElementById('progress-dialog');
-    dialog.firstChild.textContent = 'Saving…';
+    let progress = dialog.querySelector('progress');
+    progress.removeAttribute('value');
+    dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await restRequest('POST', `?save&` + query, void 0, dialog.querySelector('progress'));
+        await restRequest('POST', `?save&` + query, void 0, progress);
         save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
@@ -218,10 +220,12 @@ window.exportFile = async (state) => {
     if (state === 'export') query += '&' + exportQuery();
 
     let dialog = document.getElementById('progress-dialog');
+    let progress = dialog.querySelector('progress');
+    progress.removeAttribute('value');
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await restRequest('POST', `?export&` + query);
+        await restRequest('POST', `?export&` + query, void 0, progress);
     } catch (e) {
         alertError('Export failed', e);
     }
@@ -445,7 +449,7 @@ let updatePhoto = function () {
     }, { passive: true })
 
     return () => loading || load();
-}();
+}()
 
 function formQuery() {
     let query = [];
@@ -490,19 +494,13 @@ function exportQuery() {
 }
 
 function restRequest(method, url, body, progress) {
-    function lastStatus(ndjson) {
-        let end = ndjson.lastIndexOf('\n');
-        if (end < 0) return void 0;
-        let start = ndjson.lastIndexOf('\n', end-1);
-        return JSON.parse(ndjson.substring(start, end));
-    }
-
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
         xhr.open(method, url);
         xhr.onreadystatechange = () => {
             if (xhr.readyState === xhr.HEADERS_RECEIVED) {
-                if (xhr.getResponseHeader('Content-Disposition')) {
+                if (xhr.getResponseHeader('Content-Disposition') &&
+                    xhr.getResponseHeader('Content-Disposition').startsWith('attachment')) {
                     xhr.responseType = 'blob';
                     return;
                 }
@@ -539,7 +537,7 @@ function restRequest(method, url, body, progress) {
                 }
             } else {
                 if (xhr.status === 207 && xhr.getResponseHeader('Content-Type') === 'application/x-ndjson') {
-                    let last = lastStatus(xhr.responseText);
+                    let last = JSON.parseLast(xhr.responseText);
                     xhr = {
                         status: last.code,
                         statusText: last.text,
@@ -564,7 +562,7 @@ function restRequest(method, url, body, progress) {
         if (progress !== void 0) {
             xhr.onprogress = e => {
                 if (xhr.status === 207 && xhr.getResponseHeader('Content-Type') === 'application/x-ndjson') {
-                    let last = lastStatus(xhr.responseText);
+                    let last = JSON.parseLast(xhr.responseText);
                     if (isFinite(last.done) && isFinite(last.total)) {
                         progress.value = last.done;
                         progress.max = last.total;
@@ -631,13 +629,22 @@ function formatNumber(val, step) {
     return n.toFixed(fmt.length - i - 1);
 }
 
-function keyboardEventListener(e) {
-    for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !e.ctrlKey;
-    for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = e.ctrlKey;
+void function () {
+    function listener(e) {
+        for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !e.ctrlKey;
+        for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = e.ctrlKey;
+    }
+    window.addEventListener('keydown', listener, { passive: true });
+    window.addEventListener('keyup', listener, { passive: true });
+    listener({});
+}()
+
+JSON.parseLast = function(ndjson) {
+    let end = ndjson.lastIndexOf('\n');
+    if (end < 0) return void 0;
+    let start = ndjson.lastIndexOf('\n', end-1);
+    return JSON.parse(ndjson.substring(start, end));
 }
-window.addEventListener('keydown', keyboardEventListener, { passive: true });
-window.addEventListener('keyup', keyboardEventListener, { passive: true });
-keyboardEventListener({});
 
 // dialog polyfill, add type=cancel buttons
 for (let d of document.querySelectorAll('dialog')) {

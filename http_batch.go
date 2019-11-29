@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/schema"
+	nfd "github.com/ncruces/go-nativefiledialog"
 )
 
 type multiStatus struct {
@@ -46,9 +48,9 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 		enc := json.NewEncoder(w)
 		flush, _ := w.(http.Flusher)
-		for i, path := range files {
+		for i, file := range files {
 			var status multiStatus
-			if err := saveEdit(path, &xmp); err != nil {
+			if err := saveEdit(file, &xmp); err != nil {
 				status.Code, status.Body = errorStatus(err)
 				status.Text = http.StatusText(status.Code)
 				enc.Encode(status)
@@ -61,7 +63,6 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 				flush.Flush()
 			}
 		}
-
 		return HTTPResult{}
 
 	case export:
@@ -77,8 +78,42 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Orientation = 0
 
-		log.Printf("Exporting: %+v; %+v", xmp, exp)
-		return HTTPResult{Status: http.StatusNoContent}
+		path := filepath.Dir(files[1])
+		if res, err := nfd.PickFolder(path); err != nil {
+			return HTTPResult{Error: err}
+		} else if res == "" {
+			return HTTPResult{Status: http.StatusNoContent}
+		} else {
+			path = res
+		}
+
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.WriteHeader(http.StatusMultiStatus)
+
+		enc := json.NewEncoder(w)
+		flush, _ := w.(http.Flusher)
+		for i, file := range files {
+			var status multiStatus
+			out, err := exportEdit(file, &xmp, &exp)
+			if err == nil {
+				file = filepath.Join(path, exportName(file, &exp))
+				err = ioutil.WriteFile(file, out, 0666)
+			}
+			if err != nil {
+				status.Code, status.Body = errorStatus(err)
+				status.Text = http.StatusText(status.Code)
+				enc.Encode(status)
+				break
+			}
+
+			status.Code, status.Text = http.StatusOK, "OK"
+			status.Done, status.Total = i+1, len(files)
+			enc.Encode(status)
+			if flush != nil {
+				flush.Flush()
+			}
+		}
+		return HTTPResult{}
 
 	case settings:
 		if xmp, err := loadEdit(files[0]); err != nil {

@@ -37,7 +37,7 @@ func btoi(b bool) int {
 	return 0
 }
 
-func md5sum(data string) string {
+func sumMD5(data string) string {
 	h := md5.Sum([]byte(data))
 	return base64.URLEncoding.EncodeToString(h[:15])
 }
