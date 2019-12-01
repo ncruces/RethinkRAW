@@ -50,15 +50,16 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		flush, _ := w.(http.Flusher)
 		for i, file := range files {
 			var status multiStatus
-			if err := saveEdit(file, &xmp); err != nil {
+			err := saveEdit(file, &xmp)
+			if err != nil {
 				status.Code, status.Body = errorStatus(err)
-				status.Text = http.StatusText(status.Code)
-				enc.Encode(status)
-				break
+			} else {
+				status.Code = http.StatusOK
 			}
-			status.Code, status.Text = http.StatusOK, "OK"
 			status.Done, status.Total = i+1, len(files)
+			status.Text = http.StatusText(status.Code)
 			enc.Encode(status)
+
 			if flush != nil {
 				flush.Flush()
 			}
@@ -101,14 +102,13 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			}
 			if err != nil {
 				status.Code, status.Body = errorStatus(err)
-				status.Text = http.StatusText(status.Code)
-				enc.Encode(status)
-				break
+			} else {
+				status.Code = http.StatusOK
 			}
-
-			status.Code, status.Text = http.StatusOK, "OK"
 			status.Done, status.Total = i+1, len(files)
+			status.Text = http.StatusText(status.Code)
 			enc.Encode(status)
+
 			if flush != nil {
 				flush.Flush()
 			}

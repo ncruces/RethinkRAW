@@ -193,7 +193,7 @@ window.saveFile = async () => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await restRequest('POST', `?save&` + query, void 0, progress);
+        await restRequest('POST', `?save&` + query, { progress: progress });
         save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
@@ -225,7 +225,7 @@ window.exportFile = async (state) => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await restRequest('POST', `?export&` + query, void 0, progress);
+        await restRequest('POST', `?export&` + query, { progress: progress });
     } catch (e) {
         alertError('Export failed', e);
     }
@@ -386,23 +386,17 @@ function titleize(name) {
     return name.replace(/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=\D)(?=\d)|(?<=\d)(?=\D)|[\W_]+/g, ' ');
 }
 
-let lastError = 0;
-
 function alertError(src, err) {
-    let thisError = Date.now();
-    if (thisError - lastError > 5000) {
-        lastError = thisError;
-
-        let name = err && err.name;
-        let message = err && err.message;
-        name = name ? titleize(name) : 'Error';
-        if (message) {
-            let end = /\w$/.test(message) ? '.' : '';
-            let sep = message.length > 25 ? '\n' : ' ';
-            alert(name + '\n' + src + ' with:' + sep + message + end);
-        } else {
-            alert(name + '\n' + src + '.');
-        }
+    console.log(err);
+    let name = err && err.name;
+    let message = err && err.message;
+    name = name ? titleize(name) : 'Error';
+    if (message) {
+        let end = /\w$/.test(message) ? '.' : '';
+        let sep = message.length > 25 ? '\n' : ' ';
+        alert(name + '\n' + src + ' with:' + sep + message + end);
+    } else {
+        alert(name + '\n' + src + '.');
     }
 }
 
@@ -493,7 +487,7 @@ function exportQuery() {
     return query.join('&');
 }
 
-function restRequest(method, url, body, progress) {
+function restRequest(method, url, { body, progress } = {}) {
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
         xhr.open(method, url);
@@ -512,7 +506,7 @@ function restRequest(method, url, body, progress) {
         };
         xhr.onload = () => {
             if (xhr.responseType === 'blob') {
-                if (200 <= xhr.status && xhr.status < 300) {
+                if (xhr.status < 400) {
                     let a = document.createElement('a');
                     let disposition = xhr.getResponseHeader('Content-Disposition');
                     if (disposition) {
@@ -537,14 +531,21 @@ function restRequest(method, url, body, progress) {
                 }
             } else {
                 if (xhr.status === 207 && xhr.getResponseHeader('Content-Type') === 'application/x-ndjson') {
-                    let last = JSON.parseLast(xhr.responseText);
-                    xhr = {
-                        status: last.code,
-                        statusText: last.text,
-                        response: last.body,
-                    };
-                }
-                if (200 <= xhr.status && xhr.status < 300) {
+                    let count = 0;
+                    let lines = JSON.parseLines(xhr.responseText);
+                    for (let status of lines) {
+                        if (status.code >= 400) count++;
+                    }
+                    if (count === 0) {
+                        resolve(xhr.response);
+                    } else {
+                        reject({
+                            status: xhr.status,
+                            name: xhr.statusText,
+                            message: `${count} of ${lines.length} operations failed.`,
+                        });
+                    }
+                } else if (xhr.status < 400) {
                     resolve(xhr.response);
                 } else {
                     reject({
@@ -590,7 +591,7 @@ function htmlRequest(method, url) {
         let xhr = new XMLHttpRequest();
         xhr.open(method, url);
         xhr.onload = () => {
-            if (200 <= xhr.status && xhr.status < 300) {
+            if (xhr.status < 400) {
                 resolve(xhr.response);
             } else {
                 reject({
@@ -642,8 +643,12 @@ void function () {
 JSON.parseLast = function(ndjson) {
     let end = ndjson.lastIndexOf('\n');
     if (end < 0) return void 0;
-    let start = ndjson.lastIndexOf('\n', end-1);
+    let start = ndjson.lastIndexOf('\n', end - 1);
     return JSON.parse(ndjson.substring(start, end));
+}
+
+JSON.parseLines = function (ndjson) {
+    return ndjson.trimEnd().split('\n').map(JSON.parse);
 }
 
 // dialog polyfill, add type=cancel buttons
