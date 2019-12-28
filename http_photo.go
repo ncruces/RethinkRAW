@@ -10,8 +10,11 @@ import (
 )
 
 func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+	if r.ParseForm() != nil {
+		return HTTPResult{Status: http.StatusBadRequest}
+	}
+
 	path := fromURLPath(r.URL.Path)
-	r.ParseForm()
 
 	_, meta := r.Form["meta"]
 	_, save := r.Form["save"]

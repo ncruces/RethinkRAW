@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/schema"
-	nfd "github.com/ncruces/go-nativefiledialog"
+	"github.com/ncruces/go-ui/dialog"
 )
 
 type multiStatus struct {
@@ -21,10 +21,12 @@ type multiStatus struct {
 }
 
 func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+	if r.ParseForm() != nil {
+		return HTTPResult{Status: http.StatusBadRequest}
+	}
+
 	id := strings.TrimPrefix(r.URL.Path, "/")
 	files := openMulti.get(id)
-	r.ParseForm()
-
 	if len(files) == 0 {
 		return HTTPResult{Status: http.StatusGone}
 	}
@@ -80,7 +82,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		xmp.Orientation = 0
 
 		path := filepath.Dir(files[1])
-		if res, err := nfd.PickFolder(path); err != nil {
+		if res, err := dialog.PickFolder("", path); err != nil {
 			return HTTPResult{Error: err}
 		} else if res == "" {
 			return HTTPResult{Status: http.StatusNoContent}
@@ -94,16 +96,26 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		enc := json.NewEncoder(w)
 		flush, _ := w.(http.Flusher)
 		for i, file := range files {
+			var n int
+			var f io.WriteCloser
 			var status multiStatus
 			out, err := exportEdit(file, &xmp, &exp)
 			if err == nil {
-				file = filepath.Join(path, exportName(file, &exp))
-				err = ioutil.WriteFile(file, out, 0666)
+				f, err = makeFile(filepath.Join(path, exportName(file, &exp)))
 			}
-			if err != nil {
-				status.Code, status.Body = errorStatus(err)
-			} else {
+			if err == nil {
+				n, err = f.Write(out)
+			}
+			if err == nil && n < len(out) {
+				err = io.ErrShortWrite
+			}
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+			if err == nil {
 				status.Code = http.StatusOK
+			} else {
+				status.Code, status.Body = errorStatus(err)
 			}
 			status.Done, status.Total = i+1, len(files)
 			status.Text = http.StatusText(status.Code)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 const dcraw = "./utils/dcraw"
@@ -32,7 +33,12 @@ func loadConfig() error {
 
 	// set defaults
 	if serverConfig.DNGConverter == "" {
-		serverConfig.DNGConverter = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+		switch runtime.GOOS {
+		case "windows":
+			serverConfig.DNGConverter = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+		case "darwin":
+			serverConfig.DNGConverter = `/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter`
+		}
 	}
 	return nil
 }

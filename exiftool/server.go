@@ -88,7 +88,7 @@ func (e *Server) Shutdown() (err error) {
 		err = e.stdin.Close()
 	}
 
-	return nil
+	return
 }
 
 func (e *Server) Command(arg ...string) (res []byte, err error) {

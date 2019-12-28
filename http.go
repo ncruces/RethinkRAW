@@ -91,9 +91,13 @@ func errorStatus(err error) (status int, message string) {
 }
 
 func sendError(w http.ResponseWriter, r *http.Request, status int, message string) {
+	h := w.Header()
+	for n := range h {
+		delete(h, n)
+	}
+	h.Set("X-Content-Type-Options", "nosniff")
 	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
+		h.Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
 		templates.ExecuteTemplate(w, "error.gohtml", struct {
 			Status, Message string
@@ -102,8 +106,7 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 			message,
 		})
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
+		h.Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		json.NewEncoder(w).Encode(message)
 	}

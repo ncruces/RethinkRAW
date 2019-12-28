@@ -7,7 +7,9 @@ import (
 	"mime"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -37,7 +39,7 @@ func btoi(b bool) int {
 	return 0
 }
 
-func sumMD5(data string) string {
+func hash(data string) string {
 	h := md5.Sum([]byte(data))
 	return base64.URLEncoding.EncodeToString(h[:15])
 }
@@ -46,11 +48,11 @@ func toASCII(str string) string {
 	builder := strings.Builder{}
 	for _, r := range str {
 		// control
-		if r < ' ' || 0x7f <= r && r < 0xa0 {
+		if r <= 0x1f || 0x7f <= r && r <= 0x9f {
 			continue
 		}
 		// unicode
-		if r >= 0x7f {
+		if r >= 0xa0 {
 			builder.WriteByte('?')
 		} else {
 			builder.WriteRune(r)
@@ -65,7 +67,7 @@ func filename(name string) string {
 
 	for _, r := range name {
 		// control
-		if r < ' ' || 0x7f <= r && r < 0xa0 {
+		if r <= 0x1f || 0x7f <= r && r <= 0x9f {
 			continue
 		}
 		switch r {
@@ -86,6 +88,26 @@ func filename(name string) string {
 		return builder.String()
 	}
 	return ""
+}
+
+var newFilenameRE = regexp.MustCompile(`\A(.*?)(?: \((\d{1,4})\))?(\.\w*)?\z`)
+
+func makeFile(name string) (*os.File, error) {
+	for {
+		f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+		if os.IsExist(err) {
+			m := newFilenameRE.FindStringSubmatch(name)
+			if m != nil {
+				var i = 0
+				if m[2] != "" {
+					i, _ = strconv.Atoi(m[2])
+				}
+				name = m[1] + " (" + strconv.Itoa(i+1) + ")" + m[3]
+				continue
+			}
+		}
+		return f, err
+	}
 }
 
 func copyFile(src, dst string) (err error) {
@@ -133,7 +155,7 @@ func lnkyFile(src, dst string) error {
 		return err
 	}
 
-	dfi, err := os.Stat(dst)
+	dfi, _ := os.Stat(dst)
 	if os.SameFile(sfi, dfi) {
 		return nil
 	}

@@ -4,16 +4,18 @@ import (
 	"net/http"
 	"os"
 
-	nfd "github.com/ncruces/go-nativefiledialog"
+	"github.com/ncruces/go-ui/dialog"
 )
 
 func configHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
-	r.ParseForm()
+	if r.ParseForm() != nil {
+		return HTTPResult{Status: http.StatusBadRequest}
+	}
 
 	_, dngconv := r.Form["dngconv"]
 	if dngconv {
 		bringToTop()
-		if file, err := nfd.OpenDialog("exe", os.Getenv("PROGRAMFILES")); err != nil {
+		if file, err := dialog.OpenFile("", os.Getenv("PROGRAMFILES"), []dialog.FileFilter{{Exts: []string{".exe"}}}); err != nil {
 			return HTTPResult{Error: err}
 		} else if file == "" {
 			return HTTPResult{Status: http.StatusResetContent}
@@ -21,7 +23,9 @@ func configHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			return HTTPResult{Error: err}
 		} else {
 			serverConfig.DNGConverter = file
-			saveConfig()
+			if err := saveConfig(); err != nil {
+				return HTTPResult{Error: err}
+			}
 			return HTTPResult{Location: "/"}
 		}
 	}

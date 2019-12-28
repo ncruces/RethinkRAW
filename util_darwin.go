@@ -1,19 +1,18 @@
-// +build !windows
-// +build !darwin
-
 package main
 
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
 func findChrome() string {
-	versions := []string{"google-chrome-stable", "google-chrome", "chromium-browser", "chromium"}
+	versions := []string{"Google Chrome", "Chromium"}
 
 	for _, v := range versions {
-		if c, err := exec.LookPath(v); err == nil {
+		c := filepath.Join("/Applications", v+".app", "Contents/MacOS", v)
+		if _, err := os.Stat(c); err == nil {
 			return c
 		}
 	}
@@ -23,10 +22,11 @@ func findChrome() string {
 func exitChrome(cmd *exec.Cmd) {}
 
 func openURLCmd(url string) *exec.Cmd {
-	return exec.Command("xdg-open", url)
+	return exec.Command("open", url)
 }
 
 func isHidden(fi os.FileInfo) bool {
+	// Check for UF_HIDDEN flag?
 	return strings.HasPrefix(fi.Name(), ".")
 }
 
