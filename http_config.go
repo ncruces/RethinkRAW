@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/ncruces/go-ui/dialog"
+	"github.com/ncruces/zenity"
 )
 
 func configHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
@@ -15,7 +15,9 @@ func configHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	_, dngconv := r.Form["dngconv"]
 	if dngconv {
 		bringToTop()
-		if file, err := dialog.OpenFile("", os.Getenv("PROGRAMFILES"), []dialog.FileFilter{{Exts: []string{".exe"}}}); err != nil {
+		if file, err := zenity.SelectFile(zenity.Filename(os.Getenv("PROGRAMFILES")), zenity.FileFilters{
+			{"Applications", []string{"*.exe"}},
+		}.New()); err != nil {
 			return HTTPResult{Error: err}
 		} else if file == "" {
 			return HTTPResult{Status: http.StatusResetContent}

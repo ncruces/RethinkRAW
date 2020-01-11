@@ -7,17 +7,17 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ncruces/go-ui/dialog"
+	"github.com/ncruces/zenity"
 )
 
-var filters []dialog.FileFilter
+var filters zenity.FileFilters
 var extensions = map[string]struct{}{}
 
 func init() {
-	exts := strings.Split(".CRW .NEF .RAF .ORF .MRW .DCR .MOS .RAW .PEF .SRF .DNG .X3F .CR2 .ERF .SR2 .KDC .MFW .MEF .ARW .NRW .RW2 .RWL .IIQ .3FR .FFF .SRW .GPR .DXO .ARQ .CR3", " ")
-	filters = []dialog.FileFilter{{Name: "RAW files", Exts: exts}}
-	for _, ext := range exts {
-		extensions[ext] = struct{}{}
+	pattern := strings.Split("*.CRW *.NEF *.RAF *.ORF *.MRW *.DCR *.MOS *.RAW *.PEF *.SRF *.DNG *.X3F *.CR2 *.ERF *.SR2 *.KDC *.MFW *.MEF *.ARW *.NRW *.RW2 *.RWL *.IIQ *.3FR *.FFF *.SRW *.GPR *.DXO *.ARQ *.CR3", " ")
+	filters = zenity.FileFilters{{Name: "RAW files", Patterns: pattern}}
+	for _, ext := range pattern {
+		extensions[ext[1:]] = struct{}{}
 	}
 }
 
@@ -37,21 +37,21 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	bringToTop()
 	switch {
 	case batch:
-		if res, err := dialog.OpenFiles("", path, filters); err != nil {
+		if res, err := zenity.SelectFileMutiple(filters.New()); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			paths = res
 		}
 
 	case photo:
-		if res, err := dialog.OpenFile("", path, filters); err != nil {
+		if res, err := zenity.SelectFile(filters.New()); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			path = res
 		}
 
 	case gallery:
-		if res, err := dialog.PickFolder("", path); err != nil {
+		if res, err := zenity.SelectFile(zenity.Directory); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			path = res
