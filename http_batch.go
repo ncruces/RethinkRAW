@@ -82,7 +82,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		xmp.Orientation = 0
 
 		path := filepath.Dir(files[1])
-		if res, err := zenity.SelectFile(zenity.Directory, zenity.Filename(path)); err != nil {
+		if res, err := zenity.SelectFile(zenity.Directory(), zenity.Filename(path)); err != nil {
 			return HTTPResult{Error: err}
 		} else if res == "" {
 			return HTTPResult{Status: http.StatusNoContent}

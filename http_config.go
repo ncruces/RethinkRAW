@@ -16,8 +16,8 @@ func configHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	if dngconv {
 		bringToTop()
 		if file, err := zenity.SelectFile(zenity.Filename(os.Getenv("PROGRAMFILES")), zenity.FileFilters{
-			{"Applications", []string{"*.exe"}},
-		}.New()); err != nil {
+			{Name: "Applications", Patterns: []string{"*.exe"}},
+		}); err != nil {
 			return HTTPResult{Error: err}
 		} else if file == "" {
 			return HTTPResult{Status: http.StatusResetContent}
