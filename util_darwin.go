@@ -7,6 +7,16 @@ import (
 	"strings"
 )
 
+func init() {
+	// ignore Process Serial Number argument
+	for i, a := range os.Args {
+		if strings.HasPrefix(a, "-psn_") {
+			os.Args = append(os.Args[:i], os.Args[i+1:]...)
+			break
+		}
+	}
+}
+
 func findChrome() string {
 	versions := []string{"Google Chrome", "Chromium"}
 
@@ -26,7 +36,7 @@ func openURLCmd(url string) *exec.Cmd {
 }
 
 func isHidden(fi os.FileInfo) bool {
-	// Check for UF_HIDDEN flag?
+	// TODO: check for UF_HIDDEN flag?
 	return strings.HasPrefix(fi.Name(), ".")
 }
 

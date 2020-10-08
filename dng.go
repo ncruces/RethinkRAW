@@ -10,13 +10,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func testDNGConverter(conv ...string) (err error) {
-	for _, c := range append(conv, serverConfig.DNGConverter) {
-		_, err = os.Stat(c)
-		if err == nil {
-			break
-		}
+func testDNGConverter(file ...string) error {
+	conv := serverConfig.DNGConverter
+	if len(file) > 0 {
+		conv = file[0]
 	}
+	_, err := os.Stat(conv)
 	return err
 }
 

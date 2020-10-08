@@ -66,21 +66,18 @@ func filename(name string) string {
 	dots := 0
 
 	for _, r := range name {
-		// control
-		if r <= 0x1f || 0x7f <= r && r <= 0x9f {
-			continue
-		}
 		switch r {
-		// invalid
 		case '\\', '/', ':', '*', '?', '<', '>', '|':
-			continue
+			// Windows doesn't like these.
 		case '"':
 			builder.WriteByte('\'')
 		case '.':
 			builder.WriteByte('.')
 			dots += 1
 		default:
-			builder.WriteRune(r)
+			if strconv.IsPrint(r) {
+				builder.WriteRune(r)
+			}
 		}
 	}
 

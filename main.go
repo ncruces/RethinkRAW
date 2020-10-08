@@ -40,10 +40,6 @@ func main() {
 		}
 	}
 
-	if err := os.Chdir(baseDir); err != nil {
-		log.Fatal(err)
-	}
-
 	chrome := findChrome()
 	if chrome != "" {
 		hideConsole()
@@ -98,11 +94,16 @@ func setupChrome(chrome, url string) *exec.Cmd {
 	prefs := filepath.Join(data, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(prefs), 0755); err == nil {
-			ioutil.WriteFile(prefs, []byte(`{"download":{"prompt_for_download":true}}`), 0666)
+			ioutil.WriteFile(prefs, []byte(`{
+				"profile": {"block_third_party_cookies": true},
+				"download": {"prompt_for_download": true},
+				"enable_do_not_track": true
+			}`), 0666)
 		}
 	}
 
-	return exec.Command(chrome, "--app="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache, "--no-first-run",
-		"--disable-default-apps", "--disable-sync", "--disable-extensions", "--disable-plugins",
-		"--disable-bundled-ppapi-flash", "--disable-background-networking")
+	// https://source.chromium.org/chromium/chromium/src/+/master:chrome/test/chromedriver/chrome_launcher.cc
+	return exec.Command(chrome, "--app="+url, "--homepage="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache,
+		"--no-first-run", "--no-service-autorun", "--disable-sync", "--disable-extensions", "--disable-default-apps",
+		"--disable-background-networking", "--disable-client-side-phishing-detection")
 }

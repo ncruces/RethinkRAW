@@ -7,15 +7,13 @@ import (
 	"runtime"
 )
 
-const dcraw = "./utils/dcraw"
-const jpegtran = "./utils/jpegtran"
-const exiftoolExe = "./utils/exiftool/exiftool"
-const exiftoolArg = "./utils/exiftool/exiftool"
+var (
+	baseDir, dataDir, tempDir string
+	dcraw, jpegtran           string
+	exiftoolExe, exiftoolArg  string
+)
 
-var baseDir, dataDir, tempDir string
-var serverConfig serverSettings
-
-type serverSettings struct {
+var serverConfig struct {
 	DNGConverter string `json:"dngConverter"`
 }
 
@@ -32,14 +30,22 @@ func loadConfig() error {
 	}
 
 	// set defaults
+	dcraw = baseDir + "/utils/dcraw"
+	jpegtran = baseDir + "/utils/jpegtran"
+	exiftoolExe = baseDir + "/utils/exiftool/exiftool"
+	if runtime.GOOS == "windows" {
+		exiftoolArg = exiftoolExe
+	}
+
 	if serverConfig.DNGConverter == "" {
 		switch runtime.GOOS {
 		case "windows":
 			serverConfig.DNGConverter = `C:\Program Files\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 		case "darwin":
-			serverConfig.DNGConverter = `/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter`
+			serverConfig.DNGConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
 		}
 	}
+
 	return nil
 }
 
