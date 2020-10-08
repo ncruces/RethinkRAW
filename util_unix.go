@@ -20,7 +20,9 @@ func findChrome() string {
 	return ""
 }
 
-func exitChrome(cmd *exec.Cmd) {}
+func exitChrome(cmd *exec.Cmd) {
+	cmd.Process.Signal(os.Interrupt)
+}
 
 func openURLCmd(url string) *exec.Cmd {
 	return exec.Command("xdg-open", url)
@@ -34,8 +36,8 @@ func getANSIPath(path string) (string, error) {
 	return path, nil
 }
 
-func hideConsole() {}
-
 func bringToTop() {}
+
+func hideConsole() {}
 
 func handleConsoleCtrl(c chan<- os.Signal) {}

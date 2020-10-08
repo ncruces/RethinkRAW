@@ -124,6 +124,14 @@ func getANSIPath(path string) (string, error) {
 	return path, errors.New("Could not convert to ANSI path: " + path)
 }
 
+func bringToTop() {
+	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
+		return // no window
+	} else {
+		setForegroundWindow.Call(hwnd)
+	}
+}
+
 func hideConsole() {
 	var pid uint32
 	if n, _, err := getConsoleProcessList.Call(uintptr(unsafe.Pointer(&pid)), 1); n == 0 {
@@ -136,14 +144,6 @@ func hideConsole() {
 		return // no window
 	} else {
 		showWindow.Call(hwnd, 0) // SW_HIDE
-	}
-}
-
-func bringToTop() {
-	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
-		return // no window
-	} else {
-		setForegroundWindow.Call(hwnd)
 	}
 }
 
