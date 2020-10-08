@@ -62,7 +62,7 @@ func main() {
 	}
 
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt)
+	signal.Notify(sigs)
 	handleConsoleCtrl(sigs)
 
 	if chrome != "" {

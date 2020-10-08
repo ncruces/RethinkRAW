@@ -14,7 +14,7 @@ import (
 	"unsafe"
 )
 
-//go:generate goversioninfo -64 -icon=assets/favicon.ico -manifest=win.manifest
+//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=win.manifest
 
 var (
 	kernel32 = syscall.NewLazyDLL("kernel32.dll")
@@ -57,7 +57,7 @@ func exitChrome(cmd *exec.Cmd) {
 }
 
 func openURLCmd(url string) *exec.Cmd {
-	return exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", url)
+	return exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
 }
 
 func isHidden(fi os.FileInfo) bool {

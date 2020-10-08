@@ -9,4 +9,5 @@ require (
 	github.com/ncruces/zenity v0.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
+	github.com/stretchr/testify v1.6.1 // indirect
 )
