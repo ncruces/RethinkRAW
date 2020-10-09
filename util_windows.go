@@ -133,16 +133,15 @@ func bringToTop() {
 }
 
 func hideConsole() {
-	var pid uint32
-	if n, _, err := getConsoleProcessList.Call(uintptr(unsafe.Pointer(&pid)), 1); n == 0 {
-		log.Fatal(err)
-	} else if n > 1 {
-		return // not the only process
-	}
-
 	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
 		return // no window
 	} else {
+		var pid uint32
+		if n, _, err := getConsoleProcessList.Call(uintptr(unsafe.Pointer(&pid)), 1); n == 0 {
+			log.Fatal(err)
+		} else if n > 1 {
+			return // not the only process
+		}
 		showWindow.Call(hwnd, 0) // SW_HIDE
 	}
 }
@@ -151,7 +150,7 @@ func handleConsoleCtrl(c chan<- os.Signal) {
 	n, _, err := setConsoleCtrlHandler.Call(
 		syscall.NewCallback(func(controlType uint) uint {
 			if controlType >= 2 {
-				c <- syscall.Signal(0x1f + controlType)
+				c <- syscall.Signal(syscall.SIGTERM)
 				select {}
 			}
 			return 0
