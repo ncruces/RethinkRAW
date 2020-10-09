@@ -2,7 +2,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.dialogPolyfill = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   // nb. This is for IE10 and lower _only_.
   var supportCustomEvent = window.CustomEvent;
@@ -17,6 +17,22 @@
   }
 
   /**
+   * Dispatches the passed event to both an "on<type>" handler as well as via the
+   * normal dispatch operation. Does not bubble.
+   *
+   * @param {!EventTarget} target
+   * @param {!Event} event
+   * @return {boolean}
+   */
+  function safeDispatchEvent(target, event) {
+    var check = 'on' + event.type.toLowerCase();
+    if (typeof target[check] === 'function') {
+      target[check](event);
+    }
+    return target.dispatchEvent(event);
+  }
+
+  /**
    * @param {Element} el to check for stacking context
    * @return {boolean} whether this el or its parents creates a stacking context
    */
@@ -26,7 +42,7 @@
       var invalid = function(k, ok) {
         return !(s[k] === undefined || s[k] === ok);
       };
-      
+
       if (s.opacity < 1 ||
           invalid('zIndex', 'auto') ||
           invalid('transform', 'none') ||
@@ -67,6 +83,11 @@
    * @param {Element} el to blur
    */
   function safeBlur(el) {
+    // Find the actual focused element when the active element is inside a shadow root
+    while (el && el.shadowRoot && el.shadowRoot.activeElement) {
+      el = el.shadowRoot.activeElement;
+    }
+
     if (el && el.blur && el !== document.body) {
       el.blur();
     }
@@ -95,6 +116,47 @@
       return false;
     }
     return el.getAttribute('method').toLowerCase() === 'dialog';
+  }
+
+  /**
+   * @param {!DocumentFragment|!Element} hostElement
+   * @return {?Element}
+   */
+  function findFocusableElementWithin(hostElement) {
+    // Note that this is 'any focusable area'. This list is probably not exhaustive, but the
+    // alternative involves stepping through and trying to focus everything.
+    var opts = ['button', 'input', 'keygen', 'select', 'textarea'];
+    var query = opts.map(function(el) {
+      return el + ':not([disabled])';
+    });
+    // TODO(samthor): tabindex values that are not numeric are not focusable.
+    query.push('[tabindex]:not([disabled]):not([tabindex=""])');  // tabindex != "", not disabled
+    var target = hostElement.querySelector(query.join(', '));
+
+    if (!target && 'attachShadow' in Element.prototype) {
+      // If we haven't found a focusable target, see if the host element contains an element
+      // which has a shadowRoot.
+      // Recursively search for the first focusable item in shadow roots.
+      var elems = hostElement.querySelectorAll('*');
+      for (var i = 0; i < elems.length; i++) {
+        if (elems[i].tagName && elems[i].shadowRoot) {
+          target = findFocusableElementWithin(elems[i].shadowRoot);
+          if (target) {
+            break;
+          }
+        }
+      }
+    }
+    return target;
+  }
+
+  /**
+   * Determines if an element is attached to the DOM.
+   * @param {Element} element to check
+   * @return {Boolean} whether the element is in DOM
+   */
+  function isConnected(element) {
+    return element.isConnected || document.body.contains(element);
   }
 
   /**
@@ -153,10 +215,12 @@
 
     this.backdrop_ = document.createElement('div');
     this.backdrop_.className = 'backdrop';
-    this.backdrop_.addEventListener('click', this.backdropClick_.bind(this));
+    this.backdrop_.addEventListener('mouseup'  , this.backdropMouseEvent_.bind(this));
+    this.backdrop_.addEventListener('mousedown', this.backdropMouseEvent_.bind(this));
+    this.backdrop_.addEventListener('click'    , this.backdropMouseEvent_.bind(this));
   }
 
-  dialogPolyfillInfo.prototype = {
+  dialogPolyfillInfo.prototype = /** @type {HTMLDialogElement.prototype} */ ({
 
     get dialog() {
       return this.dialog_;
@@ -168,7 +232,7 @@
      * longer open or is no longer part of the DOM.
      */
     maybeHideModal: function() {
-      if (this.dialog_.hasAttribute('open') && document.body.contains(this.dialog_)) { return; }
+      if (this.dialog_.hasAttribute('open') && isConnected(this.dialog_)) { return; }
       this.downgradeModal();
     },
 
@@ -206,12 +270,12 @@
     },
 
     /**
-     * Handles clicks on the fake .backdrop element, redirecting them as if
+     * Handles mouse events ('mouseup', 'mousedown', 'click') on the fake .backdrop element, redirecting them as if
      * they were on the dialog itself.
      *
      * @param {!Event} e to redirect
      */
-    backdropClick_: function(e) {
+    backdropMouseEvent_: function(e) {
       if (!this.dialog_.hasAttribute('tabindex')) {
         // Clicking on the backdrop should move the implicit cursor, even if dialog cannot be
         // focused. Create a fake thing to focus on. If the backdrop was _before_ the dialog, this
@@ -244,15 +308,7 @@
         target = this.dialog_;
       }
       if (!target) {
-        // Note that this is 'any focusable area'. This list is probably not exhaustive, but the
-        // alternative involves stepping through and trying to focus everything.
-        var opts = ['button', 'input', 'keygen', 'select', 'textarea'];
-        var query = opts.map(function(el) {
-          return el + ':not([disabled])';
-        });
-        // TODO(samthor): tabindex values that are not numeric are not focusable.
-        query.push('[tabindex]:not([disabled]):not([tabindex=""])');  // tabindex != "", not disabled
-        target = this.dialog_.querySelector(query.join(', '));
+        target = findFocusableElementWithin(this.dialog_);
       }
       safeBlur(document.activeElement);
       target && target.focus();
@@ -289,7 +345,7 @@
       if (this.dialog_.hasAttribute('open')) {
         throw new Error('Failed to execute \'showModal\' on dialog: The element is already open, and therefore cannot be opened modally.');
       }
-      if (!document.body.contains(this.dialog_)) {
+      if (!isConnected(this.dialog_)) {
         throw new Error('Failed to execute \'showModal\' on dialog: The element is not in a Document.');
       }
       if (!dialogPolyfill.dm.pushDialog(this)) {
@@ -342,18 +398,10 @@
         bubbles: false,
         cancelable: false
       });
-    
-      // If we have an onclose handler assigned and it's a function, call it
-      if(this.dialog_.onclose instanceof Function) {
-        this.dialog_.onclose(closeEvent);
-      }
-
-      // Dispatch the event as normal
-      this.dialog_.dispatchEvent(closeEvent);
-
+      safeDispatchEvent(this.dialog_, closeEvent);
     }
 
-  };
+  });
 
   var dialogPolyfill = {};
 
@@ -540,24 +588,26 @@
   };
 
   dialogPolyfill.DialogManager.prototype.handleFocus_ = function(event) {
-    if (this.containedByTopDialog_(event.target)) { return; }
+    var target = event.composedPath ? event.composedPath()[0] : event.target;
+
+    if (this.containedByTopDialog_(target)) { return; }
 
     if (document.activeElement === document.documentElement) { return; }
 
     event.preventDefault();
     event.stopPropagation();
-    safeBlur(/** @type {Element} */ (event.target));
+    safeBlur(/** @type {Element} */ (target));
 
     if (this.forwardTab_ === undefined) { return; }  // move focus only from a tab key
 
     var dpi = this.pendingDialogStack[0];
     var dialog = dpi.dialog;
-    var position = dialog.compareDocumentPosition(event.target);
+    var position = dialog.compareDocumentPosition(target);
     if (position & Node.DOCUMENT_POSITION_PRECEDING) {
       if (this.forwardTab_) {
         // forward
         dpi.focus_();
-      } else if (event.target !== document.documentElement) {
+      } else if (target !== document.documentElement) {
         // backwards if we're not already focused on <html>
         document.documentElement.focus();
       }
@@ -576,7 +626,7 @@
         cancelable: true
       });
       var dpi = this.pendingDialogStack[0];
-      if (dpi && dpi.dialog.dispatchEvent(cancelEvent)) {
+      if (dpi && safeDispatchEvent(dpi.dialog, cancelEvent)) {
         dpi.dialog.close();
       }
     } else if (event.keyCode === 9) {
@@ -663,6 +713,7 @@
           return realGet.call(this);
         };
         var realSet = methodDescriptor.set;
+        /** @this {HTMLElement} */
         methodDescriptor.set = function(v) {
           if (typeof v === 'string' && v.toLowerCase() === 'dialog') {
             return this.setAttribute('method', v);
@@ -743,4 +794,4 @@
 
   return dialogPolyfill;
 
-}));
+})));

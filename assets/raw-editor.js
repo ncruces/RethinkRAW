@@ -54,6 +54,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }
+    for (let n of form.querySelectorAll('select option[hidden]')) {
+        n.remove();
+    }
 }, { passive: true, once: true })
 
 window.addEventListener('beforeunload', evt => {
@@ -382,15 +385,10 @@ function disableInputs(n) {
     }
 }
 
-function titleize(name) {
-    return name.replace(/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=\D)(?=\d)|(?<=\d)(?=\D)|[\W_]+/g, ' ');
-}
-
 function alertError(src, err) {
     console.log(err);
-    let name = err && err.name;
+    let name = err && err.name || 'Error';
     let message = err && err.message;
-    name = name ? titleize(name) : 'Error';
     if (message) {
         let end = /\w$/.test(message) ? '.' : '';
         let sep = message.length > 25 ? '\n' : ' ';
@@ -631,9 +629,13 @@ function formatNumber(val, step) {
 }
 
 void function () {
+    if (navigator.platform.indexOf('Mac') < 0) {
+        for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌘', 'ctrl');
+    }
     function listener(e) {
-        for (let n of document.querySelectorAll('.ctrl-on')) n.hidden = !e.ctrlKey;
-        for (let n of document.querySelectorAll('.ctrl-off')) n.hidden = e.ctrlKey;
+        let modKey = navigator.platform.indexOf('Mac') < 0 ? e.ctrlKey : e.metaKey;
+        for (let n of document.querySelectorAll('.mod-off')) n.hidden = modKey;
+        for (let n of document.querySelectorAll('.mod-on')) n.hidden = !modKey;
     }
     window.addEventListener('keydown', listener, { passive: true });
     window.addEventListener('keyup', listener, { passive: true });

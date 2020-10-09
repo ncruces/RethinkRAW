@@ -14,12 +14,19 @@ import (
 )
 
 func main() {
-	if err := setupDirs(); err != nil {
+	err := run()
+	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func run() error {
+	if err := setupDirs(); err != nil {
+		return err
 	}
 
 	if err := loadConfig(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	url := url.URL{
@@ -29,9 +36,9 @@ func main() {
 
 	if len(os.Args) > 1 {
 		if fi, err := os.Stat(os.Args[1]); err != nil {
-			log.Fatal(err)
+			return err
 		} else if abs, err := filepath.Abs(os.Args[1]); err != nil {
-			log.Fatal(err)
+			return err
 		} else {
 			if fi.IsDir() {
 				url.Path = "/gallery/" + toURLPath(abs)
@@ -52,8 +59,11 @@ func main() {
 
 	ln, err := net.Listen("tcp", url.Host)
 	if err == nil {
-		exif := setupExifTool()
 		http := setupHTTP()
+		exif, err := setupExifTool()
+		if err != nil {
+			return err
+		}
 		defer func() {
 			http.Shutdown(context.Background())
 			exif.Shutdown()
@@ -69,7 +79,7 @@ func main() {
 	if chrome != "" {
 		cmd := setupChrome(chrome, url.String())
 		if err := cmd.Start(); err != nil {
-			log.Fatal(err)
+			return err
 		}
 		go func() {
 			for {
@@ -78,14 +88,16 @@ func main() {
 			}
 		}()
 		if err := cmd.Wait(); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	} else {
 		if err := openURLCmd(url.String()).Run(); err != nil {
-			log.Fatal(err)
+			return err
 		}
 		<-sigs
 	}
+
+	return nil
 }
 
 func setupChrome(chrome, url string) *exec.Cmd {

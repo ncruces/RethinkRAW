@@ -1,9 +1,8 @@
 # RethinkRAW License
 
-### Copyright © 2019, Nuno Cruces. All rights reserved.
+### Copyright © 2019-2020, Nuno Cruces. All rights reserved.
 
-While in beta, RethinkRAW is provided free of charge for personal, non-commercial use.
-Note that beta versions or RethinkRAW expire 3 months after first being published.
+RethinkRAW is provided free of charge for personal, non-commercial use.
 
 RethinkRAW is licensed “as-is.” You bear the risk of using it.
 The author gives no express warranties, guarantees or conditions.

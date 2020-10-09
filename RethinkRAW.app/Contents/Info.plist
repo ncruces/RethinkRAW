@@ -6,5 +6,9 @@
 	<string>rethinkraw</string>
 	<key>CFBundleIconFile</key>
 	<string>icon.icns</string>
+	<key>CFBundleDisplayName</key>
+	<string>RethinkRAW</string>
+	<key>CFBundleVersion</key>
+	<string>0.0.3</string>
 </dict>
 </plist>

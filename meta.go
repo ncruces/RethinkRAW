@@ -12,13 +12,10 @@ import (
 
 var exifserver *exiftool.Server
 
-func setupExifTool() *exiftool.Server {
+func setupExifTool() (*exiftool.Server, error) {
 	var err error
 	exifserver, err = exiftool.NewServer(exiftoolExe, exiftoolArg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return exifserver
+	return exifserver, err
 }
 
 func getMeta(path string) ([]byte, error) {

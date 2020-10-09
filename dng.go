@@ -1,13 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
-
-	"github.com/pkg/errors"
 )
 
 func testDNGConverter(file ...string) error {
@@ -50,7 +49,7 @@ func runDNGConverter(input, output string, side int, exp *exportSettings) error 
 	log.Print("dng converter...")
 	cmd := exec.Command(serverConfig.DNGConverter, opts...)
 	if _, err := cmd.Output(); err != nil {
-		return errors.WithMessagef(err, "DNG Converter")
+		return fmt.Errorf("DNG Converter: %w", err)
 	}
 	return nil
 }
