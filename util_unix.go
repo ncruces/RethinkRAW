@@ -39,5 +39,3 @@ func getANSIPath(path string) (string, error) {
 func bringToTop() {}
 
 func hideConsole() {}
-
-func handleConsoleCtrl(c chan<- os.Signal) {}

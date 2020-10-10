@@ -48,35 +48,7 @@ func previewJPEG(path string) ([]byte, error) {
 		return buf.Bytes(), nil
 	}
 
-	exif := exifOrientation(data)
-	if exif == 0 {
-		exif = tiffOrientation(path)
-	}
-	switch {
-	case exif == -1:
-		return nil, errNotJPEG
-	case exif < 0 || exif > 9:
-		return nil, errInvalidJPEG
-	case exif < 2 || exif == 9:
-		return data, nil
-	}
-
-	flags := [7][]string{
-		{"-flip", "horizontal"},
-		{"-rotate", "180"},
-		{"-flip", "vertical"},
-		{"-transpose"},
-		{"-rotate", "90"},
-		{"-transverse"},
-		{"-rotate", "270"},
-	}
-
-	opts := append([]string{"-trim", "-copy", "none"}, flags[exif-2]...)
-
-	log.Print("jpegtran (rotate/flip)...")
-	cmd := exec.Command(jpegtran, opts...)
-	cmd.Stdin = bytes.NewReader(data)
-	return cmd.Output()
+	return data, nil
 }
 
 func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
