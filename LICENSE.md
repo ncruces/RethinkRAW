@@ -18,7 +18,6 @@ RethinkRAW is made possible by the following software:
 * ExifTool by Phil Harvey: https://exiftool.org/
 * dcraw by Dave Coffin: https://www.dechifro.org/dcraw/
 * Go by the Go Authors: https://golang.org/
-* Gorilla Schema by Rodrigo Moraes: https://github.com/gorilla/schema/
 * Strawberry Perl by Larry Wall and others: http://strawberryperl.com/
 
 RethinkRAW also requires:
