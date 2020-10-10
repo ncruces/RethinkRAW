@@ -24,7 +24,6 @@ var (
 	wideCharToMultiByte   = kernel32.NewProc("WideCharToMultiByte")
 	getConsoleProcessList = kernel32.NewProc("GetConsoleProcessList")
 	getConsoleWindow      = kernel32.NewProc("GetConsoleWindow")
-	setConsoleCtrlHandler = kernel32.NewProc("SetConsoleCtrlHandler")
 	showWindow            = user32.NewProc("ShowWindow")
 	setForegroundWindow   = user32.NewProc("SetForegroundWindow")
 )
@@ -143,21 +142,5 @@ func hideConsole() {
 			return // not the only process
 		}
 		showWindow.Call(hwnd, 0) // SW_HIDE
-	}
-}
-
-func handleConsoleCtrl(c chan<- os.Signal) {
-	n, _, err := setConsoleCtrlHandler.Call(
-		syscall.NewCallback(func(controlType uint) uint {
-			if controlType >= 2 {
-				c <- syscall.Signal(syscall.SIGTERM)
-				select {}
-			}
-			return 0
-		}),
-		1)
-
-	if n == 0 {
-		log.Fatal(err)
 	}
 }

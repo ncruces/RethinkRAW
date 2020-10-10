@@ -28,7 +28,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			return r
 		}
 
-		if out, err := getMeta(path); err != nil {
+		if out, err := getMetaHTML(path); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Cache-Control", "max-age=60")

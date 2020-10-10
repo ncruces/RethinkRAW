@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	baseDir, dataDir, tempDir string
-	dcraw, jpegtran           string
-	exiftoolExe, exiftoolArg  string
+	baseDir, dataDir, tempDir       string
+	dcraw, exiftoolExe, exiftoolArg string
 )
 
 var serverConfig struct {
@@ -31,7 +30,6 @@ func loadConfig() error {
 
 	// set defaults
 	dcraw = baseDir + "/utils/dcraw"
-	jpegtran = baseDir + "/utils/jpegtran"
 	exiftoolExe = baseDir + "/utils/exiftool/exiftool"
 	if runtime.GOOS == "windows" {
 		exiftoolArg = exiftoolExe

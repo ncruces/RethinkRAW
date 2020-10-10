@@ -74,7 +74,6 @@ func run() error {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	handleConsoleCtrl(sigs)
 
 	if chrome != "" {
 		cmd := setupChrome(chrome, url.String())
