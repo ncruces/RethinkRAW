@@ -26,13 +26,9 @@ Thumbs.db
 *.out
 
 ## Project
-/data
 /stuff
-/samples
 /assets_gen.go
-/log_*.txt
-/log_darwin.go
 /RethinkRAW.app/Contents/MacOS/data
 /RethinkRAW.app/Contents/MacOS/rethinkraw
 /RethinkRAW.app/Contents/MacOS/utils/exiftool
-!/utils/**/*.*
+!/RethinkRAW/utils/**/*.*
