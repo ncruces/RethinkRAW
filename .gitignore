@@ -31,4 +31,5 @@ Thumbs.db
 /RethinkRAW.app/Contents/MacOS/data
 /RethinkRAW.app/Contents/MacOS/rethinkraw
 /RethinkRAW.app/Contents/MacOS/utils/exiftool
-!/RethinkRAW/utils/**/*.*
+/RethinkRAW/data
+/RethinkRAW/utils/exiftool
