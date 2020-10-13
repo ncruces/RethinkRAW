@@ -10,13 +10,16 @@ import (
 	"github.com/ncruces/zenity"
 )
 
-var filters zenity.FileFilters
 var extensions = map[string]struct{}{}
+var filters zenity.FileFilter
 
 func init() {
-	pattern := strings.Split("*.CRW *.NEF *.RAF *.ORF *.MRW *.DCR *.MOS *.RAW *.PEF *.SRF *.DNG *.X3F *.CR2 *.ERF *.SR2 *.KDC *.MFW *.MEF *.ARW *.NRW *.RW2 *.RWL *.IIQ *.3FR *.FFF *.SRW *.GPR *.DXO *.ARQ *.CR3", " ")
-	filters = zenity.FileFilters{{Name: "RAW files", Patterns: pattern}}
-	for _, ext := range pattern {
+	pattern := strings.Split("public.camera-raw-image"+
+		"*.CRW *.NEF *.RAF *.ORF *.MRW *.DCR *.MOS *.RAW *.PEF *.SRF *.DNG *.X3F *.CR2 *.ERF *.SR2"+
+		"*.KDC *.MFW *.MEF *.ARW *.NRW *.RW2 *.RWL *.IIQ *.3FR *.FFF *.SRW *.GPR *.DXO *.ARQ *.CR3",
+		" ")
+	filters = zenity.FileFilter{Name: "RAW files", Patterns: pattern}
+	for _, ext := range pattern[1:] {
 		extensions[ext[1:]] = struct{}{}
 	}
 }

@@ -27,6 +27,7 @@ Thumbs.db
 
 ## Project
 /stuff
+/exiftool/tmp
 /assets_gen.go
 /RethinkRAW.app/Contents/MacOS/data
 /RethinkRAW.app/Contents/MacOS/rethinkraw
