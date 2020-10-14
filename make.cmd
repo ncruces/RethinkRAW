@@ -10,5 +10,5 @@ IF [%1]==[test] (
     go generate || EXIT /B
     go build -tags memfs -ldflags "-s -w" -o RethinkRAW\RethinkRAW.exe || EXIT /B
     go mod tidy || EXIT /B
-    IF EXIST RethinkRAW\data RD /S /Q RethinkRAW\data 2
+    IF EXIST RethinkRAW\data RD /S /Q RethinkRAW\data
 )
