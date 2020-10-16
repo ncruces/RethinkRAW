@@ -7,7 +7,6 @@ import (
 	"io"
 	"os/exec"
 	"sync"
-	"syscall"
 
 	"errors"
 )
@@ -37,22 +36,22 @@ func NewServer(path, arg1 string, commonArg ...string) (*Server, error) {
 	return e, e.start()
 }
 
-func (e *Server) start() (err error) {
+func (e *Server) start() error {
 	cmd := exec.Command(e.path, e.args...)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return
+		return err
 	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return
+		return err
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		return
+		return err
 	}
 
 	e.stdin = stdin
@@ -63,7 +62,7 @@ func (e *Server) start() (err error) {
 
 	err = cmd.Start()
 	if err != nil {
-		return
+		return err
 	}
 
 	e.cmd = cmd
@@ -71,27 +70,30 @@ func (e *Server) start() (err error) {
 }
 
 func (e *Server) restart() {
-	e.cmd.Process.Signal(syscall.SIGTERM)
+	e.cmd.Process.Kill()
+	e.cmd.Process.Release()
 	e.stdin.Close()
-	e.cmd = nil
 	e.start()
 }
 
-func (e *Server) Shutdown() (err error) {
+func (e *Server) Shutdown() error {
 	e.mtx.Lock()
 	defer e.mtx.Unlock()
 
-	if e.cmd != nil {
-		e.cmd = nil
-		fmt.Fprintln(e.stdin, "-stay_open")
-		fmt.Fprintln(e.stdin, "false")
-		err = e.stdin.Close()
+	if e.cmd == nil {
+		return nil
 	}
 
-	return
+	fmt.Fprintln(e.stdin, "-stay_open")
+	fmt.Fprintln(e.stdin, "false")
+	e.stdin.Close()
+
+	err := e.cmd.Wait()
+	e.cmd = nil
+	return err
 }
 
-func (e *Server) Command(arg ...string) (res []byte, err error) {
+func (e *Server) Command(arg ...string) ([]byte, error) {
 	e.mtx.Lock()
 	defer e.mtx.Unlock()
 
@@ -103,33 +105,33 @@ func (e *Server) Command(arg ...string) (res []byte, err error) {
 		fmt.Fprintln(e.stdin, a)
 	}
 
-	_, err = fmt.Fprintln(e.stdin, "-execute"+boundary)
+	_, err := fmt.Fprintln(e.stdin, "-execute"+boundary)
 	if err != nil {
 		e.restart()
-		return
+		return nil, err
 	}
 
 	if !e.stdout.Scan() {
-		err = e.stdout.Err()
+		err := e.stdout.Err()
 		if err == nil {
 			err = io.EOF
 		}
 		e.restart()
-		return
+		return nil, err
 	}
 	if !e.stderr.Scan() {
-		err = e.stderr.Err()
+		err := e.stderr.Err()
 		if err == nil {
 			err = io.EOF
 		}
 		e.restart()
-		return
+		return nil, err
 	}
 
 	if len(e.stderr.Bytes()) > 0 {
 		return nil, errors.New(string(bytes.TrimSpace(e.stderr.Bytes())))
 	}
-	res = make([]byte, len(e.stdout.Bytes()))
+	res := make([]byte, len(e.stdout.Bytes()))
 	copy(res, e.stdout.Bytes())
 	return res, nil
 }
