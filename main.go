@@ -13,6 +13,12 @@ import (
 	"syscall"
 )
 
+var shutdown = make(chan os.Signal, 1)
+
+func init() {
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+}
+
 func main() {
 	err := run()
 	if err != nil {
@@ -48,17 +54,13 @@ func run() error {
 		}
 	}
 
-	chrome := findChrome()
-	if chrome != "" {
-		hideConsole()
-	}
-
 	if err := testDNGConverter(); err != nil {
 		url.Path = "/dngconv.html"
 	}
 
-	ln, err := net.Listen("tcp", url.Host)
-	if err == nil {
+	var server bool
+	if ln, err := net.Listen("tcp", url.Host); err == nil {
+		server = true
 		http := setupHTTP()
 		exif, err := setupExifTool()
 		if err != nil {
@@ -72,19 +74,16 @@ func run() error {
 		go http.Serve(ln)
 	}
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	if chrome != "" {
+	if chrome := findChrome(); chrome != "" {
 		cmd := setupChrome(chrome, url.String())
 		if err := cmd.Start(); err != nil {
 			return err
 		}
+		hideConsole()
+
 		go func() {
-			for {
-				<-sigs
-				exitChrome(cmd)
-			}
+			<-shutdown
+			exitChrome(cmd)
 		}()
 		if err := cmd.Wait(); err != nil {
 			return err
@@ -93,7 +92,9 @@ func run() error {
 		if err := openURLCmd(url.String()).Run(); err != nil {
 			return err
 		}
-		<-sigs
+		if server {
+			<-shutdown
+		}
 	}
 
 	return nil

@@ -7,13 +7,17 @@ import (
 	"html/template"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
 
 var templates *template.Template
@@ -25,9 +29,77 @@ func setupHTTP() *http.Server {
 	http.Handle("/thumb/", http.StripPrefix("/thumb", HTTPHandler(thumbHandler)))
 	http.Handle("/dialog", HTTPHandler(dialogHandler))
 	http.Handle("/config", HTTPHandler(configHandler))
+	http.Handle("/ws", websocket.Handler(websocketWatcher))
 	http.Handle("/", assetHandler)
 	templates = assetTemplates()
-	return &http.Server{}
+	return &http.Server{
+		ReadHeaderTimeout: time.Second,
+		IdleTimeout:       time.Minute,
+		ConnState:         connectionWatcher,
+		Handler:           middlewareWatcher(http.DefaultServeMux),
+	}
+}
+
+var watchdog struct {
+	*time.Ticker
+	numActive  int32
+	lastActive int64
+}
+
+func init() {
+	watchdog.Ticker = time.NewTicker(time.Minute)
+	watchdog.lastActive = time.Now().Add(time.Hour).UnixNano()
+
+	go func() {
+		for range watchdog.C {
+			if atomic.LoadInt32(&watchdog.numActive) > 0 {
+				continue
+			}
+			t := time.Unix(0, atomic.LoadInt64(&watchdog.lastActive))
+			if time.Now().After(t.Add(time.Minute)) {
+				shutdown <- os.Interrupt
+			}
+		}
+	}()
+}
+
+func middlewareWatcher(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&watchdog.numActive, +1)
+		defer atomic.AddInt32(&watchdog.numActive, -1)
+		atomic.StoreInt64(&watchdog.lastActive, time.Now().UnixNano())
+		next.ServeHTTP(w, r)
+	})
+}
+
+func connectionWatcher(conn net.Conn, state http.ConnState) {
+	switch state {
+	case http.StateNew:
+		atomic.AddInt32(&watchdog.numActive, +1)
+	case http.StateHijacked, http.StateClosed:
+		atomic.AddInt32(&watchdog.numActive, -1)
+	case http.StateActive:
+		atomic.StoreInt64(&watchdog.lastActive, time.Now().UnixNano())
+	}
+}
+
+func websocketWatcher(conn *websocket.Conn) {
+	conn.PayloadType = websocket.PingFrame
+
+	for {
+		var dummy [8]byte
+		conn.SetReadDeadline(time.Now().Add(time.Minute))
+		if _, err := conn.Read(dummy[:]); err == nil {
+			continue
+		} else if !os.IsTimeout(err) {
+			return
+		}
+
+		conn.SetWriteDeadline(time.Now().Add(time.Second))
+		if _, err := conn.Write(nil); err != nil {
+			return
+		}
+	}
 }
 
 // HTTPResult helps HTTPHandlers short circuit a result

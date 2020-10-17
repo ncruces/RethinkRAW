@@ -1,6 +1,6 @@
 void function () {
 
-if (!('CSS' in window && CSS.supports('grid-area', 'auto'))) {
+if (!String.prototype.replaceAll) {
     location.replace('/browser.html');
 }
 
@@ -11,24 +11,12 @@ window.back = function () {
     } else {
         location.replace('/');
     }
-}
+};
 
-// RadioNodeList polyfill (Edge)
-if (typeof RadioNodeList === 'undefined') {
-    Object.defineProperty(HTMLCollection.prototype, 'value', {
-        get: function () {
-            for (var i = 0; i < this.length; i++) {
-                var el = this[i];
-                if (el.type === 'radio' && el.checked) return el.value;
-            }
-        },
-        set: function (value) {
-            for (var i = 0; i < this.length; i++) {
-                var el = this[i];
-                if (el.type === 'radio') el.checked = el.value == String(value);
-            }
-        }
-    });
-}
+window.addEventListener('pageshow', function createSocket() {
+    let host = location.host.replace('[::1]', 'localhost');
+    window.heartbeat = new WebSocket('ws://' + host + '/ws');
+    window.heartbeat.onclose = createSocket;
+});
 
 }()
