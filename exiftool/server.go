@@ -72,8 +72,22 @@ func (e *Server) start() error {
 func (e *Server) restart() {
 	e.cmd.Process.Kill()
 	e.cmd.Process.Release()
-	e.stdin.Close()
 	e.start()
+}
+
+func (e *Server) Close() error {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
+	if e.cmd == nil {
+		return nil
+	}
+
+	e.stdin.Close()
+	err := e.cmd.Process.Kill()
+	e.cmd.Process.Release()
+	e.cmd = nil
+	return err
 }
 
 func (e *Server) Shutdown() error {

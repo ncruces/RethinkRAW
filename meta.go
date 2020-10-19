@@ -36,12 +36,16 @@ func fixMetaDNG(orig, dest, name string) (err error) {
 	return err
 }
 
-func fixMetaJPEGAsync(orig string) (io.WriteCloser, *exiftool.AsyncResult) {
+func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
 	opts := []string{"-tagsFromFile", orig, "-GPS:all", "-ExifIFD:all", "-CommonIFD0", "-fast", "-"}
 
-	rp, wp := io.Pipe()
+	inr, inw := io.Pipe()
 	log.Print("exiftool (fix jpeg)...")
-	return wp, exiftool.CommandAsync(exiftoolExe, exiftoolArg, rp, opts...)
+	out, err := exiftool.CommandAsync(exiftoolExe, exiftoolArg, inr, opts...)
+	if err != nil {
+		return nil, nil, err
+	}
+	return inw, out, nil
 }
 
 func hasEdits(path string) bool {

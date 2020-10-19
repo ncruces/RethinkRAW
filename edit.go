@@ -12,8 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"rethinkraw/exiftool"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {
@@ -148,10 +146,13 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, err
 		return nil, err
 	}
 
+	var reader io.ReadCloser
 	var writer io.WriteCloser
-	var result *exiftool.AsyncResult
-	if !(exp.DNG || exp.Resample) {
-		writer, result = fixMetaJPEGAsync(wk.orig())
+	if !exp.DNG && !exp.Resample {
+		writer, reader, err = fixMetaJPEGAsync(wk.orig())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = runDNGConverter(wk.orig(), wk.temp(), 0, exp)
@@ -172,9 +173,11 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, err
 			return data, err
 		}
 
-		writer.Write(data)
-		writer.Close()
-		return result.Get()
+		go func() {
+			writer.Write(data)
+			writer.Close()
+		}()
+		return ioutil.ReadAll(reader)
 	}
 }
 
