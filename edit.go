@@ -19,34 +19,34 @@ import (
 func loadEdit(path string) (xmp xmpSettings, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
-		return
+		return xmp, err
 	}
 	defer wk.close()
 
 	return loadXMP(wk.loadXMP())
 }
 
-func saveEdit(path string, xmp *xmpSettings) (err error) {
+func saveEdit(path string, xmp *xmpSettings) error {
 	wk, err := openWorkspace(path)
 	if err != nil {
-		return
+		return err
 	}
 	defer wk.close()
 
 	err = editXMP(wk.origXMP(), xmp)
 	if err != nil {
-		return
+		return err
 	}
 
 	dest, err := destSidecar(path)
 	if err != nil {
-		return
+		return err
 	}
 
 	if path == dest {
 		err = os.RemoveAll(wk.temp())
 		if err != nil {
-			return
+			return err
 		}
 
 		exp := exportSettings{
@@ -57,7 +57,7 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 
 		err = runDNGConverter(wk.orig(), wk.temp(), 0, &exp)
 		if err != nil {
-			return
+			return err
 		}
 
 		err = lnkyFile(wk.temp(), dest+".bak")
@@ -66,27 +66,27 @@ func saveEdit(path string, xmp *xmpSettings) (err error) {
 	}
 
 	if err != nil {
-		return
+		return err
 	}
 	return os.Rename(dest+".bak", dest)
 }
 
-func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []byte, err error) {
+func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer wk.close()
 
 	if pvw.Preview > 0 {
 		err = editXMP(wk.lastXMP(), xmp)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		err = os.RemoveAll(wk.temp())
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		var side int
@@ -98,7 +98,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []b
 
 		err = runDNGConverter(wk.last(), wk.temp(), side, nil)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		if wk.hasEdit {
@@ -106,7 +106,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []b
 		} else {
 			err = os.Rename(wk.temp(), wk.edit())
 			if err != nil {
-				return
+				return nil, err
 			}
 
 			return previewJPEG(wk.edit())
@@ -114,38 +114,38 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) (thumb []b
 	} else {
 		err = editXMP(wk.origXMP(), xmp)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		err = os.RemoveAll(wk.temp())
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		err = runDNGConverter(wk.orig(), wk.temp(), 0, &exportSettings{})
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		return previewJPEG(wk.temp())
 	}
 }
 
-func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte, err error) {
+func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer wk.close()
 
 	err = editXMP(wk.origXMP(), xmp)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	err = os.RemoveAll(wk.temp())
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	var writer io.WriteCloser
@@ -156,20 +156,20 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) (data []byte
 
 	err = runDNGConverter(wk.orig(), wk.temp(), 0, exp)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if exp.DNG {
 		err = fixMetaDNG(wk.orig(), wk.temp(), path)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		return ioutil.ReadFile(wk.temp())
 	} else {
-		data, err = exportJPEG(wk.temp(), exp)
+		data, err := exportJPEG(wk.temp(), exp)
 		if err != nil || exp.Resample {
-			return
+			return data, err
 		}
 
 		writer.Write(data)
@@ -267,7 +267,7 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 			fit.Y = round(mul * ex.Height)
 		}
 	}
-	return
+	return fit
 }
 
 type workspace struct {
@@ -295,7 +295,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 
 	err = os.MkdirAll(wk.base, 0700)
 	if err != nil {
-		return
+		return wk, err
 	}
 
 	fi, err := os.Stat(wk.base + "edit.dng")
@@ -303,30 +303,30 @@ func openWorkspace(path string) (wk workspace, err error) {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
 		wk.hasEdit = true
-		return
+		return wk, err
 	}
 
 	fi, err = os.Stat(wk.base + "orig" + wk.ext)
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
-		return
+		return wk, err
 	}
 
 	sfi, err := os.Stat(path)
 	if err != nil {
-		return
+		return wk, err
 	}
 
 	if os.SameFile(fi, sfi) {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
-		return
+		return wk, err
 	}
 
 	err = lnkyFile(path, wk.base+"orig"+wk.ext)
 	if err != nil {
-		return
+		return wk, err
 	}
 
 	err = loadSidecar(path, wk.base+"orig.xmp")
@@ -335,12 +335,12 @@ func openWorkspace(path string) (wk workspace, err error) {
 	} else if err == nil {
 		wk.hasXMP = true
 	}
-	return
+	return wk, err
 }
 
 func (wk *workspace) close() {
-	if old := workspaces.close(wk.hash); old != "" {
-		os.RemoveAll(filepath.Join(tempDir, old))
+	if lru := workspaces.close(wk.hash); lru != "" {
+		os.RemoveAll(filepath.Join(tempDir, lru))
 	}
 }
 
@@ -419,7 +419,7 @@ func (wl *workspaceLocker) open(hash string) {
 	lk.Lock()
 }
 
-func (wl *workspaceLocker) close(hash string) (old string) {
+func (wl *workspaceLocker) close(hash string) (lru string) {
 	wl.Lock()
 
 	lk := wl.locks[hash]
@@ -427,7 +427,7 @@ func (wl *workspaceLocker) close(hash string) (old string) {
 
 	if lk.n <= 0 {
 		if len(wl.lru) >= workspaceMaxLRU {
-			old, wl.lru = wl.lru[0], wl.lru[1:]
+			lru, wl.lru = wl.lru[0], wl.lru[1:]
 		}
 		wl.lru = append(wl.lru, hash)
 		delete(wl.locks, hash)
@@ -435,7 +435,7 @@ func (wl *workspaceLocker) close(hash string) (old string) {
 
 	lk.Unlock()
 	wl.Unlock()
-	return
+	return lru
 }
 
 func (wl *workspaceLocker) delete(hash string) (ok bool) {
@@ -451,7 +451,7 @@ func (wl *workspaceLocker) delete(hash string) (ok bool) {
 
 	lk.Unlock()
 	wl.Unlock()
-	return
+	return ok
 }
 
 func loadSidecar(src, dst string) error {

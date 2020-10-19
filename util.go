@@ -111,13 +111,13 @@ func makeFile(name string) (*os.File, error) {
 func copyFile(src, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
-		return
+		return err
 	}
 	defer in.Close()
 
 	out, err := os.Create(dst)
 	if err != nil {
-		return
+		return err
 	}
 	defer func() {
 		cerr := out.Close()
@@ -127,7 +127,7 @@ func copyFile(src, dst string) (err error) {
 	}()
 
 	_, err = io.Copy(out, in)
-	return
+	return err
 }
 
 func moveFile(src, dst string) error {
@@ -187,7 +187,7 @@ func setupDirs() (err error) {
 
 	tempDir, err = getANSIPath(tempDir)
 	if err != nil {
-		return
+		return err
 	}
 
 	testDir := func() error {
@@ -201,7 +201,7 @@ func setupDirs() (err error) {
 		}
 	}
 	if testDir() == nil {
-		return
+		return nil
 	}
 	if data, err := os.UserConfigDir(); err != nil {
 		return err

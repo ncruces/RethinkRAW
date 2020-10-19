@@ -49,7 +49,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	log.Print("exiftool (load xmp)...")
 	out, err := exifserver.Command("-S", "-n", "-fast2", "-Orientation", "-XMP-crs:*", path)
 	if err != nil {
-		return
+		return xmp, err
 	}
 
 	m := make(map[string][]byte)
@@ -111,10 +111,10 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadBool(&xmp.LensProfile, m, "LensProfileEnable")
 	loadBool(&xmp.AutoLateralCA, m, "AutoLateralCA")
 
-	return
+	return xmp, nil
 }
 
-func editXMP(path string, xmp *xmpSettings) (err error) {
+func editXMP(path string, xmp *xmpSettings) error {
 	opts := []string{"-n", "-z"}
 
 	// filename
@@ -216,14 +216,14 @@ func editXMP(path string, xmp *xmpSettings) (err error) {
 	opts = append(opts, "-overwrite_original", path)
 
 	log.Print("exiftool (save xmp)...")
-	_, err = exifserver.Command(opts...)
-	return
+	_, err := exifserver.Command(opts...)
+	return err
 }
 
-func extractXMP(path, dest string) (err error) {
+func extractXMP(path, dest string) error {
 	log.Print("exiftool (extract xmp)...")
-	_, err = exifserver.Command("-n", "-Orientation=0", "-tagsFromFile", path, "-scanForXMP", "-fast2", "-Orientation", "-all:all", "-overwrite_original", dest)
-	return
+	_, err := exifserver.Command("-n", "-Orientation=0", "-tagsFromFile", path, "-scanForXMP", "-fast2", "-Orientation", "-all:all", "-overwrite_original", dest)
+	return err
 }
 
 func (xmp *xmpSettings) update(shadows, brightness, contrast, clarity int) {
