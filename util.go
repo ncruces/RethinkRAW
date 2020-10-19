@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"errors"
 	"io"
 	"mime"
 	"os"
@@ -119,7 +120,8 @@ func copyFile(src, dst string) (err error) {
 		return
 	}
 	defer func() {
-		if cerr := out.Close(); err == nil {
+		cerr := out.Close()
+		if err == nil {
 			err = cerr
 		}
 	}()
@@ -130,10 +132,7 @@ func copyFile(src, dst string) (err error) {
 
 func moveFile(src, dst string) error {
 	err := os.Rename(src, dst)
-	le, ok := err.(*os.LinkError)
-
-	// 0x12 is EXDEV, 0x11 is ERROR_NOT_SAME_DEVICE
-	if ok && (le.Err == syscall.Errno(0x12) || (le.Err == syscall.Errno(0x11) && runtime.GOOS == "windows")) {
+	if isNotSameDevice(err) {
 		if err := copyFile(src, dst); err != nil {
 			return err
 		}
@@ -158,13 +157,22 @@ func lnkyFile(src, dst string) error {
 	}
 
 	err = os.Link(src, dst)
-	le, ok := err.(*os.LinkError)
-
-	// 0x12 is EXDEV, 0x11 is ERROR_NOT_SAME_DEVICE
-	if ok && (os.IsExist(le) || le.Err == syscall.Errno(0x12) || (le.Err == syscall.Errno(0x11) && runtime.GOOS == "windows")) {
+	if isNotSameDevice(err) {
 		return copyFile(src, dst)
 	}
 	return err
+}
+
+func isNotSameDevice(err error) bool {
+	var lerr *os.LinkError
+	if errors.As(err, &lerr) {
+		if runtime.GOOS == "windows" {
+			return lerr.Err == syscall.Errno(0x11) // ERROR_NOT_SAME_DEVICE
+		} else {
+			return lerr.Err == syscall.Errno(0x12) // EXDEV
+		}
+	}
+	return false
 }
 
 func setupDirs() (err error) {

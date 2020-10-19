@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"html/template"
 	"log"
 	"mime"
@@ -152,8 +153,10 @@ func errorStatus(err error) (status int, message string) {
 
 	var buf strings.Builder
 	buf.WriteString(strings.TrimSpace(err.Error()))
-	if err, ok := err.(*exec.ExitError); ok {
-		if msg := bytes.TrimSpace(err.Stderr); len(msg) > 0 {
+
+	var eerr *exec.ExitError
+	if errors.As(err, &eerr) {
+		if msg := bytes.TrimSpace(eerr.Stderr); len(msg) > 0 {
 			buf.WriteByte('\n')
 			buf.Write(msg)
 		}

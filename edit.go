@@ -313,6 +313,17 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return
 	}
 
+	sfi, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+
+	if os.SameFile(fi, sfi) {
+		_, e := os.Stat(wk.base + "orig.xmp")
+		wk.hasXMP = e == nil
+		return
+	}
+
 	err = lnkyFile(path, wk.base+"orig"+wk.ext)
 	if err != nil {
 		return

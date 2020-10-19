@@ -33,7 +33,7 @@ find lib -name '*.pod' -delete
 find lib -type d -empty -delete
 popd
 
-# Copy modules
+# Embed Strawberry
 mkdir -p tmp/exiftool/lib/Win32/
 cp -rl tmp/strawberry/perl/bin/perl.exe tmp/exiftool/exiftool.exe
 cp -rl tmp/strawberry/perl/bin/*.dll tmp/exiftool
@@ -53,7 +53,7 @@ rm -rf bin t
 ./exiftool.exe exiftool -ver -v
 popd
 
-# Copy to destination
+# Move to destination
 rm -rf "$tgt"
 mv tmp/exiftool "$tgt"
 

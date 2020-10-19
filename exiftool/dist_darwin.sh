@@ -24,7 +24,7 @@ rm -rf t
 ./exiftool -ver -v
 popd
 
-# Copy to destination
+# Move to destination
 rm -rf "$tgt"
 mv tmp/exiftool "$tgt"
 

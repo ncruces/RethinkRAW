@@ -5,7 +5,7 @@ tgt=RethinkRAW.app/Contents/MacOS
 
 if [[ "$1" == test ]]; then
     echo Test build...
-    go build -o "$tgt/rethinkraw"
+    go build -race -o "$tgt/rethinkraw"
     exec "$tgt/rethinkraw"
 else
     echo Release build...
