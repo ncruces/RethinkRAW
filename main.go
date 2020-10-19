@@ -17,6 +17,7 @@ var shutdown = make(chan os.Signal, 1)
 
 func init() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	hideConsole()
 }
 
 func main() {
@@ -79,7 +80,6 @@ func run() error {
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-		hideConsole()
 
 		go func() {
 			<-shutdown

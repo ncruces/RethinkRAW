@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -eo pipefail
+shopt -s extglob
 
 tgt="../RethinkRAW.app/Contents/MacOS/utils/exiftool"
 exiftool="https://exiftool.org/Image-ExifTool-12.00.tar.gz"
@@ -18,7 +19,8 @@ mv tmp/* tmp/exiftool
 
 # Cleanup and test
 pushd tmp/exiftool
-rm -rf html *_files
+rm -rf !(exiftool|lib|t|README)
+find lib -name '*.pod' -delete
 prove -l lib -b t 
 rm -rf t
 ./exiftool -ver -v

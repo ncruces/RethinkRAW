@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -eo pipefail
+shopt -s extglob
 
 tgt="../RethinkRAW/utils/exiftool"
 exiftool="https://exiftool.org/Image-ExifTool-12.00.tar.gz"
@@ -27,7 +28,9 @@ popd
 
 # Cleanup Strawberry
 pushd tmp/strawberry/perl
-rm -rf lib/CORE lib/CPAN
+rm -rf lib/CORE lib/CPAN?(.pm) lib/Pod
+rm -rf lib/Encode/+(CN|JP|KR|TW)?(.pm)
+rm -rf lib/auto/Encode/+(CN|JP|KR|TW)
 find lib -name '.packlist' -delete
 find lib -name '*.pod' -delete
 find lib -type d -empty -delete
@@ -47,7 +50,8 @@ cp -rl tmp/strawberry/perl/site/lib/auto/Win32/FindFile* tmp/exiftool/lib/auto/W
 
 # Cleanup and test
 pushd tmp/exiftool
-rm -rf html *_files
+rm -rf !(exiftool*|*.dll|bin|lib|t|README)
+find lib -name '*.pod' -delete
 bin/prove.bat -b t
 rm -rf bin t
 ./exiftool.exe exiftool -ver -v
