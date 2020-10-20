@@ -86,12 +86,18 @@
     <fieldset disabled>
         <legend>Presence</legend>
 
+        <label for=texture>Texture</label>
+        <output for=texture name=texture></output>
+        <input type=range id=texture value="0" min="-100" max="100" step="1"
+            oninput="rangeInput(this)" onchange="valueChange()">
+
         <label for=clarity>Clarity</label>
         <output for=clarity name=clarity></output>
         <input type=range id=clarity value="0" min="-100" max="100" step="1"
             oninput="rangeInput(this)" onchange="valueChange()">
 
-        <label for=dehaze>Dehaze</label><output for=dehaze name=dehaze></output>
+        <label for=dehaze>Dehaze</label>
+        <output for=dehaze name=dehaze></output>
         <input type=range id=dehaze value="0" min="-100" max="100" step="1"
             oninput="rangeInput(this)" onchange="valueChange()">
 

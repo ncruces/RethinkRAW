@@ -32,6 +32,7 @@ type xmpSettings struct {
 	Shadows    int     `json:"shadows"`
 	Whites     int     `json:"whites"`
 	Blacks     int     `json:"blacks"`
+	Texture    int     `json:"texture"`
 	Clarity    int     `json:"clarity"`
 	Dehaze     int     `json:"dehaze"`
 	Vibrance   int     `json:"vibrance"`
@@ -97,6 +98,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadInt(&xmp.Blacks, m, "Blacks2012")
 
 	// presence
+	loadInt(&xmp.Texture, m, "Texture")
 	loadInt(&xmp.Dehaze, m, "Dehaze")
 	loadInt(&xmp.Vibrance, m, "Vibrance")
 	loadInt(&xmp.Saturation, m, "Saturation")
@@ -199,6 +201,7 @@ func editXMP(path string, xmp *xmpSettings) error {
 	// presence
 	opts = append(opts,
 		"-XMP-crs:Clarity="+strconv.Itoa(xmp.oldClarity()),
+		"-XMP-crs:Texture="+strconv.Itoa(xmp.Texture),
 		"-XMP-crs:Dehaze="+strconv.Itoa(xmp.Dehaze),
 		"-XMP-crs:Clarity2012="+strconv.Itoa(xmp.Clarity))
 

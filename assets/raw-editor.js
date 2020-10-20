@@ -43,7 +43,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (settings[k] !== 0) tone = 'Custom';
         rangeInput(form[k], settings[k]);
     }
-    for (let k of ['tint', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
+    for (let k of ['tint', 'texture', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
         rangeInput(form[k], settings[k]);
     }
 
@@ -451,7 +451,7 @@ function formQuery() {
     for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
         if (form[k].value) query.push(k + '=' + encodeURIComponent(form[k].value));
     }
-    for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
+    for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'texture', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
         if (form[k][0].value == 0) continue;
         query.push(k + '=' + encodeURIComponent(form[k][0].value));
     }
