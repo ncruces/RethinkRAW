@@ -20,12 +20,11 @@ func setupExifTool() (*exiftool.Server, error) {
 
 func getMetaHTML(path string) ([]byte, error) {
 	log.Print("exiftool (get meta)...")
-	return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-htmlFormat", "-groupHeadings", "-long", path)
-	//return exifserver.Command("-ignoreMinorErrors", "-fixBase", "-json", "-groupHeadings", "-long", path)
+	return exifserver.Command("-htmlFormat", "-groupHeadings", "-long", "-fixBase", "-ignoreMinorErrors", path)
 }
 
 func fixMetaDNG(orig, dest, name string) (err error) {
-	opts := []string{"-tagsFromFile", orig, "-MakerNotes", "-OriginalRawFileName-=" + filepath.Base(orig)}
+	opts := []string{"-tagsFromFile", orig, "-fixBase", "-MakerNotes", "-OriginalRawFileName-=" + filepath.Base(orig)}
 	if name != "" {
 		opts = append(opts, "-OriginalRawFileName="+filepath.Base(name))
 	}
@@ -37,7 +36,8 @@ func fixMetaDNG(orig, dest, name string) (err error) {
 }
 
 func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
-	opts := []string{"-tagsFromFile", orig, "-GPS:all", "-ExifIFD:all", "-CommonIFD0", "-fast", "-"}
+	// https://exiftool.org/forum/index.php?topic=8378.msg43043#msg43043
+	opts := []string{"-tagsFromFile", orig, "-fixBase", "-CommonIFD0", "-ExifIFD:all", "-GPS:all", "-fast", "-"}
 
 	inr, inw := io.Pipe()
 	log.Print("exiftool (fix jpeg)...")
@@ -50,13 +50,13 @@ func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
 
 func hasEdits(path string) bool {
 	log.Print("exiftool (has edits?)...")
-	out, err := exifserver.Command("-XMP-photoshop:*", path)
+	out, err := exifserver.Command("-XMP-photoshop:all", path)
 	return err == nil && len(out) > 0
 }
 
 func tiffOrientation(path string) int {
 	log.Print("exiftool (get orientation)...")
-	out, err := exifserver.Command("-s3", "-n", "-Orientation", "-fast2", path)
+	out, err := exifserver.Command("--printConv", "-short3", "-fast2", "-Orientation", path)
 	if err != nil {
 		return 0
 	}

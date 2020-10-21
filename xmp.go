@@ -1,17 +1,16 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"rethinkraw/exiftool"
 	"strconv"
 )
 
 var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
-var exiftoolRegex = regexp.MustCompile(`(?m:^(\w+): (.*))`)
 
 type xmpSettings struct {
 	Filename    string `json:"-"`
@@ -48,14 +47,14 @@ type xmpSettings struct {
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
 	log.Print("exiftool (load xmp)...")
-	out, err := exifserver.Command("-S", "-n", "-fast2", "-Orientation", "-XMP-crs:*", path)
+	out, err := exifserver.Command("--printConv", "-short2", "-fast2", "-Orientation", "-XMP-crs:all", path)
 	if err != nil {
 		return xmp, err
 	}
 
 	m := make(map[string][]byte)
-	for _, s := range exiftoolRegex.FindAllSubmatch(out, -1) {
-		m[string(s[1])] = bytes.TrimRight(s[2], "\r")
+	if err := exiftool.Unmarshal(out, m); err != nil {
+		return xmp, err
 	}
 
 	// legacy with defaults (will be upgraded/overwritten)
@@ -117,7 +116,8 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 }
 
 func editXMP(path string, xmp *xmpSettings) error {
-	opts := []string{"-n", "-z"}
+	// zip means shorter xml output, not compression
+	opts := []string{"--printConv", "-zip"}
 
 	// filename
 	if xmp.Filename != "" {
@@ -225,7 +225,7 @@ func editXMP(path string, xmp *xmpSettings) error {
 
 func extractXMP(path, dest string) error {
 	log.Print("exiftool (extract xmp)...")
-	_, err := exifserver.Command("-n", "-Orientation=0", "-tagsFromFile", path, "-scanForXMP", "-fast2", "-Orientation", "-all:all", "-overwrite_original", dest)
+	_, err := exifserver.Command("--printConv", "-Orientation=0", "-tagsFromFile", path, "-scanForXMP", "-fast2", "-Orientation", "-all:all", "-overwrite_original", dest)
 	return err
 }
 

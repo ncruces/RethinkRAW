@@ -112,7 +112,7 @@ func (e *Server) Command(arg ...string) ([]byte, error) {
 	defer e.mtx.Unlock()
 
 	if e.cmd == nil {
-		return nil, errors.New("server closed")
+		return nil, errors.New("exiftool: server closed")
 	}
 
 	for _, a := range arg {
@@ -143,7 +143,7 @@ func (e *Server) Command(arg ...string) ([]byte, error) {
 	}
 
 	if len(e.stderr.Bytes()) > 0 {
-		return nil, errors.New(string(bytes.TrimSpace(e.stderr.Bytes())))
+		return nil, fmt.Errorf("exiftool: %s", bytes.TrimSpace(e.stderr.Bytes()))
 	}
 	res := make([]byte, len(e.stdout.Bytes()))
 	copy(res, e.stdout.Bytes())

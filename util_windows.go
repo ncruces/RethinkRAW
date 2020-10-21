@@ -120,7 +120,7 @@ func getANSIPath(path string) (string, error) {
 		}
 	}
 
-	return path, errors.New("Could not convert to ANSI path: " + path)
+	return path, errors.New("could not convert to ANSI path: " + path)
 }
 
 func bringToTop() {
