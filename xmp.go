@@ -6,8 +6,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"rethinkraw/exiftool"
 	"strconv"
+
+	"github.com/ncruces/go-exiftool"
 )
 
 var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)

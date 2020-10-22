@@ -7,7 +7,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"rethinkraw/exiftool"
+	"github.com/ncruces/go-exiftool"
 )
 
 var exifserver *exiftool.Server
