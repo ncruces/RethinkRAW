@@ -6,7 +6,7 @@ let save = document.getElementById('save');
 let photo = document.getElementById('photo');
 let spinner = document.getElementById('spinner');
 
-window.addEventListener('DOMContentLoaded', async () => {
+(async () => {
     let settings;
     try {
         settings = await restRequest('GET', `?settings`);
@@ -57,7 +57,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     for (let n of form.querySelectorAll('select option[hidden]')) {
         n.remove();
     }
-}, { passive: true, once: true })
+})()
 
 window.addEventListener('beforeunload', evt => {
     if (!save.disabled) {
@@ -66,12 +66,12 @@ window.addEventListener('beforeunload', evt => {
     }
 })
 
-window.valueChange = function () {
+window.valueChange = () => {
     save.disabled = false;
     updatePhoto();
 }
 
-window.orientationChange = function (op) {
+window.orientationChange = (op) => {
     const table = {
         ccw: [8, 8, 5, 6, 7, 4, 1, 2, 3],
         cw:  [6, 6, 7, 8, 5, 2, 3, 4, 1],
@@ -86,7 +86,7 @@ window.orientationChange = function (op) {
     valueChange();
 }
 
-window.treatmentChange = function (e, val) {
+window.treatmentChange = (e, val) => {
     const profiles = [
         ['Adobe Standard'],
         ['Adobe Standard'],
@@ -109,7 +109,7 @@ window.treatmentChange = function (e, val) {
     valueChange();
 }
 
-window.whiteBalanceChange = function (e, val) {
+window.whiteBalanceChange = (e, val) => {
     const presets = {
         Daylight:   { temperature: 5500, tint: 10 },
         Cloudy:     { temperature: 6500, tint: 10 },
@@ -142,7 +142,7 @@ window.whiteBalanceChange = function (e, val) {
     valueChange();
 }
 
-window.toneChange = function (e, val) {
+window.toneChange = (e, val) => {
     if (val !== void 0) e.value = val;
 
     if (e.value === 'Default') {
@@ -160,7 +160,7 @@ window.toneChange = function (e, val) {
     valueChange();
 }
 
-window.temperatureInput = function (e, val) {
+window.temperatureInput = (e, val) => {
     if (e.length === 2) e = e[1];
     if (val !== void 0) e.value = Math.log(val);
 
@@ -174,7 +174,7 @@ window.temperatureInput = function (e, val) {
     e.previousElementSibling.value = Math.round(n / r) * r;
 }
 
-window.rangeInput = function (e, val) {
+window.rangeInput = (e, val) => {
     if (e.length === 2) e = e[1];
     if (val !== void 0) e.value = val;
 
@@ -235,7 +235,7 @@ window.exportFile = async (state) => {
     dialog.close();
 }
 
-window.toggleZoom = function (e, evt) {
+window.toggleZoom = (e, evt) => {
     zoom = !zoom;
 
     if (evt.detail) e.blur();
@@ -253,7 +253,7 @@ window.showMeta = async () => {
     dialog.showModal();
 }
 
-window.exportChange = function (e) {
+window.exportChange = (e) => {
     let form = e.tagName === 'FORM' ? e : e.form;
 
     document.getElementById('export-dng').hidden = form.format.value !== 'DNG';
@@ -628,7 +628,7 @@ function formatNumber(val, step) {
     return n.toFixed(fmt.length - i - 1);
 }
 
-void function () {
+{
     if (navigator.platform.indexOf('Mac') < 0) {
         for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌘', 'ctrl');
     }
@@ -640,16 +640,16 @@ void function () {
     window.addEventListener('keydown', listener, { passive: true });
     window.addEventListener('keyup', listener, { passive: true });
     listener({});
-}()
+}
 
-JSON.parseLast = function(ndjson) {
+JSON.parseLast = (ndjson) => {
     let end = ndjson.lastIndexOf('\n');
     if (end < 0) return void 0;
     let start = ndjson.lastIndexOf('\n', end - 1);
     return JSON.parse(ndjson.substring(start, end));
 }
 
-JSON.parseLines = function (ndjson) {
+JSON.parseLines = (ndjson) => {
     return ndjson.trimEnd().split('\n').map(JSON.parse);
 }
 

@@ -19,4 +19,12 @@ window.addEventListener('pageshow', function createSocket() {
     window.heartbeat.onclose = createSocket;
 });
 
+document.documentElement.addEventListener('click', function (evt) {
+	if (evt.metaKey || evt.ctrlKey || evt.button !== 0) evt.preventDefault();
+});
+
+document.documentElement.addEventListener('contextmenu', function (evt) {
+    evt.preventDefault();
+});
+
 }()
