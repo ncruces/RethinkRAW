@@ -7,22 +7,26 @@ import (
 	"io"
 	"os/exec"
 	"sync"
-
-	"errors"
 )
 
 const boundary = "1854673209"
 
+// Server wraps an instance of ExifTool that can process multiple commands sequentially.
+// Servers avoid the overhead of loading ExifTool for each command.
+// Servers are safe for concurrent use by multiple goroutines.
 type Server struct {
 	path   string
 	args   []string
-	mtx    sync.Mutex
+	srvMtx sync.Mutex
+	cmdMtx sync.Mutex
+	done   bool
 	cmd    *exec.Cmd
 	stdin  io.WriteCloser
 	stdout *bufio.Scanner
 	stderr *bufio.Scanner
 }
 
+// NewServer loads a new instance of ExifTool.
 func NewServer(path, arg1 string, commonArg ...string) (*Server, error) {
 	e := &Server{path: path}
 
@@ -70,50 +74,51 @@ func (e *Server) start() error {
 }
 
 func (e *Server) restart() {
+	e.srvMtx.Lock()
+	defer e.srvMtx.Unlock()
+	if e.done {
+		return
+	}
+
 	e.cmd.Process.Kill()
 	e.cmd.Process.Release()
 	e.start()
 }
 
+// Close causes ExifTool to exit immediately.
+// Close does not wait until ExifTool has actually exited.
 func (e *Server) Close() error {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if e.cmd == nil {
+	e.srvMtx.Lock()
+	defer e.srvMtx.Unlock()
+	if e.done {
 		return nil
 	}
 
-	e.stdin.Close()
 	err := e.cmd.Process.Kill()
 	e.cmd.Process.Release()
-	e.cmd = nil
+	e.done = true
 	return err
 }
 
+// Shutdown gracefully shuts down ExifTool without interrupting any commands,
+// and waits for it to complete.
 func (e *Server) Shutdown() error {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if e.cmd == nil {
-		return nil
-	}
+	e.cmdMtx.Lock()
+	defer e.cmdMtx.Unlock()
 
 	fmt.Fprintln(e.stdin, "-stay_open")
 	fmt.Fprintln(e.stdin, "false")
 	e.stdin.Close()
 
 	err := e.cmd.Wait()
-	e.cmd = nil
 	return err
 }
 
+// Command runs an ExifTool command with the given arguments and returns its stdout.
+// Commands should neither read from stdin, nor write binary data to stdout.
 func (e *Server) Command(arg ...string) ([]byte, error) {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if e.cmd == nil {
-		return nil, errors.New("exiftool: server closed")
-	}
+	e.cmdMtx.Lock()
+	defer e.cmdMtx.Unlock()
 
 	for _, a := range arg {
 		fmt.Fprintln(e.stdin, a)

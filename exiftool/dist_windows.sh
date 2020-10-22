@@ -3,7 +3,6 @@
 set -eo pipefail
 shopt -s extglob
 
-tgt="../RethinkRAW/utils/exiftool"
 exiftool="https://exiftool.org/Image-ExifTool-12.00.tar.gz"
 strawberry="http://strawberryperl.com/download/5.32.0.1/strawberry-perl-5.32.0.1-64bit-portable.zip"
 
@@ -58,8 +57,8 @@ rm -rf bin t
 popd
 
 # Move to destination
-rm -rf "$tgt"
-mv tmp/exiftool "$tgt"
+rm -rf "dist"
+mv tmp/exiftool "dist"
 
 # Cleanup
 rm -rf tmp/

@@ -7,7 +7,10 @@ import (
 	"os/exec"
 )
 
-func CommandAsync(path, arg1 string, in io.Reader, arg ...string) (out io.ReadCloser, err error) {
+// Command runs an ExifTool command with the given arguments asynchronously,
+// and returns pipes connected to its stdin and stdout.
+// Writing to stdin and reading from stdout should be done concurrently.
+func CommandAsync(path, arg1 string, arg ...string) (stdin io.WriteCloser, stdout io.ReadCloser, err error) {
 	var args []string
 
 	if arg1 != "" {
@@ -20,18 +23,21 @@ func CommandAsync(path, arg1 string, in io.Reader, arg ...string) (out io.ReadCl
 	var res asyncResult
 
 	res.cmd = exec.Command(path, args...)
-	res.cmd.Stdin = in
 	res.cmd.Stderr = &res.err
 	res.out, err = res.cmd.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	stdin, err = res.cmd.StdinPipe()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	err = res.cmd.Start()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &res, nil
+	return stdin, &res, nil
 }
 
 type asyncResult struct {

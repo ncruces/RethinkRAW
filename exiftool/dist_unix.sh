@@ -3,7 +3,6 @@
 set -eo pipefail
 shopt -s extglob
 
-tgt="../RethinkRAW.app/Contents/MacOS/utils/exiftool"
 exiftool="https://exiftool.org/Image-ExifTool-12.00.tar.gz"
 
 
@@ -27,8 +26,8 @@ rm -rf t
 popd
 
 # Move to destination
-rm -rf "$tgt"
-mv tmp/exiftool "$tgt"
+rm -rf "dist"
+mv tmp/exiftool "dist"
 
 # Cleanup
 rm -rf tmp/

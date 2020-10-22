@@ -5,6 +5,8 @@ import (
 	"errors"
 )
 
+// Unmarshal parses the standard, short or veryShort ExifTool output formats.
+// Loads tag names and values into a map.
 func Unmarshal(data []byte, m map[string][]byte) error {
 	for len(data) > 0 {
 		i := bytes.IndexByte(data, '\n')
