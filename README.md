@@ -26,7 +26,7 @@ This means you can later move on to Adobe tools,
 without losing any of your edits.
 
 To achieve this, RethinkRAW leverages the free
-[Adobe DNG Converter](https://helpx.adobe.com/photoshop/digital-negative.html).
+[Adobe DNG Converter](https://helpx.adobe.com/photoshop/using/adobe-dng-converter.html).
 
 ## Screenshots
 

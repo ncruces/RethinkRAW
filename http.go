@@ -29,7 +29,6 @@ func setupHTTP() *http.Server {
 	http.Handle("/batch/", http.StripPrefix("/batch", HTTPHandler(batchHandler)))
 	http.Handle("/thumb/", http.StripPrefix("/thumb", HTTPHandler(thumbHandler)))
 	http.Handle("/dialog", HTTPHandler(dialogHandler))
-	http.Handle("/config", HTTPHandler(configHandler))
 	http.Handle("/ws", websocket.Handler(websocketWatcher))
 	http.Handle("/", assetHandler)
 	templates = assetTemplates()

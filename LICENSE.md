@@ -22,5 +22,5 @@ RethinkRAW is made possible by the following software:
 
 RethinkRAW also requires:
 
-* Adobe DNG Converter: https://helpx.adobe.com/photoshop/digital-negative.html
+* Adobe DNG Converter: https://helpx.adobe.com/photoshop/using/adobe-dng-converter.html
 * A modern browser, we recomend Google Chrome: https://www.google.com/chrome/

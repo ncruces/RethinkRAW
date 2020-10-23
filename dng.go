@@ -9,12 +9,8 @@ import (
 	"strconv"
 )
 
-func testDNGConverter(file ...string) error {
-	conv := serverConfig.DNGConverter
-	if len(file) > 0 {
-		conv = file[0]
-	}
-	_, err := os.Stat(conv)
+func testDNGConverter() error {
+	_, err := os.Stat(dngConverter)
 	return err
 }
 
@@ -47,7 +43,7 @@ func runDNGConverter(input, output string, side int, exp *exportSettings) error 
 	opts = append(opts, "-d", dir, "-o", output, input)
 
 	log.Print("dng converter...")
-	cmd := exec.Command(serverConfig.DNGConverter, opts...)
+	cmd := exec.Command(dngConverter, opts...)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("DNG Converter: %w", err)
 	}

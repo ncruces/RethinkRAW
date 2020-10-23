@@ -28,11 +28,7 @@ func main() {
 }
 
 func run() error {
-	if err := setupDirs(); err != nil {
-		return err
-	}
-
-	if err := loadConfig(); err != nil {
+	if err := setupPaths(); err != nil {
 		return err
 	}
 
