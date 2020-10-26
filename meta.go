@@ -12,9 +12,8 @@ import (
 
 var exifserver *exiftool.Server
 
-func setupExifTool() (*exiftool.Server, error) {
-	var err error
-	exifserver, err = exiftool.NewServer(exiftoolExe, exiftoolArg)
+func setupExifTool() (s *exiftool.Server, err error) {
+	exifserver, err = exiftool.NewServer()
 	return exifserver, err
 }
 
@@ -40,7 +39,7 @@ func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
 	opts := []string{"-tagsFromFile", orig, "-fixBase", "-CommonIFD0", "-ExifIFD:all", "-GPS:all", "-fast", "-"}
 
 	log.Print("exiftool (fix jpeg)...")
-	return exiftool.CommandAsync(exiftoolExe, exiftoolArg, opts...)
+	return exiftool.CommandAsync(opts...)
 }
 
 func hasEdits(path string) bool {

@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
+
+	"github.com/ncruces/go-exiftool"
 )
 
 var (
@@ -28,19 +31,21 @@ func setupPaths() (err error) {
 		return err
 	}
 
-	dcraw = baseDir + "/utils/dcraw"
-	exiftoolExe = baseDir + "/utils/exiftool/exiftool"
-	if runtime.GOOS == "windows" {
-		exiftoolArg = exiftoolExe
-	}
 	switch runtime.GOOS {
 	case "windows":
+		dcraw = baseDir + `\utils\dcraw.exe`
+		exiftool.Exec = baseDir + `\utils\exiftool\exiftool.exe`
+		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
+		exiftool.Config = baseDir + `\utils\ExifTool_config.pl`
 		dngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 		cameraRawPaths = []string{
 			os.Getenv("PROGRAMDATA") + `\Adobe\CameraRaw`,
 			os.Getenv("APPDATA") + `\Adobe\CameraRaw`,
 		}
 	case "darwin":
+		dcraw = baseDir + "/utils/dcraw"
+		exiftool.Exec = baseDir + "/utils/exiftool/exiftool"
+		exiftool.Config = baseDir + "/utils/ExifTool_config.pl"
 		dngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
 		cameraRawPaths = []string{
 			"/Library/Application Support/Adobe/CameraRaw",
