@@ -17,9 +17,9 @@ type xmpSettings struct {
 	Filename    string `json:"-"`
 	Orientation int    `json:"orientation,omitempty"`
 
-	Process   float32 `json:"process,omitempty"`
-	Profile   string  `json:"profile,omitempty"`
-	Grayscale bool    `json:"grayscale"`
+	Process  float32  `json:"process,omitempty"`
+	Profile  string   `json:"profile,omitempty"`
+	Profiles []string `json:"profiles,omitempty"`
 
 	WhiteBalance string `json:"whiteBalance,omitempty"`
 	Temperature  int    `json:"temperature,omitempty"`
@@ -48,7 +48,8 @@ type xmpSettings struct {
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
 	log.Print("exiftool (load xmp)...")
-	out, err := exifserver.Command("--printConv", "-short2", "-fast2", "-Orientation", "-XMP-crs:all", path)
+	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
+		"-Orientation", "-Make", "-Model", "-XMP-crs:all", path)
 	if err != nil {
 		return xmp, err
 	}
@@ -57,6 +58,9 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	if err := exiftool.Unmarshal(out, m); err != nil {
 		return xmp, err
 	}
+
+	// load camera profiles
+	xmp.Profiles = append(profiles, getCameraProfiles(string(m["Make"]), string(m["Model"]))...)
 
 	// legacy with defaults (will be upgraded/overwritten)
 	shadows, brightness, contrast, clarity := 5, 50, 25, 0
@@ -70,7 +74,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 
 	// defaults (will be overwritten)
 	xmp.Process = 11.0
-	xmp.Profile = "Adobe Standard"
+	xmp.Profile = "Adobe Color"
 	xmp.WhiteBalance = "As Shot"
 	xmp.Sharpness = 40
 	xmp.ColorNR = 25
@@ -79,9 +83,13 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadInt(&xmp.Orientation, m, "Orientation")
 
 	// process/profile
+	var grayscale bool
 	loadFloat32(&xmp.Process, m, "ProcessVersion")
 	loadString(&xmp.Profile, m, "CameraProfile")
-	loadBool(&xmp.Grayscale, m, "ConvertToGrayscale")
+	loadBool(&grayscale, m, "ConvertToGrayscale")
+	if grayscale && xmp.Profile == "Adobe Standard" {
+		xmp.Profile = "Adobe Standard B&W"
+	}
 
 	// white balance
 	loadString(&xmp.WhiteBalance, m, "WhiteBalance")
@@ -139,10 +147,15 @@ func editXMP(path string, xmp *xmpSettings) error {
 	}
 	// profile
 	if xmp.Profile != "" {
-		opts = append(opts, "-XMP-crs:CameraProfile="+xmp.Profile)
+		if settings, ok := profileSettings[xmp.Profile]; ok {
+			opts = append(opts, settings...)
+		} else {
+			opts = append(opts,
+				"-XMP-crs:CameraProfile="+xmp.Profile,
+				"-XMP-crs:ConvertToGrayscale=",
+				"-XMP-crs:Look*=")
+		}
 	}
-	// grayscale
-	opts = append(opts, "-XMP-crs:ConvertToGrayscale="+strconv.FormatBool(xmp.Grayscale))
 
 	// white balance
 	opts = append(opts, "-XMP-crs:WhiteBalance="+xmp.WhiteBalance)
@@ -226,7 +239,10 @@ func editXMP(path string, xmp *xmpSettings) error {
 
 func extractXMP(path, dest string) error {
 	log.Print("exiftool (extract xmp)...")
-	_, err := exifserver.Command("--printConv", "-Orientation=0", "-tagsFromFile", path, "-scanForXMP", "-fast2", "-Orientation", "-all:all", "-overwrite_original", dest)
+	_, err := exifserver.Command("--printConv", "-fast2",
+		"-tagsFromFile", path, "-scanForXMP",
+		"-Orientation", "-Make", "-Model", "-all:all",
+		"-overwrite_original", dest)
 	return err
 }
 

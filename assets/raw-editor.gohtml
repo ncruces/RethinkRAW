@@ -4,14 +4,7 @@
 
     <fieldset disabled>
         <legend>Profile</legend>
-        Treatment:
-        <div style="float:right">
-            <label><input type=radio name=grayscale value="false" onchange="treatmentChange(this)"> Color</label>
-            <label><input type=radio name=grayscale value="true" onchange="treatmentChange(this)"> B&amp;W</label>
-        </div>
-        <select name=profile class="below" disabled>
-            <option hidden>
-            <option>Adobe Standard</option>
+        <select name=profile class="below" onchange="profileChange(this)">
         </select>
     </fieldset>
 

@@ -11,7 +11,6 @@ import (
 
 var (
 	baseDir, dataDir, tempDir string
-	exiftoolExe, exiftoolArg  string
 	dcraw, dngConverter       string
 	cameraRawPaths            []string
 )
@@ -53,17 +52,7 @@ func setupPaths() (err error) {
 		}
 	}
 
-	testDir := func() error {
-		if err := os.MkdirAll(dataDir, 0700); err != nil {
-			return err
-		}
-		if f, err := os.Create(filepath.Join(dataDir, "lastrun")); err != nil {
-			return err
-		} else {
-			return f.Close()
-		}
-	}
-	if testDir() == nil {
+	if testDataDir() == nil {
 		return nil
 	}
 	if data, err := os.UserConfigDir(); err != nil {
@@ -71,5 +60,16 @@ func setupPaths() (err error) {
 	} else {
 		dataDir = filepath.Join(data, "RethinkRAW")
 	}
-	return testDir()
+	return testDataDir()
+}
+
+func testDataDir() error {
+	if err := os.MkdirAll(dataDir, 0700); err != nil {
+		return err
+	}
+	if f, err := os.Create(filepath.Join(dataDir, "lastrun")); err != nil {
+		return err
+	} else {
+		return f.Close()
+	}
 }

@@ -30,11 +30,11 @@ let spinner = document.getElementById('spinner');
 
     if (settings.orientation) form.orientation.value = settings.orientation;
     if (settings.process) form.process.value = settings.process.toFixed(1);
-    form.profile.value = settings.profile;
+    for (let p of settings.profiles) form.profile.add(new Option(p));
     form.lensProfile.checked = settings.lensProfile;
     form.autoLateralCA.checked = settings.autoLateralCA;
 
-    treatmentChange(form.grayscale, settings.grayscale);
+    profileChange(form.profile, settings.profile);
     temperatureInput(form.temperature, settings.temperature);
     whiteBalanceChange(form.whiteBalance, settings.whiteBalance);
 
@@ -86,23 +86,12 @@ window.orientationChange = (op) => {
     valueChange();
 }
 
-window.treatmentChange = (e, val) => {
-    const profiles = [
-        ['Adobe Standard'],
-        ['Adobe Standard'],
-    ];
-
+window.profileChange = (e, val) => {
     if (val !== void 0) e.value = val;
-    let color = e.value === 'false';
-    if (e.length === 2) e = e[0];
+    let bw = e.value.includes('Monochrome') || e.value.includes('B&W');
 
-    let profile = e.form.profile;
-    profile.innerHTML = '';
-    for (let o of profiles[+color]) {
-        profile.insertAdjacentHTML('beforeend', `<option>${o}</option>`);
-    }
     for (let n of e.form.querySelectorAll('div.color')) {
-        n.classList.toggle('disabled-color', !color);
+        n.classList.toggle('disabled-color', bw);
         disableInputs(n);
     }
 
@@ -448,7 +437,7 @@ function formQuery() {
 
     if (form.tone.value === 'Auto') query.push('autoTone=1');
 
-    for (let k of ['orientation', 'process', 'grayscale', 'whiteBalance']) {
+    for (let k of ['orientation', 'process', 'profile', 'whiteBalance']) {
         if (form[k].value) query.push(k + '=' + encodeURIComponent(form[k].value));
     }
     for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'texture', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
