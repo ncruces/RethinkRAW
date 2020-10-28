@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -42,6 +43,35 @@ func btoi(b bool) int {
 func hash(data string) string {
 	h := md5.Sum([]byte(data))
 	return base64.URLEncoding.EncodeToString(h[:15])
+}
+
+func index(a []string, x string) int {
+	for k, v := range a {
+		if x == v {
+			return k
+		}
+	}
+	return -1
+}
+
+func unique(a *[]string) {
+	s := *a
+	if len(s) < 1 {
+		return
+	}
+
+	sort.Strings(s)
+
+	i := 0
+	for j := 1; j < len(s); j++ {
+		if s[i] != s[j] {
+			i++
+			s[i] = s[j]
+		}
+	}
+	i++
+
+	*a = s[:i:i]
 }
 
 func toASCII(str string) string {

@@ -59,9 +59,6 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 		return xmp, err
 	}
 
-	// load camera profiles
-	xmp.Profiles = append(profiles, getCameraProfiles(string(m["Make"]), string(m["Model"]))...)
-
 	// legacy with defaults (will be upgraded/overwritten)
 	shadows, brightness, contrast, clarity := 5, 50, 25, 0
 	loadBool(&xmp.AutoTone, m, "AutoExposure")
@@ -89,6 +86,12 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadBool(&grayscale, m, "ConvertToGrayscale")
 	if grayscale && xmp.Profile == "Adobe Standard" {
 		xmp.Profile = "Adobe Standard B&W"
+	}
+
+	// load camera profiles
+	xmp.Profiles = append(profiles, getCameraProfiles(string(m["Make"]), string(m["Model"]))...)
+	if index(xmp.Profiles, xmp.Profile) < 0 {
+		xmp.Profiles = append(xmp.Profiles, xmp.Profile)
 	}
 
 	// white balance

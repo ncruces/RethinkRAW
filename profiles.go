@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 )
@@ -136,6 +135,7 @@ func getCameraProfiles(make, model string) []string {
 	model = strings.ToUpper(model)
 
 	var res []string
+
 	for _, root := range cameraRawPaths {
 		root = filepath.Join(root, "CameraProfiles/Camera")
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -144,24 +144,34 @@ func getCameraProfiles(make, model string) []string {
 			}
 			name := strings.ToUpper(info.Name())
 			if info.IsDir() {
-				if len(make) > 0 && make[0] == name[0] ||
-					len(model) > 0 && model[0] == name[0] {
+				// first (or only) word should be the maker
+				if i := strings.IndexByte(name, ' '); i >= 0 {
+					name = name[:i]
+				}
+				if name != "" && (strings.HasPrefix(make, name) || strings.HasPrefix(model, name)) {
 					return nil
 				}
 				return filepath.SkipDir
 			}
 			if filepath.Ext(name) == ".DCP" {
-				for _, prefix := range []string{make + " " + model, model} {
-					if strings.HasPrefix(name, prefix) {
-						name, _ := exifserver.Command("--printConv", "-short3", "-fast2", "-ProfileName", path)
-						res = append(res, string(name))
-					}
+				// remove maker
+				if i := strings.IndexByte(name, ' '); i >= 0 {
+					name = name[i+1:]
+				}
+				// remove profile name
+				if i := strings.Index(name, " CAMERA "); i >= 0 {
+					name = name[:i]
+				}
+				if name != "" && strings.HasSuffix(model, name) {
+					name, _ := exifserver.Command("--printConv", "-short3", "-fast2", "-ProfileName", path)
+					res = append(res, string(name))
 				}
 			}
 			return nil
 		})
 	}
+
+	unique(&res)
 	cameraProfiles[make+" "+model] = res
-	sort.Strings(res)
 	return res
 }

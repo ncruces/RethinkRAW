@@ -88,7 +88,9 @@ window.orientationChange = (op) => {
 
 window.profileChange = (e, val) => {
     if (val !== void 0) e.value = val;
-    let bw = e.value.includes('Monochrome') || e.value.includes('B&W');
+    let bw = e.value.includes('B&W') ||
+        e.value.includes('Monotone') ||
+        e.value.includes('Monochrome');
 
     for (let n of e.form.querySelectorAll('div.color')) {
         n.classList.toggle('disabled-color', bw);
