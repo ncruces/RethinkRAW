@@ -621,16 +621,24 @@ function formatNumber(val, step) {
 
 {
     if (navigator.platform.indexOf('Mac') < 0) {
-        for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌘', 'ctrl');
+        for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌥', 'alt');
     }
     function listener(e) {
-        let modKey = navigator.platform.indexOf('Mac') < 0 ? e.ctrlKey : e.metaKey;
-        for (let n of document.querySelectorAll('.mod-off')) n.hidden = modKey;
-        for (let n of document.querySelectorAll('.mod-on')) n.hidden = !modKey;
+        for (let n of document.querySelectorAll('.mod-off')) n.hidden = e.altKey;
+        for (let n of document.querySelectorAll('.mod-on')) n.hidden = !e.altKey;
     }
     window.addEventListener('keydown', listener, { passive: true });
     window.addEventListener('keyup', listener, { passive: true });
     listener({});
+
+    for (let n of document.querySelectorAll('fieldset legend')) {
+        n.addEventListener('click', () => {
+            for (let c of n.parentElement.children) {
+                if (c !== n) c.hidden = !c.hidden;
+            }
+        }, { passive: true });
+        n.title = n.title.replace('⌥', 'alt');
+    }
 }
 
 JSON.parseLast = (ndjson) => {

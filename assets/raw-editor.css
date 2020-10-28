@@ -22,8 +22,7 @@ form#settings select {
     margin-bottom: 0.3rem;
 }
 
-form#settings select.below {
-    margin-top: 0.3rem;
+form#settings select:last-child {
     margin-bottom: initial;
 }
 

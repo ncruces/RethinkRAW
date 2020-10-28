@@ -20,7 +20,7 @@ window.addEventListener('pageshow', function createSocket() {
 });
 
 document.documentElement.addEventListener('click', function (evt) {
-	if (evt.metaKey || evt.ctrlKey || evt.button !== 0) evt.preventDefault();
+	if (evt.altKey || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.button !== 0) evt.preventDefault();
 });
 
 document.documentElement.addEventListener('contextmenu', function (evt) {

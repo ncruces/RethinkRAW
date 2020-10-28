@@ -235,7 +235,7 @@ func editXMP(path string, xmp *xmpSettings) error {
 
 	opts = append(opts, "-overwrite_original", path)
 
-	log.Print("exiftool (save xmp)...")
+	log.Print("exiftool (edit xmp)...")
 	_, err := exifserver.Command(opts...)
 	return err
 }
@@ -353,7 +353,7 @@ func loadFloat32(dst *float32, m map[string][]byte, key string) {
 }
 
 func dngPreview(path string) string {
-	log.Print("dcraw thumb-size ...")
+	log.Print("dcraw (get thumb size)...")
 	cmd := exec.Command(dcraw, "-i", "-v", path)
 	out, err := cmd.Output()
 	if err != nil {

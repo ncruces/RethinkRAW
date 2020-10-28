@@ -29,7 +29,7 @@ func fixMetaDNG(orig, dest, name string) error {
 	}
 	opts = append(opts, "-overwrite_original", dest)
 
-	log.Print("exiftool (fix dng)..")
+	log.Print("exiftool (fix dng)...")
 	_, err := exifserver.Command(opts...)
 	return err
 }

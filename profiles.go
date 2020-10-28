@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -163,6 +164,7 @@ func getCameraProfiles(make, model string) []string {
 					name = name[:i]
 				}
 				if name != "" && strings.HasSuffix(model, name) {
+					log.Print("exiftool (load profile)...")
 					name, _ := exifserver.Command("--printConv", "-short3", "-fast2", "-ProfileName", path)
 					res = append(res, string(name))
 				}
