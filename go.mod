@@ -9,5 +9,6 @@ require (
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/zenity v0.4.2
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
-	golang.org/x/net v0.0.0-20201026091529-146b70c837a4
+	golang.org/x/net v0.0.0-20201029055024-942e2f445f3c
+	gonum.org/v1/gonum v0.8.1
 )
