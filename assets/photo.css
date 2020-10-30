@@ -31,7 +31,7 @@ img#photo {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform .5s ease-out;
+    transition: transform .2s ease;
 }
 
 img#photo:after {
