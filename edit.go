@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"rethinkraw/osutil"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {
@@ -58,9 +60,9 @@ func saveEdit(path string, xmp *xmpSettings) error {
 			return err
 		}
 
-		err = lnkyFile(wk.temp(), dest+".bak")
+		err = osutil.Lnky(wk.temp(), dest+".bak")
 	} else {
-		err = copyFile(wk.origXMP(), dest+".bak")
+		err = osutil.Copy(wk.origXMP(), dest+".bak")
 	}
 
 	if err != nil {
@@ -327,7 +329,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return wk, err
 	}
 
-	err = lnkyFile(path, wk.base+"orig"+wk.ext)
+	err = osutil.Lnky(path, wk.base+"orig"+wk.ext)
 	if err != nil {
 		return wk, err
 	}

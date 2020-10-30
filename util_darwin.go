@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 )
 
 func init() {
@@ -36,19 +35,6 @@ func exitChrome(cmd *exec.Cmd) {
 
 func openURLCmd(url string) *exec.Cmd {
 	return exec.Command("open", url)
-}
-
-func isHidden(fi os.FileInfo) bool {
-	if strings.HasPrefix(fi.Name(), ".") {
-		return true
-	}
-
-	if s, ok := fi.Sys().(*syscall.Stat_t); ok &&
-		s.Flags&0x8000 != 0 { // UF_HIDDEN
-		return true
-	}
-
-	return false
 }
 
 func getANSIPath(path string) (string, error) {

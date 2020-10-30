@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"rethinkraw/osutil"
+
 	"github.com/gorilla/schema"
 	"github.com/ncruces/zenity"
 )
@@ -101,7 +103,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			var status multiStatus
 			out, err := exportEdit(file, &xmp, &exp)
 			if err == nil {
-				f, err = makeFile(filepath.Join(path, exportName(file, &exp)))
+				f, err = osutil.NewFile(filepath.Join(path, exportName(file, &exp)))
 			}
 			if err == nil {
 				n, err = f.Write(out)

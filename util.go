@@ -3,16 +3,10 @@ package main
 import (
 	"crypto/md5"
 	"encoding/base64"
-	"errors"
-	"io"
 	"mime"
-	"os"
-	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 )
 
 const MaxUint = ^uint(0)
@@ -115,91 +109,4 @@ func filename(name string) string {
 		return builder.String()
 	}
 	return ""
-}
-
-var newFilenameRE = regexp.MustCompile(`\A(.*?)(?: \((\d{1,4})\))?(\.\w*)?\z`)
-
-func makeFile(name string) (*os.File, error) {
-	for {
-		f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
-		if os.IsExist(err) {
-			m := newFilenameRE.FindStringSubmatch(name)
-			if m != nil {
-				var i = 0
-				if m[2] != "" {
-					i, _ = strconv.Atoi(m[2])
-				}
-				name = m[1] + " (" + strconv.Itoa(i+1) + ")" + m[3]
-				continue
-			}
-		}
-		return f, err
-	}
-}
-
-func copyFile(src, dst string) (err error) {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
-
-	_, err = io.Copy(out, in)
-	return err
-}
-
-func moveFile(src, dst string) error {
-	err := os.Rename(src, dst)
-	if isNotSameDevice(err) {
-		if err := copyFile(src, dst); err != nil {
-			return err
-		}
-		if err := os.Remove(src); os.IsNotExist(err) {
-			return nil
-		} else {
-			return err
-		}
-	}
-	return err
-}
-
-func lnkyFile(src, dst string) error {
-	sfi, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-
-	dfi, _ := os.Stat(dst)
-	if os.SameFile(sfi, dfi) {
-		return nil
-	}
-
-	err = os.Link(src, dst)
-	if isNotSameDevice(err) {
-		return copyFile(src, dst)
-	}
-	return err
-}
-
-func isNotSameDevice(err error) bool {
-	var lerr *os.LinkError
-	if errors.As(err, &lerr) {
-		if runtime.GOOS == "windows" {
-			return lerr.Err == syscall.Errno(0x11) // ERROR_NOT_SAME_DEVICE
-		} else {
-			return lerr.Err == syscall.Errno(0x12) // EXDEV
-		}
-	}
-	return false
 }

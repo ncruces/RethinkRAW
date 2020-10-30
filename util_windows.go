@@ -59,19 +59,6 @@ func openURLCmd(url string) *exec.Cmd {
 	return exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
 }
 
-func isHidden(fi os.FileInfo) bool {
-	if strings.HasPrefix(fi.Name(), ".") {
-		return true
-	}
-
-	if s, ok := fi.Sys().(*syscall.Win32FileAttributeData); ok &&
-		s.FileAttributes&(syscall.FILE_ATTRIBUTE_HIDDEN|syscall.FILE_ATTRIBUTE_SYSTEM) != 0 {
-		return true
-	}
-
-	return false
-}
-
 func isANSIString(s string) bool {
 	if s == "" {
 		return true

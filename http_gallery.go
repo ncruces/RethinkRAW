@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"rethinkraw/osutil"
 )
 
 func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
@@ -26,7 +28,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		data.Title = filepath.Clean(path)
 
 		for _, i := range files {
-			if isHidden(i) {
+			if osutil.HiddenFile(i) {
 				continue
 			}
 
