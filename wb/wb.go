@@ -7,24 +7,82 @@ import (
 )
 
 type CameraProfile struct {
-	colorMatrix1, colorMatrix2 *mat.Dense
-	temperature1, temperature2 float64
-}
+	CalibrationIlluminant1, CalibrationIlluminant2 LightSource
+	ColorMatrix1, ColorMatrix2                     []float64
+	CameraCalibration1, CameraCalibration2         []float64
+	AnalogBalance                                  []float64
 
-func NewCameraProfile(illuminant1, illuminant2 LightSource, colorMatrix1, colorMatrix2 []float64) *CameraProfile {
-	const nCols = 3
-	return &CameraProfile{
-		temperature1: illuminant1.Temperature(),
-		temperature2: illuminant2.Temperature(),
-		colorMatrix1: mat.NewDense(len(colorMatrix1)/nCols, nCols, colorMatrix1),
-		colorMatrix2: mat.NewDense(len(colorMatrix2)/nCols, nCols, colorMatrix2),
-	}
+	temperature1, temperature2 float64
+	colorMatrix1, colorMatrix2 *mat.Dense
 }
 
 func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int) {
 	vec := mat.NewVecDense(len(neutral), neutral)
-	tmp, tnt := p.temperatureFromXY(p.neutralToXY(vec))
-	return int(math.RoundToEven(tmp)), int(math.RoundToEven(tnt))
+	tmp, tnt := p.neutralToXY(vec).temperature()
+
+	// temperature range 2000 to 50000
+	switch {
+	case tmp < 2000.0:
+		tmp = 2000.0
+	case tmp > 50000.0:
+		tmp = 50000.0
+	default:
+		tmp = math.RoundToEven(tmp)
+	}
+
+	// tint range -150 to +150
+	switch {
+	case tnt < -150.0:
+		tnt = -150.0
+	case tint > +150.0:
+		tnt = +150.0
+	default:
+		tnt = math.RoundToEven(tnt)
+	}
+
+	return int(tmp), int(tnt)
+}
+
+// Port of dng_color_spec::dng_color_spec.
+func (p *CameraProfile) setup() {
+	channels := len(p.ColorMatrix1) / 3
+
+	p.temperature1 = p.CalibrationIlluminant1.Temperature()
+	p.temperature2 = p.CalibrationIlluminant2.Temperature()
+
+	var analog *mat.DiagDense
+	if p.AnalogBalance != nil {
+		analog = mat.NewDiagDense(channels, p.AnalogBalance)
+	}
+
+	p.colorMatrix1 = mat.NewDense(channels, 3, p.ColorMatrix1)
+	if p.CameraCalibration1 != nil {
+		p.colorMatrix1.Mul(mat.NewDense(channels, channels, p.CameraCalibration1), p.colorMatrix1)
+	}
+	if analog != nil {
+		p.colorMatrix1.Mul(analog, p.colorMatrix1)
+	}
+
+	if p.CameraCalibration2 == nil ||
+		p.temperature1 == p.temperature2 ||
+		p.temperature1 <= 0.0 || p.temperature2 <= 0.0 {
+		p.temperature1 = 5000.0
+		p.temperature2 = 5000.0
+		p.colorMatrix2 = p.colorMatrix1
+	} else {
+		p.colorMatrix2 = mat.NewDense(channels, 3, p.ColorMatrix2)
+		if p.CameraCalibration2 != nil {
+			p.colorMatrix2.Mul(mat.NewDense(channels, channels, p.CameraCalibration2), p.colorMatrix2)
+		}
+		if analog != nil {
+			p.colorMatrix2.Mul(analog, p.colorMatrix2)
+		}
+
+		if p.temperature1 > p.temperature2 {
+			p.temperature1, p.temperature2 = p.temperature2, p.temperature1
+			p.colorMatrix1, p.colorMatrix2 = p.colorMatrix2, p.colorMatrix1
+		}
+	}
 }
 
 // Port of dng_color_spec::NeutralToXY.
@@ -61,8 +119,12 @@ func (p *CameraProfile) neutralToXY(neutral mat.Vector) xy64 {
 
 // Port of dng_color_spec::FindXYZtoCamera.
 func (p *CameraProfile) findXYZtoCamera(white xy64) mat.Matrix {
+	if p.colorMatrix1 == nil {
+		p.setup()
+	}
+
 	// Convert to temperature/offset space.
-	temperature, _ := p.temperatureFromXY(white)
+	temperature, _ := white.temperature()
 
 	// Find fraction to weight the first calibration.
 	var g float64
@@ -93,12 +155,33 @@ func (p *CameraProfile) findXYZtoCamera(white xy64) mat.Matrix {
 	return &colorMatrix
 }
 
+var _D50 = xy64{0.34567, 0.35850}
+
+type xy64 struct{ x, y float64 }
+type xyz64 struct{ x, y, z float64 }
+
+func newXYZ64(v mat.Vector) xyz64 {
+	if v.Len() != 3 {
+		panic(mat.ErrShape)
+	}
+	return xyz64{v.AtVec(0), v.AtVec(1), v.AtVec(2)}
+}
+
+// Port of XYZtoXY.
+func (v xyz64) XY() xy64 {
+	total := v.x + v.y + v.z
+	if total <= 0.0 {
+		return _D50
+	}
+	return xy64{v.x / total, v.y / total}
+}
+
 // Scale factor between distances in uv space to a more user friendly "tint"
 // parameter.
 const tintScale = -3000.0
 
 // Table from Wyszecki & Stiles, "Color Science", second edition, page 228.
-var tempTable = []struct {
+var tempTable = [31]struct {
 	r, u, v, t float64
 }{
 	{0, 0.18006, 0.26352, -0.24341},
@@ -120,7 +203,7 @@ var tempTable = []struct {
 	{250, 0.22511, 0.33439, -1.4512},
 	{275, 0.23247, 0.33904, -1.7298},
 	{300, 0.24010, 0.34308, -2.0637},
-	{325, 0.24702, 0.34655, -2.4681},
+	{325, 0.24792, 0.34655, -2.4681}, /* Note: 0.24792 is a corrected value for the error found in W&S as 0.24702 */
 	{350, 0.25591, 0.34951, -2.9641},
 	{375, 0.26400, 0.35200, -3.5814},
 	{400, 0.27218, 0.35407, -4.3633},
@@ -135,7 +218,7 @@ var tempTable = []struct {
 }
 
 // Port dng_temperature::Set_xy_coord.
-func (p *CameraProfile) temperatureFromXY(xy xy64) (temperature, tint float64) {
+func (xy xy64) temperature() (temperature, tint float64) {
 	// Convert to uv space.
 	u := 2.0 * xy.x / (1.5 - xy.x + 6.0*xy.y)
 	v := 3.0 * xy.y / (1.5 - xy.x + 6.0*xy.y)
@@ -145,14 +228,15 @@ func (p *CameraProfile) temperatureFromXY(xy xy64) (temperature, tint float64) {
 	last_du := 0.0
 	last_dv := 0.0
 
-	for index := 1; index <= 30; index++ {
+	for index := 1; index < len(tempTable); index++ {
 		// Convert slope to delta-u and delta-v, with length 1.
 		du := 1.0
 		dv := tempTable[index].t
-
-		len := math.Hypot(1.0, dv*dv)
-		du /= len
-		dv /= len
+		{
+			len := math.Hypot(du, dv)
+			du /= len
+			dv /= len
+		}
 
 		// Find delta from black body point to test coordinate.
 		uu := u - tempTable[index].u
@@ -162,7 +246,7 @@ func (p *CameraProfile) temperatureFromXY(xy xy64) (temperature, tint float64) {
 		dt := -uu*dv + vv*du
 
 		// If below line, we have found line pair.
-		if dt <= 0.0 || index == 30 {
+		if dt <= 0.0 || index == len(tempTable)-1 {
 			// Find fractional weight of two lines.
 			if dt > 0.0 {
 				dt = 0.0
@@ -184,10 +268,11 @@ func (p *CameraProfile) temperatureFromXY(xy xy64) (temperature, tint float64) {
 			// Interpolate vectors along slope.
 			du = du*(1.0-f) + last_du*f
 			dv = dv*(1.0-f) + last_dv*f
-
-			len = math.Hypot(du, dv)
-			du /= len
-			dv /= len
+			{
+				len := math.Hypot(du, dv)
+				du /= len
+				dv /= len
+			}
 
 			// Find distance along slope.
 			tint = (uu*du + vv*dv) * tintScale
@@ -201,27 +286,6 @@ func (p *CameraProfile) temperatureFromXY(xy xy64) (temperature, tint float64) {
 	}
 
 	return temperature, tint
-}
-
-var _D50 = xy64{0.3457, 0.3585}
-
-type xy64 struct{ x, y float64 }
-type xyz64 struct{ x, y, z float64 }
-
-func newXYZ64(v mat.Vector) xyz64 {
-	if v.Len() != 3 {
-		panic(mat.ErrShape)
-	}
-	return xyz64{v.AtVec(0), v.AtVec(1), v.AtVec(2)}
-}
-
-// Port of XYZtoXY.
-func (v xyz64) XY() xy64 {
-	total := v.x + v.y + v.z
-	if total <= 0.0 {
-		return _D50
-	}
-	return xy64{v.x / total, v.y / total}
 }
 
 type LightSource uint16

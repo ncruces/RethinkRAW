@@ -162,13 +162,11 @@ func editXMP(path string, xmp *xmpSettings) error {
 
 	// white balance
 	opts = append(opts, "-XMP-crs:WhiteBalance="+xmp.WhiteBalance)
-	switch xmp.WhiteBalance {
-	case "As Shot", "Auto":
-	case "Custom":
+	if xmp.WhiteBalance == "Custom" {
 		opts = append(opts,
 			"-XMP-crs:ColorTemperature="+strconv.Itoa(xmp.Temperature),
 			"-XMP-crs:Tint="+strconv.Itoa(xmp.Tint))
-	default:
+	} else {
 		opts = append(opts,
 			"-XMP-crs:ColorTemperature=",
 			"-XMP-crs:Tint=")
