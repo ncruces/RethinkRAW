@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+
+	"rethinkraw/osutil"
 )
 
 var shutdown = make(chan os.Signal, 1)
@@ -85,7 +87,7 @@ func run() error {
 			return err
 		}
 	} else {
-		if err := openURLCmd(url.String()).Run(); err != nil {
+		if err := osutil.ShellOpen(url.String()); err != nil {
 			return err
 		}
 		if server {

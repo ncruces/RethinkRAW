@@ -28,7 +28,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		data.Title = filepath.Clean(path)
 
 		for _, i := range files {
-			if osutil.HiddenFile(i) {
+			if osutil.HiddenFile(i) || !i.Mode().IsRegular() {
 				continue
 			}
 

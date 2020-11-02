@@ -55,10 +55,6 @@ func exitChrome(cmd *exec.Cmd) {
 	}
 }
 
-func openURLCmd(url string) *exec.Cmd {
-	return exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-}
-
 func isANSIString(s string) bool {
 	if s == "" {
 		return true

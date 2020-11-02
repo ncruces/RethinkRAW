@@ -33,10 +33,6 @@ func exitChrome(cmd *exec.Cmd) {
 	cmd.Process.Signal(os.Interrupt)
 }
 
-func openURLCmd(url string) *exec.Cmd {
-	return exec.Command("open", url)
-}
-
 func getANSIPath(path string) (string, error) {
 	return path, nil
 }
