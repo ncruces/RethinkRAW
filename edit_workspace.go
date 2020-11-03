@@ -9,18 +9,41 @@ import (
 	"rethinkraw/osutil"
 )
 
+// RethinkRAW edits happen in a workspace.
+//
+// Adobe DNG Converter loads RAW files and editing metadata from disk,
+// and saves DNG files with their embed previews to disk as well.
+//
+// A workspace is a temporary directory created for each opened RAW file
+// where all edits and conversions take place.
+//
+// This temporary directory is located on: "$TMPDIR/RethingRAW/[HASH]/"
+// The directory is created when the file is first opened,
+// and deleted when the workspace is finally closed.
+//
+// It can contain several files:
+//  . orig.EXT - a read-only copy of the original RAW file
+//  . orig.xmp - a sidecar for orig.EXT
+//  . temp.dng - a DNG used as the target for all conversions
+//  . edit.dng - a DNG conversion of the original RAW file used for editing previews
+//
+// Editing settings are loaded from orig.xmp or orig.EXT (in that order).
+// The DNG in edit.dng is downscaled to at most 2560 on the widest side.
+// When generating a preview, use edit.dng unless the preview requires full resolution.
+// If edit.dng is missing, use orig.EXT, ask for a 2560 preview, and save that to edit.dng.
+
 type workspace struct {
-	hash    string
-	base    string
-	ext     string
-	hasXMP  bool
-	hasEdit bool
+	hash    string // a hash of the original RAW file path
+	ext     string // the extension of the original RAW file
+	base    string // base directory for the workspace
+	hasXMP  bool   // did the original RAW file have a XMP sidecar?
+	hasEdit bool   // any recent edits?
 }
 
 func openWorkspace(path string) (wk workspace, err error) {
 	wk.hash = hash(filepath.Clean(path))
-	wk.base = filepath.Join(tempDir, wk.hash) + string(filepath.Separator)
 	wk.ext = filepath.Ext(path)
+	wk.base = filepath.Join(tempDir, wk.hash) + string(filepath.Separator)
 
 	workspaces.open(wk.hash)
 	defer func() {
@@ -32,11 +55,13 @@ func openWorkspace(path string) (wk workspace, err error) {
 		}
 	}()
 
+	// Create directory
 	err = os.MkdirAll(wk.base, 0700)
 	if err != nil {
 		return wk, err
 	}
 
+	// Have we edited this file recently (10 min)?
 	fi, err := os.Stat(wk.base + "edit.dng")
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
@@ -45,6 +70,7 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return wk, err
 	}
 
+	// Was this just copied (1 min)?
 	fi, err = os.Stat(wk.base + "orig" + wk.ext)
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
@@ -57,17 +83,20 @@ func openWorkspace(path string) (wk workspace, err error) {
 		return wk, err
 	}
 
+	// Is it the same file?
 	if os.SameFile(fi, sfi) {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
 		return wk, err
 	}
 
+	// Otherwise, copy the original RAW file to orig.EXT
 	err = osutil.Lnky(path, wk.base+"orig"+wk.ext)
 	if err != nil {
 		return wk, err
 	}
 
+	// And look for a sidecar.
 	err = loadSidecar(path, wk.base+"orig.xmp")
 	if os.IsNotExist(err) {
 		err = nil
@@ -83,22 +112,27 @@ func (wk *workspace) close() {
 	}
 }
 
+// A read-only copy of the original RAW file (full resolution).
 func (wk *workspace) orig() string {
 	return wk.base + "orig" + wk.ext
 }
 
+// A DNG conversion of the original RAW file used for editing previews (downscaled to 2560).
 func (wk *workspace) edit() string {
 	return wk.base + "edit.dng"
 }
 
+// A DNG used as the target for all conversions.
 func (wk *workspace) temp() string {
 	return wk.base + "temp.dng"
 }
 
+// A sidecar for orig.EXT.
 func (wk *workspace) origXMP() string {
 	return wk.base + "orig.xmp"
 }
 
+// The file from which to load editing settings.
 func (wk *workspace) loadXMP() string {
 	if wk.hasXMP {
 		return wk.base + "orig.xmp"
@@ -107,6 +141,7 @@ func (wk *workspace) loadXMP() string {
 	}
 }
 
+// The file to use as the source for a preview conversion.
 func (wk *workspace) last() string {
 	if wk.hasEdit {
 		return wk.base + "edit.dng"
@@ -115,6 +150,7 @@ func (wk *workspace) last() string {
 	}
 }
 
+// The sidecar to go with the above.
 func (wk *workspace) lastXMP() string {
 	if wk.hasEdit {
 		return wk.base + "edit.dng"
@@ -123,10 +159,17 @@ func (wk *workspace) lastXMP() string {
 	}
 }
 
-type workspaceLock struct {
-	sync.Mutex
-	n int
-}
+// HTTP is stateless. There is no notion of a file being opened for editing.
+//
+// A global manager keeps track of which files are currently being edited,
+// and how many tasks are pending for each file.
+//
+// Once a file has no pending tasks, the workspace is eligible for deletion.
+// As an optimization, the 3 LRU workspaces are cached.
+
+var workspaces = workspaceLocker{locks: make(map[string]*workspaceLock)}
+
+const workspaceMaxLRU = 3
 
 type workspaceLocker struct {
 	sync.Mutex
@@ -134,22 +177,26 @@ type workspaceLocker struct {
 	locks map[string]*workspaceLock
 }
 
-var workspaces = workspaceLocker{locks: make(map[string]*workspaceLock)}
+type workspaceLock struct {
+	sync.Mutex
+	n int //
+}
 
-const workspaceMaxLRU = 3
-
+// Open and lock a workspace.
 func (wl *workspaceLocker) open(hash string) {
 	wl.Lock()
 
+	// create a workspace lock
 	lk, ok := wl.locks[hash]
 	if !ok {
 		lk = &workspaceLock{}
 		wl.locks[hash] = lk
 	}
-	lk.n++
+	lk.n++ // one more pending task
 
 	for i, h := range wl.lru {
 		if h == hash {
+			// remove workspace from LRU
 			wl.lru = append(wl.lru[:i], wl.lru[i+1:]...)
 		}
 	}
@@ -158,37 +205,47 @@ func (wl *workspaceLocker) open(hash string) {
 	lk.Lock()
 }
 
+// Close and unlock a workspace, but cache it.
+// Return a workspace to evict.
 func (wl *workspaceLocker) close(hash string) (lru string) {
 	wl.Lock()
 
 	lk := wl.locks[hash]
-	lk.n--
+	lk.n-- // one less pending task
 
+	// are we the last task?
 	if lk.n <= 0 {
+		// evict a workspace from LRU
 		if len(wl.lru) >= workspaceMaxLRU {
 			lru, wl.lru = wl.lru[0], wl.lru[1:]
 		}
+		// add ourselves to LRU
 		wl.lru = append(wl.lru, hash)
+		// delete our lock
 		delete(wl.locks, hash)
 	}
 
 	lk.Unlock()
 	wl.Unlock()
-	return lru
+	return lru // return the evicted workspace
 }
 
+// Close and unlock a workspace, but don't cache it.
+// Return if safe to delete.
 func (wl *workspaceLocker) delete(hash string) (ok bool) {
 	wl.Lock()
 
 	lk := wl.locks[hash]
-	lk.n--
+	lk.n-- // one less pending task
 
+	// are we the last task?
 	if lk.n <= 0 {
+		// delete our lock
 		delete(wl.locks, hash)
 		ok = true
 	}
 
 	lk.Unlock()
 	wl.Unlock()
-	return ok
+	return ok // were we the last task?
 }

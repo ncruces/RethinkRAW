@@ -304,8 +304,6 @@ func loadSidecar(src, dst string) error {
 }
 
 func destSidecar(src string) (string, error) {
-	// fallback to NAME.EXT.XMP
-	ret := src + ".xmp"
 	ext := filepath.Ext(src)
 
 	if ext != "" {
@@ -319,9 +317,6 @@ func destSidecar(src string) (string, error) {
 			f.Close()
 		} else if !os.IsNotExist(err) {
 			return "", err
-		} else {
-			// fallback to NAME.XMP
-			ret = xmp
 		}
 	}
 
@@ -337,8 +332,8 @@ func destSidecar(src string) (string, error) {
 		return src, nil
 	}
 
-	// otherwise, fallback
-	return ret, nil
+	// fallback to NAME.XMP
+	return strings.TrimSuffix(src, ext) + ".xmp", nil
 }
 
 func isSidecarForExt(r io.Reader, ext string) bool {
@@ -351,7 +346,7 @@ func isSidecarForExt(r io.Reader, ext string) bool {
 	for {
 		t, err := dec.Token()
 		if err != nil {
-			return err == io.EOF
+			return err == io.EOF // assume yes
 		}
 
 		if s, ok := t.(xml.StartElement); ok {
