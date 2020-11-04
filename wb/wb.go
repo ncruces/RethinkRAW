@@ -16,16 +16,20 @@ type CameraProfile struct {
 	colorMatrix1, colorMatrix2 *mat.Dense
 }
 
-func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int, err error) {
-	var tmp, tnt float64
-	err = mat.Maybe(func() {
-		vec := mat.NewVecDense(len(neutral), neutral)
-		tmp, tnt = p.neutralToXY(vec).temperature()
-	})
+func (p *CameraProfile) Init() error {
+	return mat.Maybe(p.init)
+}
 
-	if err != nil {
-		return 0, 0, err
-	}
+func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int, err error) {
+	err = mat.Maybe(func() {
+		xy := p.neutralToXY(mat.NewVecDense(len(neutral), neutral))
+		temperature, tint = GetTemperature(xy.x, xy.y)
+	})
+	return
+}
+
+func GetTemperature(x, y float64) (temperature, tint int) {
+	tmp, tnt := xy64{x, y}.temperature()
 
 	// temperature range 2000 to 50000
 	switch {
@@ -47,11 +51,11 @@ func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int
 		tnt = math.RoundToEven(tnt)
 	}
 
-	return int(tmp), int(tnt), nil
+	return int(tmp), int(tnt)
 }
 
 // Port of dng_color_spec::dng_color_spec.
-func (p *CameraProfile) setup() {
+func (p *CameraProfile) init() {
 	channels := len(p.ColorMatrix1) / 3
 
 	p.temperature1 = p.CalibrationIlluminant1.Temperature()
@@ -127,7 +131,7 @@ func (p *CameraProfile) neutralToXY(neutral mat.Vector) xy64 {
 // Port of dng_color_spec::FindXYZtoCamera.
 func (p *CameraProfile) findXYZtoCamera(white xy64) mat.Matrix {
 	if p.colorMatrix1 == nil {
-		p.setup()
+		p.init()
 	}
 
 	// Convert to temperature/offset space.
