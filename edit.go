@@ -142,7 +142,8 @@ func loadWhiteBalance(path string) error {
 		}
 	}
 
-	return loadCameraProfile(wk.edit())
+	_, err = loadCameraProfile(wk.edit())
+	return err
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {

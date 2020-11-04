@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/json"
+	"log"
 	"mime"
 	"sort"
 	"strconv"
@@ -109,4 +111,12 @@ func filename(name string) string {
 		return builder.String()
 	}
 	return ""
+}
+
+func logPretty(v interface{}) (err error) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err == nil {
+		log.Println(string(b))
+	}
+	return
 }

@@ -9,12 +9,10 @@ import (
 	"regexp"
 	"strconv"
 
-	"rethinkraw/wb"
+	"rethinkraw/dng"
 
 	"github.com/ncruces/go-exiftool"
 )
-
-var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 
 type xmpSettings struct {
 	Filename    string `json:"-"`
@@ -49,7 +47,13 @@ type xmpSettings struct {
 	AutoLateralCA bool `json:"autoLateralCA"`
 }
 
-func loadCameraProfile(path string) error {
+type dngWhiteBalance struct {
+	AsShotTemperature, AsShotTint int
+	AutoTemperature, AutoTint     int
+	ManualTemperature, ManualTint int
+}
+
+func loadCameraProfile(path string) (wb dngWhiteBalance, err error) {
 	log.Print("exiftool (load camera profile)...")
 
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
@@ -57,21 +61,21 @@ func loadCameraProfile(path string) error {
 		"-EXIF:CameraCalibration?", "-EXIF:AnalogBalance",
 		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", path)
 	if err != nil {
-		return err
+		return wb, err
 	}
 
 	m := make(map[string][]byte)
 	if err := exiftool.Unmarshal(out, m); err != nil {
-		return err
+		return wb, err
 	}
 
 	var neutral []float64
-	var profile wb.CameraProfile
+	var profile dng.CameraProfile
 	var illuminant1, illuminant2 int
 	loadInt(&illuminant1, m, "CalibrationIlluminant1")
 	loadInt(&illuminant2, m, "CalibrationIlluminant2")
-	profile.CalibrationIlluminant1 = wb.LightSource(illuminant1)
-	profile.CalibrationIlluminant2 = wb.LightSource(illuminant2)
+	profile.CalibrationIlluminant1 = dng.LightSource(illuminant1)
+	profile.CalibrationIlluminant2 = dng.LightSource(illuminant2)
 	loadFloat64s(&profile.ColorMatrix1, m, "ColorMatrix1")
 	loadFloat64s(&profile.ColorMatrix2, m, "ColorMatrix2")
 	loadFloat64s(&profile.CameraCalibration1, m, "CameraCalibration1")
@@ -79,7 +83,7 @@ func loadCameraProfile(path string) error {
 	loadFloat64s(&profile.AnalogBalance, m, "AnalogBalance")
 	loadFloat64s(&neutral, m, "AsShotNeutral")
 	log.Println(profile.GetTemperature(neutral))
-	return nil
+	return wb, nil
 }
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
@@ -399,6 +403,8 @@ func loadFloat64s(dst *[]float64, m map[string][]byte, key string) {
 		*dst = fs
 	}
 }
+
+var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 
 func dngPreview(path string) string {
 	log.Print("dcraw (get thumb size)...")
