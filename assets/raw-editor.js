@@ -57,6 +57,10 @@ let spinner = document.getElementById('spinner');
     for (let n of form.querySelectorAll('select option[hidden]')) {
         n.remove();
     }
+
+    setTimeout(async () => {
+        await restRequest('GET', `?whiteBalance`);
+    });
 })()
 
 window.addEventListener('beforeunload', evt => {

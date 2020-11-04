@@ -141,24 +141,6 @@ func (wk *workspace) loadXMP() string {
 	}
 }
 
-// The file to use as the source for a preview conversion.
-func (wk *workspace) last() string {
-	if wk.hasEdit {
-		return wk.base + "edit.dng"
-	} else {
-		return wk.base + "orig" + wk.ext
-	}
-}
-
-// The sidecar to go with the above.
-func (wk *workspace) lastXMP() string {
-	if wk.hasEdit {
-		return wk.base + "edit.dng"
-	} else {
-		return wk.base + "orig.xmp"
-	}
-}
-
 // HTTP is stateless. There is no notion of a file being opened for editing.
 //
 // A global manager keeps track of which files are currently being edited,

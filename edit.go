@@ -42,11 +42,6 @@ func saveEdit(path string, xmp *xmpSettings) error {
 	}
 
 	if path == dest {
-		err = os.RemoveAll(wk.temp())
-		if err != nil {
-			return err
-		}
-
 		exp := exportSettings{
 			DNG:     true,
 			Embed:   true,
@@ -76,46 +71,10 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, e
 	}
 	defer wk.close()
 
-	if pvw.Preview > 0 {
-		err = editXMP(wk.lastXMP(), xmp)
-		if err != nil {
-			return nil, err
-		}
+	if pvw.Preview == 0 {
+		// use the original RAW file for a full resolution preview
 
-		err = os.RemoveAll(wk.temp())
-		if err != nil {
-			return nil, err
-		}
-
-		var side int
-		if wk.hasEdit {
-			side = pvw.Preview
-		} else {
-			side = 2560
-		}
-
-		err = runDNGConverter(wk.last(), wk.temp(), side, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		if wk.hasEdit {
-			return previewJPEG(wk.temp())
-		} else {
-			err = os.Rename(wk.temp(), wk.edit())
-			if err != nil {
-				return nil, err
-			}
-
-			return previewJPEG(wk.edit())
-		}
-	} else {
 		err = editXMP(wk.origXMP(), xmp)
-		if err != nil {
-			return nil, err
-		}
-
-		err = os.RemoveAll(wk.temp())
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +85,64 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, e
 		}
 
 		return previewJPEG(wk.temp())
+	} else if wk.hasEdit {
+		// use edit.dng (downscaled to at most 2560 on the widest side)
+
+		err = editXMP(wk.edit(), xmp)
+		if err != nil {
+			return nil, err
+		}
+
+		err = runDNGConverter(wk.edit(), wk.temp(), pvw.Preview, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		return previewJPEG(wk.temp())
+	} else {
+		// create edit.dng (downscaled to at most 2560 on the widest side)
+
+		err = editXMP(wk.origXMP(), xmp)
+		if err != nil {
+			return nil, err
+		}
+
+		err = runDNGConverter(wk.orig(), wk.temp(), 2560, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		err = os.Rename(wk.temp(), wk.edit())
+		if err != nil {
+			return nil, err
+		}
+
+		return previewJPEG(wk.edit())
 	}
+}
+
+func loadWhiteBalance(path string) error {
+	wk, err := openWorkspace(path)
+	if err != nil {
+		return err
+	}
+	defer wk.close()
+
+	if !wk.hasEdit {
+		// create edit.dng (downscaled to at most 2560 on the widest side)
+
+		err = runDNGConverter(wk.orig(), wk.temp(), 2560, nil)
+		if err != nil {
+			return err
+		}
+
+		err = os.Rename(wk.temp(), wk.edit())
+		if err != nil {
+			return err
+		}
+	}
+
+	return loadCameraProfile(wk.edit())
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {
@@ -137,11 +153,6 @@ func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, err
 	defer wk.close()
 
 	err = editXMP(wk.origXMP(), xmp)
-	if err != nil {
-		return nil, err
-	}
-
-	err = os.RemoveAll(wk.temp())
 	if err != nil {
 		return nil, err
 	}

@@ -16,9 +16,16 @@ type CameraProfile struct {
 	colorMatrix1, colorMatrix2 *mat.Dense
 }
 
-func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int) {
-	vec := mat.NewVecDense(len(neutral), neutral)
-	tmp, tnt := p.neutralToXY(vec).temperature()
+func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int, err error) {
+	var tmp, tnt float64
+	err = mat.Maybe(func() {
+		vec := mat.NewVecDense(len(neutral), neutral)
+		tmp, tnt = p.neutralToXY(vec).temperature()
+	})
+
+	if err != nil {
+		return 0, 0, err
+	}
 
 	// temperature range 2000 to 50000
 	switch {
@@ -40,7 +47,7 @@ func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int
 		tnt = math.RoundToEven(tnt)
 	}
 
-	return int(tmp), int(tnt)
+	return int(tmp), int(tnt), nil
 }
 
 // Port of dng_color_spec::dng_color_spec.

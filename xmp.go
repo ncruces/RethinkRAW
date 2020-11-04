@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
+
+	"rethinkraw/wb"
 
 	"github.com/ncruces/go-exiftool"
 )
@@ -44,6 +47,39 @@ type xmpSettings struct {
 
 	LensProfile   bool `json:"lensProfile"`
 	AutoLateralCA bool `json:"autoLateralCA"`
+}
+
+func loadCameraProfile(path string) error {
+	log.Print("exiftool (load camera profile)...")
+
+	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
+		"-EXIF:CalibrationIlluminant?", "-EXIF:ColorMatrix?",
+		"-EXIF:CameraCalibration?", "-EXIF:AnalogBalance",
+		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", path)
+	if err != nil {
+		return err
+	}
+
+	m := make(map[string][]byte)
+	if err := exiftool.Unmarshal(out, m); err != nil {
+		return err
+	}
+
+	var neutral []float64
+	var profile wb.CameraProfile
+	var illuminant1, illuminant2 int
+	loadInt(&illuminant1, m, "CalibrationIlluminant1")
+	loadInt(&illuminant2, m, "CalibrationIlluminant2")
+	profile.CalibrationIlluminant1 = wb.LightSource(illuminant1)
+	profile.CalibrationIlluminant2 = wb.LightSource(illuminant2)
+	loadFloat64s(&profile.ColorMatrix1, m, "ColorMatrix1")
+	loadFloat64s(&profile.ColorMatrix2, m, "ColorMatrix2")
+	loadFloat64s(&profile.CameraCalibration1, m, "CameraCalibration1")
+	loadFloat64s(&profile.CameraCalibration2, m, "CameraCalibration2")
+	loadFloat64s(&profile.AnalogBalance, m, "AnalogBalance")
+	loadFloat64s(&neutral, m, "AsShotNeutral")
+	log.Println(profile.GetTemperature(neutral))
+	return nil
 }
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
@@ -347,6 +383,20 @@ func loadFloat32(dst *float32, m map[string][]byte, key string) {
 		if err == nil {
 			*dst = float32(f)
 		}
+	}
+}
+
+func loadFloat64s(dst *[]float64, m map[string][]byte, key string) {
+	if v, ok := m[key]; ok {
+		var fs []float64
+		for _, s := range bytes.Split(v, []byte(" ")) {
+			f, err := strconv.ParseFloat(string(s), 64)
+			if err != nil {
+				return
+			}
+			fs = append(fs, f)
+		}
+		*dst = fs
 	}
 }
 

@@ -1,8 +1,9 @@
 package wb_test
 
 import (
-	"rethinkraw/wb"
 	"testing"
+
+	"rethinkraw/wb"
 )
 
 func TestCameraProfile_GetTemperature(t *testing.T) {
@@ -17,9 +18,9 @@ func TestCameraProfile_GetTemperature(t *testing.T) {
 			CameraCalibration2:     []float64{0.9434, 0, 0, 0, 1, 0, 0, 0, 0.94},
 		}
 
-		temp, tint := cam.GetTemperature([]float64{0.346414, 1, 0.636816})
-		if temp != 6383 || tint != 1 {
-			t.Error(temp, tint)
+		temp, tint, err := cam.GetTemperature([]float64{0.346414, 1, 0.636816})
+		if temp != 6383 || tint != 1 || err != nil {
+			t.Error(temp, tint, err)
 		}
 	}
 
@@ -34,9 +35,9 @@ func TestCameraProfile_GetTemperature(t *testing.T) {
 			AnalogBalance:          []float64{1, 1, 1, 1},
 		}
 
-		temp, tint := cam.GetTemperature([]float64{1 / 1.080806, 1, 1 / 3.700866, 1 / 1.623588})
-		if temp != 2681 || tint != 28 {
-			t.Error(temp, tint)
+		temp, tint, err := cam.GetTemperature([]float64{1 / 1.080806, 1, 1 / 3.700866, 1 / 1.623588})
+		if temp != 2681 || tint != 28 || err != nil {
+			t.Error(temp, tint, err)
 		}
 	}
 }

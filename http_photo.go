@@ -21,6 +21,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	_, export := r.Form["export"]
 	_, preview := r.Form["preview"]
 	_, settings := r.Form["settings"]
+	_, whiteBalance := r.Form["whiteBalance"]
 
 	switch {
 	case meta:
@@ -99,6 +100,12 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			if err := enc.Encode(xmp); err != nil {
 				return HTTPResult{Error: err}
 			}
+		}
+		return HTTPResult{}
+
+	case whiteBalance:
+		if err := loadWhiteBalance(path); err != nil {
+			return HTTPResult{Error: err}
 		}
 		return HTTPResult{}
 
