@@ -55,70 +55,6 @@ type xmpWhiteBalance struct {
 	Tint        int `json:"tint"`
 }
 
-func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
-	log.Print("exiftool (load camera profile)...")
-
-	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
-		"-EXIF:CalibrationIlluminant?", "-EXIF:ColorMatrix?",
-		"-EXIF:CameraCalibration?", "-EXIF:AnalogBalance",
-		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", path)
-	if err != nil {
-		return nil, err
-	}
-
-	m := make(map[string][]byte)
-	if err := exiftool.Unmarshal(out, m); err != nil {
-		return nil, err
-	}
-
-	var profile dng.CameraProfile
-	var neutral, whiteXY []float64
-	var illuminant1, illuminant2 int
-	loadFloat64s(&profile.ColorMatrix1, m, "ColorMatrix1")
-	loadFloat64s(&profile.ColorMatrix2, m, "ColorMatrix2")
-	loadFloat64s(&profile.CameraCalibration1, m, "CameraCalibration1")
-	loadFloat64s(&profile.CameraCalibration2, m, "CameraCalibration2")
-	loadFloat64s(&profile.AnalogBalance, m, "AnalogBalance")
-	loadFloat64s(&neutral, m, "AsShotNeutral")
-	loadFloat64s(&whiteXY, m, "AsShotWhiteXY")
-	loadInt(&illuminant1, m, "CalibrationIlluminant1")
-	loadInt(&illuminant2, m, "CalibrationIlluminant2")
-	profile.CalibrationIlluminant1 = dng.LightSource(illuminant1)
-	profile.CalibrationIlluminant2 = dng.LightSource(illuminant2)
-
-	res := make(map[string]xmpWhiteBalance)
-
-	if len(whiteXY) == 2 {
-		var wb xmpWhiteBalance
-		wb.Temperature, wb.Tint = dng.GetTemperature(whiteXY[0], whiteXY[1])
-		res["As Shot"] = wb
-	} else if profile.ColorMatrix1 == nil {
-		return nil, err
-	} else if len(neutral) > 1 {
-		var wb xmpWhiteBalance
-		wb.Temperature, wb.Tint, err = profile.GetTemperature(neutral)
-		if err != nil {
-			return nil, err
-		} else {
-			res["As Shot"] = wb
-		}
-	}
-
-	mul, err := dngMultipliers(path)
-	if len(mul) > 1 {
-		var wb xmpWhiteBalance
-		mul := mul[:len(profile.ColorMatrix1)/3]
-		wb.Temperature, wb.Tint, err = profile.GetTemperature(mul)
-		if err != nil {
-			return nil, err
-		} else {
-			res["Custom"] = wb
-		}
-	}
-
-	return res, err
-}
-
 func loadXMP(path string) (xmp xmpSettings, err error) {
 	log.Print("exiftool (load xmp)...")
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
@@ -318,6 +254,70 @@ func extractXMP(path, dest string) error {
 		"-Orientation", "-Make", "-Model", "-all:all",
 		"-overwrite_original", dest)
 	return err
+}
+
+func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
+	log.Print("exiftool (load camera profile)...")
+
+	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
+		"-EXIF:CalibrationIlluminant?", "-EXIF:ColorMatrix?",
+		"-EXIF:CameraCalibration?", "-EXIF:AnalogBalance",
+		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", path)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string][]byte)
+	if err := exiftool.Unmarshal(out, m); err != nil {
+		return nil, err
+	}
+
+	var profile dng.CameraProfile
+	var neutral, whiteXY []float64
+	var illuminant1, illuminant2 int
+	loadFloat64s(&profile.ColorMatrix1, m, "ColorMatrix1")
+	loadFloat64s(&profile.ColorMatrix2, m, "ColorMatrix2")
+	loadFloat64s(&profile.CameraCalibration1, m, "CameraCalibration1")
+	loadFloat64s(&profile.CameraCalibration2, m, "CameraCalibration2")
+	loadFloat64s(&profile.AnalogBalance, m, "AnalogBalance")
+	loadFloat64s(&neutral, m, "AsShotNeutral")
+	loadFloat64s(&whiteXY, m, "AsShotWhiteXY")
+	loadInt(&illuminant1, m, "CalibrationIlluminant1")
+	loadInt(&illuminant2, m, "CalibrationIlluminant2")
+	profile.CalibrationIlluminant1 = dng.LightSource(illuminant1)
+	profile.CalibrationIlluminant2 = dng.LightSource(illuminant2)
+
+	res := make(map[string]xmpWhiteBalance)
+
+	if len(whiteXY) == 2 {
+		var wb xmpWhiteBalance
+		wb.Temperature, wb.Tint = dng.GetTemperature(whiteXY[0], whiteXY[1])
+		res["As Shot"] = wb
+	} else if profile.ColorMatrix1 == nil {
+		return nil, err
+	} else if len(neutral) > 1 {
+		var wb xmpWhiteBalance
+		wb.Temperature, wb.Tint, err = profile.GetTemperature(neutral)
+		if err != nil {
+			return nil, err
+		} else {
+			res["As Shot"] = wb
+		}
+	}
+
+	mul, err := dngMultipliers(path)
+	if len(mul) > 1 {
+		var wb xmpWhiteBalance
+		mul := mul[:len(profile.ColorMatrix1)/3]
+		wb.Temperature, wb.Tint, err = profile.GetTemperature(mul)
+		if err != nil {
+			return nil, err
+		} else {
+			res["Custom"] = wb
+		}
+	}
+
+	return res, err
 }
 
 func (xmp *xmpSettings) update(shadows, brightness, contrast, clarity int) {
