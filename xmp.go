@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os/exec"
 	"path/filepath"
@@ -49,12 +50,12 @@ type xmpSettings struct {
 	AutoLateralCA bool `json:"autoLateralCA"`
 }
 
-type dngWhiteBalance struct {
-	AsShotTemperature, AsShotTint int
-	ManualTemperature, ManualTint int
+type xmpWhiteBalance struct {
+	Temperature int `json:"temperature"`
+	Tint        int `json:"tint"`
 }
 
-func extractWhiteBalance(path string) (wb dngWhiteBalance, err error) {
+func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
 	log.Print("exiftool (load camera profile)...")
 
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
@@ -62,12 +63,12 @@ func extractWhiteBalance(path string) (wb dngWhiteBalance, err error) {
 		"-EXIF:CameraCalibration?", "-EXIF:AnalogBalance",
 		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", path)
 	if err != nil {
-		return wb, err
+		return nil, err
 	}
 
 	m := make(map[string][]byte)
 	if err := exiftool.Unmarshal(out, m); err != nil {
-		return wb, err
+		return nil, err
 	}
 
 	var profile dng.CameraProfile
@@ -85,29 +86,37 @@ func extractWhiteBalance(path string) (wb dngWhiteBalance, err error) {
 	profile.CalibrationIlluminant1 = dng.LightSource(illuminant1)
 	profile.CalibrationIlluminant2 = dng.LightSource(illuminant2)
 
+	res := make(map[string]xmpWhiteBalance)
+
 	if len(whiteXY) == 2 {
-		wb.AsShotTemperature, wb.AsShotTint = dng.GetTemperature(whiteXY[0], whiteXY[1])
-	}
-	if profile.ColorMatrix1 == nil {
-		return wb, err
-	}
-	if len(neutral) > 1 {
-		wb.AsShotTemperature, wb.AsShotTint, err = profile.GetTemperature(neutral)
+		var wb xmpWhiteBalance
+		wb.Temperature, wb.Tint = dng.GetTemperature(whiteXY[0], whiteXY[1])
+		res["As Shot"] = wb
+	} else if profile.ColorMatrix1 == nil {
+		return nil, err
+	} else if len(neutral) > 1 {
+		var wb xmpWhiteBalance
+		wb.Temperature, wb.Tint, err = profile.GetTemperature(neutral)
 		if err != nil {
-			return wb, err
+			return nil, err
+		} else {
+			res["As Shot"] = wb
 		}
 	}
 
 	mul, err := dngMultipliers(path)
 	if len(mul) > 1 {
+		var wb xmpWhiteBalance
 		mul := mul[:len(profile.ColorMatrix1)/3]
-		wb.ManualTemperature, wb.ManualTint, err = profile.GetTemperature(mul)
+		wb.Temperature, wb.Tint, err = profile.GetTemperature(mul)
 		if err != nil {
-			return wb, err
+			return nil, err
+		} else {
+			res["Custom"] = wb
 		}
 	}
 
-	return wb, err
+	return res, err
 }
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
@@ -461,12 +470,9 @@ func dngPreview(path string) string {
 
 func dngMultipliers(path string, arg ...string) ([]float64, error) {
 	log.Print("dcraw (get multipliers)...")
-	cmd := exec.Command(dcraw, append(arg, "-v", "-h", "-c", path)...)
+	cmd := exec.Command(dcraw, append(arg, "-v", "-d", "-c", path)...)
+	cmd.Stdout = ioutil.Discard
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, err
@@ -496,7 +502,6 @@ func dngMultipliers(path string, arg ...string) ([]float64, error) {
 		}
 	}
 	stderr.Close()
-	stdout.Close()
 
 	err = cmd.Wait()
 	var eerr *exec.ExitError

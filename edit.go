@@ -121,7 +121,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, e
 	}
 }
 
-func loadWhiteBalance(path string) (wb dngWhiteBalance, err error) {
+func loadWhiteBalance(path string) (wb map[string]xmpWhiteBalance, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return wb, err
