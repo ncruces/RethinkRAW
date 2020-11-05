@@ -121,10 +121,10 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, e
 	}
 }
 
-func loadWhiteBalance(path string) error {
+func loadWhiteBalance(path string) (wb dngWhiteBalance, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
-		return err
+		return wb, err
 	}
 	defer wk.close()
 
@@ -133,17 +133,16 @@ func loadWhiteBalance(path string) error {
 
 		err = runDNGConverter(wk.orig(), wk.temp(), 2560, nil)
 		if err != nil {
-			return err
+			return wb, err
 		}
 
 		err = os.Rename(wk.temp(), wk.edit())
 		if err != nil {
-			return err
+			return wb, err
 		}
 	}
 
-	_, err = loadCameraProfile(wk.edit())
-	return err
+	return extractWhiteBalance(wk.edit())
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"os/exec"
@@ -49,11 +51,10 @@ type xmpSettings struct {
 
 type dngWhiteBalance struct {
 	AsShotTemperature, AsShotTint int
-	AutoTemperature, AutoTint     int
 	ManualTemperature, ManualTint int
 }
 
-func loadCameraProfile(path string) (wb dngWhiteBalance, err error) {
+func extractWhiteBalance(path string) (wb dngWhiteBalance, err error) {
 	log.Print("exiftool (load camera profile)...")
 
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
@@ -69,21 +70,44 @@ func loadCameraProfile(path string) (wb dngWhiteBalance, err error) {
 		return wb, err
 	}
 
-	var neutral []float64
 	var profile dng.CameraProfile
+	var neutral, whiteXY []float64
 	var illuminant1, illuminant2 int
-	loadInt(&illuminant1, m, "CalibrationIlluminant1")
-	loadInt(&illuminant2, m, "CalibrationIlluminant2")
-	profile.CalibrationIlluminant1 = dng.LightSource(illuminant1)
-	profile.CalibrationIlluminant2 = dng.LightSource(illuminant2)
 	loadFloat64s(&profile.ColorMatrix1, m, "ColorMatrix1")
 	loadFloat64s(&profile.ColorMatrix2, m, "ColorMatrix2")
 	loadFloat64s(&profile.CameraCalibration1, m, "CameraCalibration1")
 	loadFloat64s(&profile.CameraCalibration2, m, "CameraCalibration2")
 	loadFloat64s(&profile.AnalogBalance, m, "AnalogBalance")
 	loadFloat64s(&neutral, m, "AsShotNeutral")
-	log.Println(profile.GetTemperature(neutral))
-	return wb, nil
+	loadFloat64s(&whiteXY, m, "AsShotWhiteXY")
+	loadInt(&illuminant1, m, "CalibrationIlluminant1")
+	loadInt(&illuminant2, m, "CalibrationIlluminant2")
+	profile.CalibrationIlluminant1 = dng.LightSource(illuminant1)
+	profile.CalibrationIlluminant2 = dng.LightSource(illuminant2)
+
+	if len(whiteXY) == 2 {
+		wb.AsShotTemperature, wb.AsShotTint = dng.GetTemperature(whiteXY[0], whiteXY[1])
+	}
+	if profile.ColorMatrix1 == nil {
+		return wb, err
+	}
+	if len(neutral) > 1 {
+		wb.AsShotTemperature, wb.AsShotTint, err = profile.GetTemperature(neutral)
+		if err != nil {
+			return wb, err
+		}
+	}
+
+	mul, err := dngMultipliers(path)
+	if len(mul) > 1 {
+		mul := mul[:len(profile.ColorMatrix1)/3]
+		wb.ManualTemperature, wb.ManualTint, err = profile.GetTemperature(mul)
+		if err != nil {
+			return wb, err
+		}
+	}
+
+	return wb, err
 }
 
 func loadXMP(path string) (xmp xmpSettings, err error) {
@@ -433,4 +457,59 @@ func dngPreview(path string) string {
 	default:
 		return "p0"
 	}
+}
+
+func dngMultipliers(path string, arg ...string) ([]float64, error) {
+	log.Print("dcraw (get multipliers)...")
+	cmd := exec.Command(dcraw, append(arg, "-v", "-h", "-c", path)...)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	var msg bytes.Buffer
+	var multipliers []float64
+	for r := bufio.NewReader(stderr); ; {
+		buf, err := r.ReadBytes('\n')
+		msg.Write(buf)
+		if err != nil {
+			break
+		}
+		if bytes.HasPrefix(buf, []byte("multipliers ")) {
+			multipliers = make([]float64, 4)
+			data := bytes.SplitN(buf[:len(buf)-1], []byte(" "), 5)[1:]
+			multipliers[0], _ = strconv.ParseFloat(string(data[0]), 64)
+			multipliers[1], _ = strconv.ParseFloat(string(data[1]), 64)
+			multipliers[2], _ = strconv.ParseFloat(string(data[2]), 64)
+			multipliers[3], _ = strconv.ParseFloat(string(data[3]), 64)
+			break
+		}
+	}
+	stderr.Close()
+	stdout.Close()
+
+	err = cmd.Wait()
+	var eerr *exec.ExitError
+	if errors.As(err, &eerr) {
+		eerr.Stderr = msg.Bytes()
+	}
+
+	if multipliers != nil {
+		multipliers[0] = 1 / multipliers[0]
+		multipliers[1] = 1 / multipliers[1]
+		multipliers[2] = 1 / multipliers[2]
+		multipliers[3] = 1 / multipliers[3]
+		return multipliers, nil
+	}
+	return nil, err
 }

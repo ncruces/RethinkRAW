@@ -104,8 +104,10 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{}
 
 	case whiteBalance:
-		if err := loadWhiteBalance(path); err != nil {
+		if wb, err := loadWhiteBalance(path); err != nil {
 			return HTTPResult{Error: err}
+		} else {
+			logPretty(wb)
 		}
 		return HTTPResult{}
 
