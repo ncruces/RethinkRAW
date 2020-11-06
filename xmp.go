@@ -256,7 +256,7 @@ func extractXMP(path, dest string) error {
 	return err
 }
 
-func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
+func extractWhiteBalance(path string, coords []int) (map[string]xmpWhiteBalance, error) {
 	log.Print("exiftool (load camera profile)...")
 
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
@@ -270,6 +270,10 @@ func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
 	m := make(map[string][]byte)
 	if err := exiftool.Unmarshal(out, m); err != nil {
 		return nil, err
+	}
+	// ColorMatrix1 is required for all non-monochrome DNGs.
+	if _, ok := m["ColorMatrix1"]; !ok {
+		return nil, nil
 	}
 
 	var profile dng.CameraProfile
@@ -289,13 +293,13 @@ func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
 
 	res := make(map[string]xmpWhiteBalance)
 
-	if len(whiteXY) == 2 {
+	switch {
+	case len(whiteXY) == 2:
 		var wb xmpWhiteBalance
 		wb.Temperature, wb.Tint = dng.GetTemperature(whiteXY[0], whiteXY[1])
 		res["As Shot"] = wb
-	} else if profile.ColorMatrix1 == nil {
-		return nil, err
-	} else if len(neutral) > 1 {
+
+	case len(neutral) >= 2:
 		var wb xmpWhiteBalance
 		wb.Temperature, wb.Tint, err = profile.GetTemperature(neutral)
 		if err != nil {
@@ -305,10 +309,20 @@ func extractWhiteBalance(path string) (map[string]xmpWhiteBalance, error) {
 		}
 	}
 
-	mul, err := dngMultipliers(path)
+	if len(coords) != 2 {
+		return res, nil
+	}
+
+	mul, err := dngMultipliers(path, "-A",
+		strconv.Itoa(int(coords[0])),
+		strconv.Itoa(int(coords[1])),
+		"2", "2")
+	if err != nil {
+		return res, err
+	}
 	if len(mul) > 1 {
 		var wb xmpWhiteBalance
-		mul := mul[:len(profile.ColorMatrix1)/3]
+		mul := mul[:len(profile.ColorMatrix1)/3] // TODO: are we sure?
 		wb.Temperature, wb.Tint, err = profile.GetTemperature(mul)
 		if err != nil {
 			return nil, err

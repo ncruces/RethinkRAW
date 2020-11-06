@@ -74,16 +74,16 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case preview:
 		var xmp xmpSettings
-		var pvw previewSettings
+		var size struct{ Preview int }
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
-		if err := dec.Decode(&pvw, r.Form); err != nil {
+		if err := dec.Decode(&size, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
-		if out, err := previewEdit(path, &xmp, &pvw); err != nil {
+		if out, err := previewEdit(path, size.Preview, &xmp); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "image/jpeg")
@@ -104,10 +104,20 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{}
 
 	case whiteBalance:
-		if wb, err := loadWhiteBalance(path); err != nil {
+		var coords struct{ WhiteBalance []int }
+		dec := schema.NewDecoder()
+		dec.IgnoreUnknownKeys(true)
+		if err := dec.Decode(&coords, r.Form); err != nil {
+			return HTTPResult{Error: err}
+		}
+		if wb, err := loadWhiteBalance(path, coords.WhiteBalance); err != nil {
 			return HTTPResult{Error: err}
 		} else {
-			logPretty(wb)
+			w.Header().Set("Content-Type", "application/json")
+			enc := json.NewEncoder(w)
+			if err := enc.Encode(wb); err != nil {
+				return HTTPResult{Error: err}
+			}
 		}
 		return HTTPResult{}
 

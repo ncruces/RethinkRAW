@@ -64,14 +64,14 @@ func saveEdit(path string, xmp *xmpSettings) error {
 	return os.Rename(dest+".bak", dest)
 }
 
-func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, error) {
+func previewEdit(path string, size int, xmp *xmpSettings) ([]byte, error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return nil, err
 	}
 	defer wk.close()
 
-	if pvw.Preview == 0 {
+	if size == 0 {
 		// use the original RAW file for a full resolution preview
 
 		err = editXMP(wk.origXMP(), xmp)
@@ -93,7 +93,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, e
 			return nil, err
 		}
 
-		err = runDNGConverter(wk.edit(), wk.temp(), pvw.Preview, nil)
+		err = runDNGConverter(wk.edit(), wk.temp(), size, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func previewEdit(path string, xmp *xmpSettings, pvw *previewSettings) ([]byte, e
 	}
 }
 
-func loadWhiteBalance(path string) (wb map[string]xmpWhiteBalance, err error) {
+func loadWhiteBalance(path string, coords []int) (wb map[string]xmpWhiteBalance, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return wb, err
@@ -142,7 +142,7 @@ func loadWhiteBalance(path string) (wb map[string]xmpWhiteBalance, err error) {
 		}
 	}
 
-	return extractWhiteBalance(wk.edit())
+	return extractWhiteBalance(wk.edit(), coords)
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {
@@ -200,10 +200,6 @@ func exportName(path string, exp *exportSettings) string {
 		ext = ".jpg"
 	}
 	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)) + ext
-}
-
-type previewSettings struct {
-	Preview int
 }
 
 type exportSettings struct {

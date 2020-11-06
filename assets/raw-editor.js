@@ -9,7 +9,7 @@ let spinner = document.getElementById('spinner');
 (async () => {
     let settings;
     try {
-        settings = await restRequest('GET', `?settings`);
+        settings = await restRequest('GET', '?settings');
     } catch (e) {
         alertError('Load failed', e);
         spinner.hidden = true;
@@ -59,9 +59,26 @@ let spinner = document.getElementById('spinner');
     }
 
     setTimeout(async () => {
-        await restRequest('GET', `?whiteBalance`);
+        let wb = await restRequest('GET', '?whiteBalance');
+        console.log(wb);
     });
 })()
+
+window.imageClick = async (evt) => {
+    let wr = photo.width / photo.naturalWidth;
+    let hr = photo.height / photo.naturalHeight;
+    let ratio = Math.min(wr, hr);
+    let width = photo.naturalWidth * ratio;
+    let height = photo.naturalHeight * ratio;
+
+    let ws = 2560 * Math.min(1, photo.naturalWidth / photo.naturalHeight);
+    let hs = 2560 * Math.min(1, photo.naturalHeight / photo.naturalWidth);
+    let posx = Math.floor((evt.offsetX - (photo.width - width) / 2) / width * ws);
+    let posy = Math.floor((evt.offsetY - (photo.height - height) / 2) / height * hs);
+    
+    let wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
+    console.log(wb);
+}
 
 window.addEventListener('beforeunload', evt => {
     if (!save.disabled) {
@@ -191,7 +208,7 @@ window.saveFile = async () => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await restRequest('POST', `?save&` + query, { progress: progress });
+        await restRequest('POST', '?save&' + query, { progress: progress });
         save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
@@ -223,7 +240,7 @@ window.exportFile = async (state) => {
     dialog.firstChild.textContent = 'Exporting…';
     dialog.showModal();
     try {
-        await restRequest('POST', `?export&` + query, { progress: progress });
+        await restRequest('POST', '?export&' + query, { progress: progress });
     } catch (e) {
         alertError('Export failed', e);
     }
@@ -241,7 +258,7 @@ window.toggleZoom = (e, evt) => {
 }
 
 window.showMeta = async () => {
-    let html = await htmlRequest('GET', `?meta`);
+    let html = await htmlRequest('GET', '?meta');
     let dialog = document.getElementById('meta-dialog');
     dialog.onclick = () => dialog.close();
     dialog.innerHTML = html;
@@ -427,9 +444,8 @@ let updatePhoto = function () {
     photo.addEventListener('mouseleave', () => photo.style.transform = 'unset', { passive: true })
     photo.addEventListener('mousemove', evt => {
         if (zoom) {
-            let rect = photo.parentElement.getBoundingClientRect();
-            let width = photo.naturalWidth / rect.width / devicePixelRatio;
-            let height = photo.naturalHeight / rect.height / devicePixelRatio;
+            let width = photo.naturalWidth / photo.width / devicePixelRatio;
+            let height = photo.naturalHeight / photo.height / devicePixelRatio;
             photo.style.transform = `scale(${Math.max(1.5, width, height)})`;
             photo.style.transformOrigin = `${evt.offsetX}px ${evt.offsetY}px`;
             photo.style.cursor = 'move';
