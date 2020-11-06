@@ -431,7 +431,10 @@ let updatePhoto = function () {
             let width = photo.naturalWidth / rect.width / devicePixelRatio;
             let height = photo.naturalHeight / rect.height / devicePixelRatio;
             photo.style.transform = `scale(${Math.max(1.5, width, height)})`;
-            photo.style.transformOrigin = `${evt.clientX - rect.left}px ${evt.clientY - rect.top}px`;
+            photo.style.transformOrigin = `${evt.offsetX}px ${evt.offsetY}px`;
+            photo.style.cursor = 'move';
+        } else {
+            photo.style.cursor = 'unset';
         }
     }, { passive: true })
 
@@ -615,7 +618,7 @@ function formatNumber(val, step) {
     if (!Number.isFinite(step)) return val.toString();
 
     let fmt = step.toString();
-    if (fmt.indexOf('e') >= 0) return val.toString();
+    if (fmt.includes('e')) return val.toString();
 
     let n = Number(val);
     let i = fmt.indexOf('.');
@@ -624,15 +627,30 @@ function formatNumber(val, step) {
 }
 
 {
-    if (navigator.platform.indexOf('Mac') < 0) {
-        for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌥', 'alt');
+    if (!navigator.platform.includes('Mac')) {
+            for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌥', 'alt');
     }
     function listener(e) {
-        for (let n of document.querySelectorAll('.mod-off')) n.hidden = e.altKey;
-        for (let n of document.querySelectorAll('.mod-on')) n.hidden = !e.altKey;
+        let key = e.altKey && !(e.ctrlKey || e.metaKey || e.shiftKey);
+        for (let n of document.querySelectorAll('.mod-off')) n.hidden = key;
+        for (let n of document.querySelectorAll('.mod-on')) n.hidden = !key;
+
+        if (navigator.platform.includes('Mac')) {
+            if (e.metaKey && e.key === 's' && !(e.altKey || e.ctrlKey)) {
+                if (e.shiftKey) exportFile('dialog');
+                else saveFile();
+                e.preventDefault();
+            }
+        } else {
+            if (e.ctrlKey && e.key === 's' && !(e.metaKey || e.shiftKey)) {
+                if (e.ctrlKey) exportFile('dialog');
+                else saveFile();
+                e.preventDefault();
+            }
+        }
     }
-    window.addEventListener('keydown', listener, { passive: true });
-    window.addEventListener('keyup', listener, { passive: true });
+    window.addEventListener('keydown', listener);
+    window.addEventListener('keyup', listener);
     listener({});
 
     for (let n of document.querySelectorAll('fieldset legend')) {
