@@ -77,6 +77,9 @@ window.imageClick = async (evt) => {
     let posy = Math.floor((evt.offsetY - (photo.height - height) / 2) / height * hs);
     
     let wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
+    whiteBalanceChange(form.whiteBalance, 'Custom');
+    temperatureInput(form.temperature, wb['Custom'].temperature);
+    rangeInput(form.tint, wb['Custom'].tint);
     console.log(wb);
 }
 
@@ -650,20 +653,6 @@ function formatNumber(val, step) {
         let key = e.altKey && !(e.ctrlKey || e.metaKey || e.shiftKey);
         for (let n of document.querySelectorAll('.mod-off')) n.hidden = key;
         for (let n of document.querySelectorAll('.mod-on')) n.hidden = !key;
-
-        if (navigator.platform.includes('Mac')) {
-            if (e.metaKey && e.key === 's' && !(e.altKey || e.ctrlKey)) {
-                if (e.shiftKey) exportFile('dialog');
-                else saveFile();
-                e.preventDefault();
-            }
-        } else {
-            if (e.ctrlKey && e.key === 's' && !(e.metaKey || e.shiftKey)) {
-                if (e.ctrlKey) exportFile('dialog');
-                else saveFile();
-                e.preventDefault();
-            }
-        }
     }
     window.addEventListener('keydown', listener);
     window.addEventListener('keyup', listener);
