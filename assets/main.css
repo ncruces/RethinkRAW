@@ -66,13 +66,9 @@ body {
     display: none;
 }
 
-#menu .minimal-ui {
-    display: none;
-}
-
-@media not all and (display-mode: browser) {
+@media (display-mode: browser) {
     #menu .minimal-ui {
-        display: unset;
+        display: none;
     }
 }
 

@@ -202,6 +202,8 @@ window.rangeInput = (e, val) => {
 window.setCustomWhiteBalance = () => form.whiteBalance.value = 'Custom';
 window.setCustomTone = () => form.tone.value = 'Custom';
 
+window.saveFileAs = () => exportFile('dialog');
+
 window.saveFile = async () => {
     let query = formQuery();
 
