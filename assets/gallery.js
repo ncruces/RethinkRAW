@@ -15,4 +15,4 @@ for (let img of document.querySelectorAll('img.lazy')) {
     observer.observe(img);
 }
 
-}()
+}();

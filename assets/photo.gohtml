@@ -24,19 +24,19 @@
             <div class="toolbar">
                 <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
                 <button type=button title="S̲ave" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fa-save"></i></button>
-                <button type=button title="Ex̲port JPEG (⌥-click for options)" accesskey="x" class="mod-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
-                <button type=button title="Export…" class="mod-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
-                <button type=button title="Z̲oom" accesskey="z" onclick="toggleZoom(this, event)"><i class="fas fa-search-plus"></i><i class="fas fa-search-minus pushed"></i></button>
-                <!--<button type=button title="Crop" disabled><i class="fas fa-crop"></i></button>-->
-                <button type=button title="Rotate couterclockwise (⌥-click to flip horizontally)" class="mod-off" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
-                <button type=button title="Rotate clockwise (⌥-click to flip vertically)" class="mod-off" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
-                <button type=button title="Flip horizontally" class="mod-on" onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>
-                <button type=button title="Flip vertically" class="mod-on" onclick="orientationChange('vt')"><i class="fas fa-arrows-alt-v"></i></button>
+                <button type=button title="Ex̲port JPEG (⌥-click for options)" accesskey="x" class="alt-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
+                <button type=button title="Export…" class="alt-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
+                <button type=button title="Z̲oom" accesskey="z" onclick="toggleZoom(event)" id=zoom><i class="fas fa-search-plus"></i><i class="fas fa-search-minus pushed"></i></button>
+                <button type=button title="W̲hite balance" accesskey="w" onclick="toggleWhite(event)" id=white><i class="fas fa-eye-dropper"></i><i class="fas fa-eye-dropper pushed"></i></button>
+                <button type=button title="Rotate couterclockwise (⌥-click to flip horizontally)" class="alt-off" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
+                <button type=button title="Rotate clockwise (⌥-click to flip vertically)" class="alt-off" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
+                <button type=button title="Flip horizontally" class="alt-on" onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>
+                <button type=button title="Flip vertically" class="alt-on" onclick="orientationChange('vt')"><i class="fas fa-arrows-alt-v"></i></button>
                 <button type=button title="Show metadata…" onclick="showMeta()"><i class="fas fa-info"></i></button>
             </div>
         </div>
         <div id=box2>
-            <img id=photo alt="{{.Name}}" src="/thumb/{{.Path}}" onclick="imageClick(event)">
+            <img id=photo alt="{{.Name}}" src="/thumb/{{.Path}}">
             <i id=spinner class="fas fa-spinner fa-spin"></i>
         </div>
     </div>

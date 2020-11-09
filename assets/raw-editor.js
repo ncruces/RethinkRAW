@@ -1,12 +1,13 @@
 void function () {
 
-let zoom = false;
 let form = document.getElementById('settings');
 let save = document.getElementById('save');
+let zoom = document.getElementById('zoom');
+let white = document.getElementById('white');
 let photo = document.getElementById('photo');
 let spinner = document.getElementById('spinner');
 
-(async () => {
+void async function() {
     let settings;
     try {
         settings = await restRequest('GET', '?settings');
@@ -62,38 +63,19 @@ let spinner = document.getElementById('spinner');
         let wb = await restRequest('GET', '?whiteBalance');
         console.log(wb);
     });
-})()
-
-window.imageClick = async (evt) => {
-    let wr = photo.width / photo.naturalWidth;
-    let hr = photo.height / photo.naturalHeight;
-    let ratio = Math.min(wr, hr);
-    let width = photo.naturalWidth * ratio;
-    let height = photo.naturalHeight * ratio;
-
-    let ws = 2560 * Math.min(1, photo.naturalWidth / photo.naturalHeight);
-    let hs = 2560 * Math.min(1, photo.naturalHeight / photo.naturalWidth);
-    let posx = Math.floor((evt.offsetX - (photo.width - width) / 2) / width * ws);
-    let posy = Math.floor((evt.offsetY - (photo.height - height) / 2) / height * hs);
-    
-    let wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
-    whiteBalanceChange(form.whiteBalance, 'Custom');
-    temperatureInput(form.temperature, wb['Custom'].temperature);
-    rangeInput(form.tint, wb['Custom'].tint);
-    console.log(wb);
-}
+}();
 
 window.addEventListener('beforeunload', evt => {
     if (!save.disabled) {
         evt.returnValue = 'Leave this page? Changes that you made may not be saved.';
         evt.preventDefault();
     }
-})
+});
 
 window.valueChange = () => {
     save.disabled = false;
     updatePhoto();
-}
+};
 
 window.orientationChange = (op) => {
     const table = {
@@ -103,12 +85,12 @@ window.orientationChange = (op) => {
         vt:  [4, 4, 3, 2, 1, 8, 7, 6, 5],
     };
 
-    let orient = table[op][form.orientation.value]
+    let orient = table[op][form.orientation.value];
     if (orient === void 0) orient = table[op][0];
     form.orientation.value = orient;
 
     valueChange();
-}
+};
 
 window.profileChange = (e, val) => {
     if (val !== void 0) e.value = val;
@@ -122,7 +104,7 @@ window.profileChange = (e, val) => {
     }
 
     valueChange();
-}
+};
 
 window.whiteBalanceChange = (e, val) => {
     const presets = {
@@ -155,7 +137,7 @@ window.whiteBalanceChange = (e, val) => {
     }
 
     valueChange();
-}
+};
 
 window.toneChange = (e, val) => {
     if (val !== void 0) e.value = val;
@@ -173,7 +155,7 @@ window.toneChange = (e, val) => {
     }
 
     valueChange();
-}
+};
 
 window.temperatureInput = (e, val) => {
     if (e.length === 2) e = e[1];
@@ -187,7 +169,7 @@ window.temperatureInput = (e, val) => {
             n < 40000 ? 500 : 1000;
 
     e.previousElementSibling.value = Math.round(n / r) * r;
-}
+};
 
 window.rangeInput = (e, val) => {
     if (e.length === 2) e = e[1];
@@ -197,7 +179,7 @@ window.rangeInput = (e, val) => {
     let s = formatNumber(e.value, e.step);
     if (n > 0 && e.min < 0 && s !== '0') s = '+' + s;
     e.previousElementSibling.value = s;
-}
+};
 
 window.setCustomWhiteBalance = () => form.whiteBalance.value = 'Custom';
 window.setCustomTone = () => form.tone.value = 'Custom';
@@ -225,7 +207,7 @@ window.saveFile = async () => {
     } else for (let photo of template.Photos) {
         pingRequest(`/thumb/${encodeURI(photo.Path)}`);
     }
-}
+};
 
 window.exportFile = async (state) => {
     if (state === 'dialog') {
@@ -250,17 +232,29 @@ window.exportFile = async (state) => {
         alertError('Export failed', e);
     }
     dialog.close();
-}
+};
 
-window.toggleZoom = (e, evt) => {
-    zoom = !zoom;
+window.toggleZoom = evt => {
+    if (photo.style.cursor === 'crosshair') toggleWhite();
+    let zoomed = photo.style.cursor === 'zoom-out';
+    zoomed = !zoomed;
 
-    if (evt.detail) e.blur();
-    e.classList.toggle('pushed', zoom);
+    photo.style.cursor = zoomed ? 'zoom-out' : 'unset';
+    zoom.classList.toggle('pushed', zoomed);
+    if (evt && evt.detail) zoom.blur();
+    if (zoomed) updatePhoto();
+    updateZoom();
+};
 
-    if (zoom) updatePhoto();
-    else photo.style.transform = 'unset';
-}
+window.toggleWhite = evt => {
+    if (photo.style.cursor === 'zoom-out') toggleZoom();
+    let picking = photo.style.cursor === 'crosshair';
+    picking = !picking;
+
+    photo.style.cursor = picking ? 'crosshair' : 'unset';
+    white.classList.toggle('pushed', picking);
+    if (evt && evt.detail) white.blur();
+};
 
 window.showMeta = async () => {
     let html = await htmlRequest('GET', '?meta');
@@ -268,7 +262,7 @@ window.showMeta = async () => {
     dialog.onclick = () => dialog.close();
     dialog.innerHTML = html;
     dialog.showModal();
-}
+};
 
 window.exportChange = (e) => {
     let form = e.tagName === 'FORM' ? e : e.form;
@@ -393,7 +387,7 @@ window.exportChange = (e) => {
     form.mpixels.required = true;
 
     function formatElement(e) { if (e.value !== '') e.value = formatNumber(e.value, e.step); }
-}
+};
 
 function disableInputs(n) {
     let disabled = n.className.includes('disabled');
@@ -420,13 +414,15 @@ let updatePhoto = function () {
     let loading, query, size;
 
     function calcSize() {
-        if (zoom) return Infinity;
+        if (photo.style.cursor === 'zoom-out') return Infinity;
         return Math.ceil(Math.max(photo.width, photo.height) * devicePixelRatio);
     }
 
     function load() {
-        loading = true;
+        if (loading) return;
+        if (size >= calcSize() && query === formQuery()) return;
         spinner.hidden = false;
+        loading = true;
         setTimeout(() => {
             size = calcSize();
             query = formQuery();
@@ -437,30 +433,17 @@ let updatePhoto = function () {
     }
 
     function loaded() {
-        loading = false;
-        spinner.hidden = true;
         photo.removeEventListener('load', loaded);
         photo.removeEventListener('error', loaded);
-        if (size < calcSize() || query !== formQuery()) load();
+        spinner.hidden = true;
+        loading = false;
+        updateZoom();
+        load();
     }
 
-    window.addEventListener('resize', () => loading || size < calcSize() && load(), { passive: true })
-
-    photo.addEventListener('mouseleave', () => photo.style.transform = 'unset', { passive: true })
-    photo.addEventListener('mousemove', evt => {
-        if (zoom) {
-            let width = photo.naturalWidth / photo.width / devicePixelRatio;
-            let height = photo.naturalHeight / photo.height / devicePixelRatio;
-            photo.style.transform = `scale(${Math.max(1.5, width, height)})`;
-            photo.style.transformOrigin = `${evt.offsetX}px ${evt.offsetY}px`;
-            photo.style.cursor = 'move';
-        } else {
-            photo.style.cursor = 'unset';
-        }
-    }, { passive: true })
-
-    return () => loading || load();
-}()
+    window.addEventListener('resize', load, { passive: true });
+    return load;
+}();
 
 function formQuery() {
     let query = [];
@@ -482,7 +465,7 @@ function formQuery() {
 }
 
 function exportQuery() {
-    let form = document.getElementById('export-form')
+    let form = document.getElementById('export-form');
     let query = [];
 
     if (form.format.value === 'DNG') {
@@ -578,7 +561,7 @@ function restRequest(method, url, { body, progress } = {}) {
             name: xhr.statusText,
         });
         if (progress !== void 0) {
-            xhr.onprogress = e => {
+            xhr.onprogress = evt => {
                 if (xhr.status === 207 && xhr.getResponseHeader('Content-Type') === 'application/x-ndjson') {
                     let last = JSON.parseLast(xhr.responseText);
                     if (isFinite(last.done) && isFinite(last.total)) {
@@ -587,7 +570,7 @@ function restRequest(method, url, { body, progress } = {}) {
                     }
                     return;
                 }
-                if (e.lengthComputable) {
+                if (evt.lengthComputable) {
                     progress.value = pe.loaded;
                     progress.max = pe.total;
                     return;
@@ -649,25 +632,95 @@ function formatNumber(val, step) {
 
 {
     if (!navigator.platform.includes('Mac')) {
-            for (let n of document.querySelectorAll('.mod-off')) n.title = n.title.replace('⌥', 'alt');
+        for (let n of document.querySelectorAll('.alt-off')) n.title = n.title.replace('⌥', 'alt');
     }
-    function listener(e) {
-        let key = e.altKey && !(e.ctrlKey || e.metaKey || e.shiftKey);
-        for (let n of document.querySelectorAll('.mod-off')) n.hidden = key;
-        for (let n of document.querySelectorAll('.mod-on')) n.hidden = !key;
+    function toogleAlt(evt) {
+        let key = evt.altKey && !(evt.ctrlKey || evt.metaKey || evt.shiftKey);
+        for (let n of document.querySelectorAll('.alt-off')) n.hidden = key;
+        for (let n of document.querySelectorAll('.alt-on')) n.hidden = !key;
     }
-    window.addEventListener('keydown', listener);
-    window.addEventListener('keyup', listener);
-    listener({});
+    window.addEventListener('keydown', toogleAlt);
+    window.addEventListener('keyup', toogleAlt);
+    toogleAlt({});
 
     for (let n of document.querySelectorAll('fieldset legend')) {
         n.addEventListener('click', () => {
             for (let c of n.parentElement.children) {
                 if (c !== n) c.hidden = !c.hidden;
             }
-        }, { passive: true });
+        });
         n.title = n.title.replace('⌥', 'alt');
     }
+}
+
+if (photo) {
+    let mousePos;
+
+    function updateZoom(evt) {
+        if (evt) mousePos = evt.type === 'mouseleave' ? null : {x: evt.offsetX, y: evt.offsetY};
+        if (mousePos && photo.style.cursor === 'zoom-out') {
+            let width = photo.naturalWidth / photo.width / devicePixelRatio;
+            let height = photo.naturalHeight / photo.height / devicePixelRatio;
+            photo.style.transform = `scale(${Math.max(1.5, width, height)})`;
+            photo.style.transformOrigin = `${mousePos.x}px ${mousePos.y}px`;
+        } else {
+            photo.style.transform = 'unset';
+        }
+    }
+
+    window.addEventListener('keydown', evt => {
+        if (evt.key === 'z' && photo.style.cursor !== 'zoom-out') {
+            photo.style.cursor = 'zoom-in';
+            zoom.classList.add('pushed');
+            white.classList.remove('pushed');
+        }
+        if (evt.key === 'w' && photo.style.cursor !== 'zoom-out') {
+            photo.style.cursor = 'crosshair';
+            white.classList.add('pushed');
+            zoom.classList.remove('pushed');
+        }
+    });
+    window.addEventListener('keyup', evt => {
+        if (evt.key === 'z' && photo.style.cursor === 'zoom-in') {
+            photo.style.cursor = 'unset';
+            zoom.classList.remove('pushed');
+        }
+        if (evt.key === 'w' && photo.style.cursor === 'crosshair') {
+            photo.style.cursor = 'unset';
+            white.classList.remove('pushed');
+        }
+    });
+    photo.addEventListener('mouseleave', updateZoom, { passive: true });
+    photo.addEventListener('mousemove', updateZoom, { passive: true });
+
+    photo.addEventListener('click', async (evt) => {
+        switch (photo.style.cursor) {
+            case 'zoom-in':
+            case 'zoom-out':
+                toggleZoom();
+                break;
+
+            case 'crosshair': {
+                let wr = photo.width / photo.naturalWidth;
+                let hr = photo.height / photo.naturalHeight;
+                let ratio = Math.min(wr, hr);
+                let width = photo.naturalWidth * ratio;
+                let height = photo.naturalHeight * ratio;
+
+                let ws = 2560 * Math.min(1, photo.naturalWidth / photo.naturalHeight);
+                let hs = 2560 * Math.min(1, photo.naturalHeight / photo.naturalWidth);
+                let posx = Math.floor((evt.offsetX - (photo.width - width) / 2) / width * ws);
+                let posy = Math.floor((evt.offsetY - (photo.height - height) / 2) / height * hs);
+
+                let wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
+                whiteBalanceChange(form.whiteBalance, 'Custom');
+                temperatureInput(form.temperature, wb['Custom'].temperature);
+                rangeInput(form.tint, wb['Custom'].tint);
+                console.log(wb);
+                break;
+            }
+        }
+    });
 }
 
 JSON.parseLast = (ndjson) => {
@@ -675,23 +728,23 @@ JSON.parseLast = (ndjson) => {
     if (end < 0) return void 0;
     let start = ndjson.lastIndexOf('\n', end - 1);
     return JSON.parse(ndjson.substring(start, end));
-}
+};
 
 JSON.parseLines = (ndjson) => {
     return ndjson.trimEnd().split('\n').map(JSON.parse);
-}
+};
 
 // dialog polyfill, add type=cancel buttons
 for (let d of document.querySelectorAll('dialog')) {
     dialogPolyfill.registerDialog(d);
-    d.addEventListener('cancel', () => d.returnValue = '', { passive: true });
+    d.addEventListener('cancel', () => d.returnValue = '');
     for (let b of d.querySelectorAll('form button[type=cancel]')) {
         b.type = 'button';
         b.addEventListener('click', () => {
             d.dispatchEvent(new Event('cancel'));
             d.close();
-        }, { passive: true });
+        });
     }
 }
 
-}()
+}();
