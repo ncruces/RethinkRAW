@@ -60,8 +60,17 @@ void async function() {
     }
 
     setTimeout(async () => {
-        let wb = await restRequest('GET', '?whiteBalance');
-        console.log(wb);
+        try {
+            let wb = await restRequest('GET', '?whiteBalance');
+            if (wb.temperature) {
+                whiteBalancePresets['As Shot'] = wb;
+                let restoreSave = save.disabled;
+                whiteBalanceChange(form.whiteBalance);
+                temperatureInput(form.temperature);
+                save.disabled = restoreSave;
+            }
+        } catch (e) {
+        }
     });
 }();
 
@@ -106,24 +115,24 @@ window.profileChange = (e, val) => {
     valueChange();
 };
 
-window.whiteBalanceChange = (e, val) => {
-    const presets = {
-        Daylight:   { temperature: 5500, tint: 10 },
-        Cloudy:     { temperature: 6500, tint: 10 },
-        Shade:      { temperature: 7500, tint: 10 },
-        Tungsten:   { temperature: 2850, tint:  0 },
-        Fluorescent:{ temperature: 3800, tint: 20 },
-        Flash:      { temperature: 5500, tint:  0 },
-    }
+const whiteBalancePresets = {
+    Daylight:   { temperature: 5500, tint: 10 },
+    Cloudy:     { temperature: 6500, tint: 10 },
+    Shade:      { temperature: 7500, tint: 10 },
+    Tungsten:   { temperature: 2850, tint:  0 },
+    Fluorescent:{ temperature: 3800, tint: 20 },
+    Flash:      { temperature: 5500, tint:  0 },
+}
 
+window.whiteBalanceChange = (e, val) => {
     if (val !== void 0) e.value = val;
 
     let temp = e.form.temperature;
     let tint = e.form.tint;
     let auto = false;
-    if (e.value in presets) {
-        let k = presets[e.value].temperature;
-        let t = presets[e.value].tint;
+    if (e.value in whiteBalancePresets) {
+        let k = whiteBalancePresets[e.value].temperature;
+        let t = whiteBalancePresets[e.value].tint;
         tint[0].value = t;
         tint[1].value = t;
         temp[0].value = k;
@@ -453,7 +462,16 @@ function formQuery() {
     for (let k of ['orientation', 'process', 'profile', 'whiteBalance']) {
         if (form[k].value) query.push(k + '=' + encodeURIComponent(form[k].value));
     }
-    for (let k of ['temperature', 'tint', 'exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'texture', 'clarity', 'dehaze', 'vibrance', 'saturation', 'sharpness', 'luminanceNR', 'colorNR']) {
+    if (form.whiteBalance.value === 'Custom') {
+        query.push('temperature=' + encodeURIComponent(form.temperature[0].value));
+        query.push('tint=' + encodeURIComponent(form.tint[0].value));
+    }
+    if (form.tone.value === 'Auto') query.push('autoTone=1');
+    else for (let k of ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation']) {
+        if (form[k][0].value == 0) continue;
+        query.push(k + '=' + encodeURIComponent(form[k][0].value));
+    }
+    for (let k of ['texture', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
         if (form[k][0].value == 0) continue;
         query.push(k + '=' + encodeURIComponent(form[k][0].value));
     }
@@ -712,11 +730,19 @@ if (photo) {
                 let posx = Math.floor((evt.offsetX - (photo.width - width) / 2) / width * ws);
                 let posy = Math.floor((evt.offsetY - (photo.height - height) / 2) / height * hs);
 
-                let wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
-                whiteBalanceChange(form.whiteBalance, 'Custom');
-                temperatureInput(form.temperature, wb['Custom'].temperature);
-                rangeInput(form.tint, wb['Custom'].tint);
-                console.log(wb);
+                let wb;
+                try {
+                    wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
+                } catch (e) {
+                    alertError('White balance failed', e);
+                }
+                if (wb.temperature) { 
+                    whiteBalanceChange(form.whiteBalance, 'Custom');
+                    temperatureInput(form.temperature, wb.temperature);
+                    rangeInput(form.tint, wb.tint);
+                } else {
+                    alertError('White balance failed');
+                }
                 break;
             }
         }
