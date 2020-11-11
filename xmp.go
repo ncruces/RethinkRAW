@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -300,7 +301,7 @@ func extractWhiteBalance(meta, pixels string, coords []float64) (wb xmpWhiteBala
 	}
 
 	if len(profile.ColorMatrix1) != 3*3 {
-		return wb, err
+		return wb, errors.New("unsupported 4-color camera")
 	}
 
 	neutral, err = getMultipliers(pixels, coords)
@@ -466,8 +467,6 @@ func getRawPixels(path string) error {
 	return cmd.Run()
 }
 
-const errUnsupportedPixelMap = constError("unsupported pixel map")
-
 func getMultipliers(path string, coords []float64) ([]float64, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -507,6 +506,10 @@ func getMultipliers(path string, coords []float64) ([]float64, error) {
 				}
 			}
 
+			if r == g && b == g {
+				return nil, errors.New("unsupported camera")
+			}
+
 			var multipliers [3]float64
 			multipliers[0] = float64(r) / float64(g)
 			multipliers[1] = float64(g) / float64(g)
@@ -515,5 +518,5 @@ func getMultipliers(path string, coords []float64) ([]float64, error) {
 		}
 	}
 
-	return nil, errUnsupportedPixelMap
+	return nil, errors.New("unsupported pixel map")
 }

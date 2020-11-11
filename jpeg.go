@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -13,17 +14,10 @@ import (
 	"github.com/ncruces/go-image/rotateflip"
 )
 
-const errNotJPEG = constError("not a JPEG file")
-const errInvalidJPEG = constError("not a valid JPEG file")
-const errUnsupportedThumb = constError("unsupported thumbnail")
-
 func extractThumb(path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
 	cmd := exec.Command(dcraw, "-e", "-c", path)
-	if out, err := cmd.Output(); err != nil || len(out) > 2 {
-		return out, err
-	}
-	return nil, errUnsupportedThumb
+	return cmd.Output()
 }
 
 func previewJPEG(path string) ([]byte, error) {
@@ -32,23 +26,23 @@ func previewJPEG(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	if data[0] != '\xff' || data[1] != '\xd8' {
-		img, err := pnmDecodeThumb(data)
-		if err != nil {
-			return nil, err
-		}
-
-		exf := rotateflip.Orientation(tiffOrientation(path))
-		img = rotateflip.Image(img, exf.Op())
-
-		buf := bytes.Buffer{}
-		if err := jpeg.Encode(&buf, img, nil); err != nil {
-			return nil, err
-		}
-		return buf.Bytes(), nil
+	if bytes.HasPrefix(data, []byte("\xff\xd8")) {
+		return data, nil
 	}
 
-	return data, nil
+	img, err := pnmDecodeThumb(data)
+	if err != nil {
+		return nil, err
+	}
+
+	exf := rotateflip.Orientation(tiffOrientation(path))
+	img = rotateflip.Image(img, exf.Op())
+
+	buf := bytes.Buffer{}
+	if err := jpeg.Encode(&buf, img, nil); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
@@ -57,8 +51,8 @@ func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
 		return nil, err
 	}
 
-	if data[0] != '\xff' || data[1] != '\xd8' {
-		return nil, errNotJPEG
+	if !bytes.HasPrefix(data, []byte("\xff\xd8")) {
+		return nil, errors.New("not a JPEG file")
 	}
 
 	if settings.Resample {
@@ -85,7 +79,7 @@ func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
 }
 
 func exifOrientation(data []byte) int {
-	if len(data) < 2 || data[0] != '\xff' || data[1] != '\xd8' {
+	if !bytes.HasPrefix(data, []byte("\xff\xd8")) {
 		return -1
 	}
 
@@ -212,6 +206,5 @@ func pnmDecodeThumb(data []byte) (image.Image, error) {
 			return img, nil
 		}
 	}
-
-	return nil, errUnsupportedThumb
+	return nil, errors.New("unsupported thumbnail")
 }

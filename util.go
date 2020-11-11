@@ -15,10 +15,6 @@ const MaxUint = ^uint(0)
 const MaxInt = int(MaxUint >> 1)
 const MinInt = -MaxInt - 1
 
-type constError string
-
-func (e constError) Error() string { return string(e) }
-
 func init() {
 	must(mime.AddExtensionType(".dng", "image/x-adobe-dng"))
 }
