@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -256,13 +254,13 @@ func extractXMP(path, dest string) error {
 	return err
 }
 
-func extractWhiteBalance(path string, coords []int) (wb xmpWhiteBalance, err error) {
+func extractWhiteBalance(meta, pixels string, coords []float64) (wb xmpWhiteBalance, err error) {
 	log.Print("exiftool (load camera profile)...")
 
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
 		"-EXIF:CalibrationIlluminant?", "-EXIF:ColorMatrix?",
 		"-EXIF:CameraCalibration?", "-EXIF:AnalogBalance",
-		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", path)
+		"-EXIF:AsShotNeutral", "-EXIF:AsShotWhiteXY", meta)
 	if err != nil {
 		return wb, err
 	}
@@ -301,16 +299,16 @@ func extractWhiteBalance(path string, coords []int) (wb xmpWhiteBalance, err err
 		return wb, err
 	}
 
-	mul, err := dngMultipliers(path, "-A",
-		strconv.Itoa(int(coords[0])),
-		strconv.Itoa(int(coords[1])),
-		"2", "2")
+	if len(profile.ColorMatrix1) != 3*3 {
+		return wb, err
+	}
+
+	neutral, err = getMultipliers(pixels, coords)
 	if err != nil {
 		return wb, err
 	}
 
-	mul = mul[:len(profile.ColorMatrix1)/3] // TODO: are we sure?
-	wb.Temperature, wb.Tint, err = profile.GetTemperature(mul)
+	wb.Temperature, wb.Tint, err = profile.GetTemperature(neutral)
 	return wb, err
 }
 
@@ -462,53 +460,60 @@ func dngPreview(path string) string {
 	}
 }
 
-func dngMultipliers(path string, arg ...string) ([]float64, error) {
-	log.Print("dcraw (get multipliers)...")
-	cmd := exec.Command(dcraw, append(arg, "-v", "-d", "-c", path)...)
-	cmd.Stdout = ioutil.Discard
+func getRawPixels(path string) error {
+	log.Print("dcraw (get raw pixels)...")
+	cmd := exec.Command(dcraw, "-r", "1", "1", "1", "1", "-o", "0", "-h", "-4", path)
+	return cmd.Run()
+}
 
-	stderr, err := cmd.StderrPipe()
+const errUnsupportedPixelMap = constError("unsupported pixel map")
+
+func getMultipliers(path string, coords []float64) ([]float64, error) {
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	var msg bytes.Buffer
-	var multipliers []float64
-	for r := bufio.NewReader(stderr); ; {
-		buf, err := r.ReadBytes('\n')
-		msg.Write(buf)
-		if err != nil {
-			break
+	var format, width, height int
+	n, _ := fmt.Fscanf(bytes.NewReader(data), "P%d\n%d %d\n65535\n", &format, &width, &height)
+	if n == 3 {
+		for i := 0; i < 3; i++ {
+			data = data[bytes.IndexByte(data, '\n')+1:]
 		}
-		if bytes.HasPrefix(buf, []byte("multipliers ")) {
-			multipliers = make([]float64, 4)
-			data := bytes.SplitN(buf[:len(buf)-1], []byte(" "), 5)[1:]
-			multipliers[0], _ = strconv.ParseFloat(string(data[0]), 64)
-			multipliers[1], _ = strconv.ParseFloat(string(data[1]), 64)
-			multipliers[2], _ = strconv.ParseFloat(string(data[2]), 64)
-			multipliers[3], _ = strconv.ParseFloat(string(data[3]), 64)
-			break
+
+		if format == 6 && len(data) == 6*width*height {
+			x := int(coords[0] * float64(width))
+			y := int(coords[1] * float64(height))
+			if x < 0 {
+				x = 0
+			}
+			if y < 0 {
+				y = 0
+			}
+			if x > width-2 {
+				x = width - 2
+			}
+			if y >= height-2 {
+				y = height - 2
+			}
+
+			var r, g, b int
+			for yy := 0; yy < 2; yy++ {
+				for xx := 0; xx < 2; xx++ {
+					i := (x+xx)*6 + (y+yy)*6*width
+					r += 256*int(data[0+i]) + int(data[1+i])
+					g += 256*int(data[2+i]) + int(data[3+i])
+					b += 256*int(data[4+i]) + int(data[5+i])
+				}
+			}
+
+			var multipliers [3]float64
+			multipliers[0] = float64(r) / float64(g)
+			multipliers[1] = float64(g) / float64(g)
+			multipliers[2] = float64(b) / float64(g)
+			return multipliers[:], nil
 		}
 	}
-	stderr.Close()
 
-	err = cmd.Wait()
-	var eerr *exec.ExitError
-	if errors.As(err, &eerr) {
-		eerr.Stderr = msg.Bytes()
-	}
-
-	if multipliers != nil {
-		multipliers[0] = 1 / multipliers[0]
-		multipliers[1] = 1 / multipliers[1]
-		multipliers[2] = 1 / multipliers[2]
-		multipliers[3] = 1 / multipliers[3]
-		return multipliers, nil
-	}
-	return nil, err
+	return nil, errUnsupportedPixelMap
 }

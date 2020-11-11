@@ -198,10 +198,7 @@ func pnmDecodeThumb(data []byte) (image.Image, error) {
 			copy(img.Pix, data)
 			return img, nil
 
-		case format == 6 && len(data) == 3*width*height:
-			if len(data) != 3*width*height {
-				return nil, errUnsupportedThumb
-			}
+		case format == 6 && len(data) != 3*width*height:
 			img := image.NewRGBA(rect)
 			var i, j int
 			for k := 0; k < width*height; k++ {

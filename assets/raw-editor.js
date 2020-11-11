@@ -725,10 +725,9 @@ if (photo) {
                 let width = photo.naturalWidth * ratio;
                 let height = photo.naturalHeight * ratio;
 
-                let ws = 2560 * Math.min(1, photo.naturalWidth / photo.naturalHeight);
-                let hs = 2560 * Math.min(1, photo.naturalHeight / photo.naturalWidth);
-                let posx = Math.floor((evt.offsetX - (photo.width - width) / 2) / width * ws);
-                let posy = Math.floor((evt.offsetY - (photo.height - height) / 2) / height * hs);
+                let posx = (evt.offsetX - (photo.width - width) / 2) / width;
+                let posy = (evt.offsetY - (photo.height - height) / 2) / height;
+                if (posx < 0 || posy < 0 || posx > 1 || posy > 1) break;
 
                 let wb;
                 try {
@@ -737,9 +736,9 @@ if (photo) {
                     alertError('White balance failed', e);
                 }
                 if (wb.temperature) { 
-                    whiteBalanceChange(form.whiteBalance, 'Custom');
-                    temperatureInput(form.temperature, wb.temperature);
                     rangeInput(form.tint, wb.tint);
+                    temperatureInput(form.temperature, wb.temperature);
+                    whiteBalanceChange(form.whiteBalance, 'Custom');
                 } else {
                     alertError('White balance failed');
                 }

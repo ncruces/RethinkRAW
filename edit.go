@@ -121,7 +121,7 @@ func previewEdit(path string, size int, xmp *xmpSettings) ([]byte, error) {
 	}
 }
 
-func loadWhiteBalance(path string, coords []int) (wb xmpWhiteBalance, err error) {
+func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return wb, err
@@ -142,7 +142,14 @@ func loadWhiteBalance(path string, coords []int) (wb xmpWhiteBalance, err error)
 		}
 	}
 
-	return extractWhiteBalance(wk.edit(), coords)
+	if len(coords) == 2 && !wk.hasPixels {
+		err = getRawPixels(wk.orig())
+		if err != nil {
+			return wb, err
+		}
+	}
+
+	return extractWhiteBalance(wk.edit(), wk.pixels(), coords)
 }
 
 func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {

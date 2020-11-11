@@ -104,7 +104,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{}
 
 	case whiteBalance:
-		var coords struct{ WhiteBalance []int }
+		var coords struct{ WhiteBalance []float64 }
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&coords, r.Form); err != nil {

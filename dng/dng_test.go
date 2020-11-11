@@ -32,7 +32,6 @@ func TestCameraProfile_GetTemperature(t *testing.T) {
 			CalibrationIlluminant2: dng.LSD65,
 			ColorMatrix1:           []float64{0.8771, -0.3148, -0.0125, -0.5926, 1.2567, 0.3815, -0.0871, 0.1575, 0.6633, -0.4678, 0.8486, 0.4548},
 			ColorMatrix2:           []float64{0.7925, -0.1910, -0.0776, -0.8227, 1.5459, 0.2998, -0.1517, 0.2198, 0.6817, -0.7241, 1.1401, 0.3481},
-			AnalogBalance:          []float64{1, 1, 1, 1},
 		}
 
 		temp, tint, err := cam.GetTemperature([]float64{1 / 1.080806, 1, 1 / 3.700866, 1 / 1.623588})

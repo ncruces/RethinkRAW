@@ -33,11 +33,12 @@ import (
 // If edit.dng is missing, use orig.EXT, ask for a 2560 preview, and save that to edit.dng.
 
 type workspace struct {
-	hash    string // a hash of the original RAW file path
-	ext     string // the extension of the original RAW file
-	base    string // base directory for the workspace
-	hasXMP  bool   // did the original RAW file have a XMP sidecar?
-	hasEdit bool   // any recent edits?
+	hash      string // a hash of the original RAW file path
+	ext       string // the extension of the original RAW file
+	base      string // base directory for the workspace
+	hasXMP    bool   // did the original RAW file have a XMP sidecar?
+	hasPixels bool   // have we extracted pixel data?
+	hasEdit   bool   // any recent edits?
 }
 
 func openWorkspace(path string) (wk workspace, err error) {
@@ -66,6 +67,8 @@ func openWorkspace(path string) (wk workspace, err error) {
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
+		_, e = os.Stat(wk.base + "orig.ppm")
+		wk.hasPixels = e == nil
 		wk.hasEdit = true
 		return wk, err
 	}
@@ -75,6 +78,8 @@ func openWorkspace(path string) (wk workspace, err error) {
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
+		_, e = os.Stat(wk.base + "orig.ppm")
+		wk.hasPixels = e == nil
 		return wk, err
 	}
 
@@ -87,6 +92,8 @@ func openWorkspace(path string) (wk workspace, err error) {
 	if os.SameFile(fi, sfi) {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
+		_, e = os.Stat(wk.base + "orig.ppm")
+		wk.hasPixels = e == nil
 		return wk, err
 	}
 
@@ -125,6 +132,11 @@ func (wk *workspace) edit() string {
 // A DNG used as the target for all conversions.
 func (wk *workspace) temp() string {
 	return wk.base + "temp.dng"
+}
+
+// A pixel map for orig.EXT.
+func (wk *workspace) pixels() string {
+	return wk.base + "orig.ppm"
 }
 
 // A sidecar for orig.EXT.
