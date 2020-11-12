@@ -6,6 +6,25 @@ import (
 	"rethinkraw/dng"
 )
 
+func TestGetTemperatureFromXY(t *testing.T) {
+	cases := [][2]int{
+		{5500, 10},
+		{6500, 10},
+		{7500, 10},
+		{2850, 0},
+		{3800, 20},
+		{5500, 0},
+	}
+
+	for _, p := range cases {
+		x, y := dng.GetXYFromTemperature(p[0], p[1])
+		p0, p1 := dng.GetTemperatureFromXY(x, y)
+		if p0 != p[0] || p1 != p[1] {
+			t.Error(p, p0, p1)
+		}
+	}
+}
+
 func TestCameraProfile_GetTemperature(t *testing.T) {
 	// For a RG/GB camera.
 	{

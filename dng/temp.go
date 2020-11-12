@@ -6,7 +6,7 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func GetTemperature(x, y float64) (temperature, tint int) {
+func GetTemperatureFromXY(x, y float64) (temperature, tint int) {
 	tmp, tnt := xy64{x, y}.temperature()
 
 	// temperature range 2000 to 50000
@@ -30,6 +30,11 @@ func GetTemperature(x, y float64) (temperature, tint int) {
 	}
 
 	return int(tmp), int(tnt)
+}
+
+func GetXYFromTemperature(temperature, tint int) (x, y float64) {
+	xy := getXY(float64(temperature), float64(tint))
+	return xy.x, xy.y
 }
 
 var _D50 = xy64{0.34567, 0.35850}
@@ -100,7 +105,7 @@ func (xy xy64) temperature() (temperature, tint float64) {
 	u := 2.0 * xy.x / (1.5 - xy.x + 6.0*xy.y)
 	v := 3.0 * xy.y / (1.5 - xy.x + 6.0*xy.y)
 
-	// Search for line pair coordinate is between.
+	// Search for line pair coordinate in between.
 	last_dt := 0.0
 	last_du := 0.0
 	last_dv := 0.0
@@ -163,4 +168,65 @@ func (xy xy64) temperature() (temperature, tint float64) {
 	}
 
 	return temperature, tint
+}
+
+// Port dng_temperature::Get_xy_coord.
+func getXY(temperature, tint float64) xy64 {
+	var result xy64
+
+	// Find inverse temperature to use as index.
+	r := 1.0e6 / temperature
+
+	// Convert tint to offset in uv space.
+	offset := tint * (1.0 / tintScale)
+
+	// Search for line pair containing coordinate.
+	for index := 1; index < len(tempTable); index++ {
+		if r < tempTable[index].r || index == len(tempTable)-1 {
+			// Find relative weight of first line.
+			f := (tempTable[index].r - r) / (tempTable[index].r - tempTable[index-1].r)
+
+			// Interpolate the black body coordinates.
+			u := tempTable[index-1].u*f + tempTable[index].u*(1.0-f)
+			v := tempTable[index-1].v*f + tempTable[index].v*(1.0-f)
+
+			// Find vectors along slope for each line.
+
+			uu1 := 1.0
+			vv1 := tempTable[index-1].t
+			{
+				len := math.Hypot(uu1, vv1)
+				uu1 /= len
+				vv1 /= len
+			}
+
+			uu2 := 1.0
+			vv2 := tempTable[index].t
+			{
+				len := math.Hypot(uu2, vv2)
+				uu2 /= len
+				vv2 /= len
+			}
+
+			// Find vector from black body point.
+			uu3 := uu1*f + uu2*(1.0-f)
+			vv3 := vv1*f + vv2*(1.0-f)
+			{
+				len := math.Hypot(uu3, vv3)
+				uu3 /= len
+				vv3 /= len
+			}
+
+			// Adjust coordinate along this vector.
+			u += uu3 * offset
+			v += vv3 * offset
+
+			// Convert to xy coordinates.
+			result.x = 1.5 * u / (u - 4.0*v + 2.0)
+			result.y = v / (u - 4.0*v + 2.0)
+			break
+		}
+	}
+
+	return result
 }

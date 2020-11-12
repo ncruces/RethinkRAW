@@ -23,7 +23,7 @@ func (p *CameraProfile) Init() error {
 func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int, err error) {
 	err = mat.Maybe(func() {
 		xy := p.neutralToXY(mat.NewVecDense(len(neutral), neutral))
-		temperature, tint = GetTemperature(xy.x, xy.y)
+		temperature, tint = GetTemperatureFromXY(xy.x, xy.y)
 	})
 	return
 }

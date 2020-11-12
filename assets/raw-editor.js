@@ -429,7 +429,11 @@ let updatePhoto = function () {
 
     function load() {
         if (loading) return;
-        if (size >= calcSize() && query === formQuery()) return;
+        if (size >= calcSize() && query === formQuery()) {
+            spinner.hidden = true;
+            loading = false;
+            return;
+        }
         spinner.hidden = false;
         loading = true;
         setTimeout(() => {
@@ -731,9 +735,12 @@ if (photo) {
 
                 let wb;
                 try {
+                    spinner.hidden = false;
                     wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
                 } catch (e) {
                     alertError('White balance failed', e);
+                } finally {
+                    spinner.hidden = true;
                 }
                 if (wb.temperature) { 
                     rangeInput(form.tint, wb.tint);

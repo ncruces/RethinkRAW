@@ -293,7 +293,7 @@ func extractWhiteBalance(meta, pixels string, coords []float64) (wb xmpWhiteBala
 	if len(coords) != 2 {
 		switch {
 		case len(whiteXY) == 2:
-			wb.Temperature, wb.Tint = dng.GetTemperature(whiteXY[0], whiteXY[1])
+			wb.Temperature, wb.Tint = dng.GetTemperatureFromXY(whiteXY[0], whiteXY[1])
 		case len(neutral) >= 2:
 			wb.Temperature, wb.Tint, err = profile.GetTemperature(neutral)
 		}
@@ -481,24 +481,24 @@ func getMultipliers(path string, coords []float64) ([]float64, error) {
 		}
 
 		if format == 6 && len(data) == 6*width*height {
-			x := int(coords[0] * float64(width))
-			y := int(coords[1] * float64(height))
+			x := int(coords[0]*float64(width)) - 1
+			y := int(coords[1]*float64(height)) - 1
 			if x < 0 {
 				x = 0
 			}
 			if y < 0 {
 				y = 0
 			}
-			if x > width-2 {
-				x = width - 2
+			if x > width-4 {
+				x = width - 4
 			}
-			if y >= height-2 {
-				y = height - 2
+			if y >= height-4 {
+				y = height - 4
 			}
 
 			var r, g, b int
-			for yy := 0; yy < 2; yy++ {
-				for xx := 0; xx < 2; xx++ {
+			for yy := 0; yy < 4; yy++ {
+				for xx := 0; xx < 4; xx++ {
 					i := (x+xx)*6 + (y+yy)*6*width
 					r += 256*int(data[0+i]) + int(data[1+i])
 					g += 256*int(data[2+i]) + int(data[3+i])
