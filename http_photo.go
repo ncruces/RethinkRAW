@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/gorilla/schema"
+	"github.com/ncruces/zenity"
 )
 
 func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
@@ -40,12 +42,13 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case save:
 		var xmp xmpSettings
-		xmp.Filename = path
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
+		xmp.Filename = path
+
 		if err := saveEdit(path, &xmp); err != nil {
 			return HTTPResult{Error: err}
 		} else {
@@ -54,7 +57,6 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	case export:
 		var xmp xmpSettings
-		xmp.Filename = path
 		var exp exportSettings
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
@@ -64,12 +66,23 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if err := dec.Decode(&exp, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
+		xmp.Filename = path
+
+		exppath := exportName(path, &exp)
+		if res, err := zenity.SelectFileSave(zenity.Filename(exppath), zenity.ConfirmOverwrite()); err != nil {
+			return HTTPResult{Error: err}
+		} else if res == "" {
+			return HTTPResult{Status: http.StatusNoContent}
+		} else {
+			exppath = res
+		}
+
 		if out, err := exportEdit(path, &xmp, &exp); err != nil {
 			return HTTPResult{Error: err}
+		} else if err := ioutil.WriteFile(exppath, out, 0666); err != nil {
+			return HTTPResult{Error: err}
 		} else {
-			attachmentHeaders(exportName(path, &exp), w.Header())
-			w.Write(out)
-			return HTTPResult{}
+			return HTTPResult{Status: http.StatusNoContent}
 		}
 
 	case preview:

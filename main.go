@@ -107,7 +107,6 @@ func setupChrome(chrome, url string) *exec.Cmd {
 		if err := os.MkdirAll(filepath.Dir(prefs), 0755); err == nil {
 			ioutil.WriteFile(prefs, []byte(`{
 				"profile": {"block_third_party_cookies": true},
-				"download": {"prompt_for_download": true},
 				"enable_do_not_track": true
 			}`), 0666)
 		}

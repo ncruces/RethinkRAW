@@ -54,8 +54,8 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		flush, _ := w.(http.Flusher)
 		for i, file := range files {
 			var status multiStatus
-			err := saveEdit(file, &xmp)
-			if err != nil {
+			xmp.Filename = file
+			if err := saveEdit(file, &xmp); err != nil {
 				status.Code, status.Body = errorStatus(err)
 			} else {
 				status.Code = http.StatusOK
@@ -83,13 +83,13 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Orientation = 0
 
-		path := filepath.Dir(files[1])
-		if res, err := zenity.SelectFile(zenity.Directory(), zenity.Filename(path)); err != nil {
+		exppath := filepath.Dir(files[0])
+		if res, err := zenity.SelectFile(zenity.Directory(), zenity.Filename(exppath)); err != nil {
 			return HTTPResult{Error: err}
 		} else if res == "" {
 			return HTTPResult{Status: http.StatusNoContent}
 		} else {
-			path = res
+			exppath = res
 		}
 
 		w.Header().Set("Content-Type", "application/x-ndjson")
@@ -98,26 +98,23 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		enc := json.NewEncoder(w)
 		flush, _ := w.(http.Flusher)
 		for i, file := range files {
-			var n int
-			var f io.WriteCloser
 			var status multiStatus
+			var f io.WriteCloser
+			xmp.Filename = file
 			out, err := exportEdit(file, &xmp, &exp)
 			if err == nil {
-				f, err = osutil.NewFile(filepath.Join(path, exportName(file, &exp)))
+				f, err = osutil.NewFile(filepath.Join(exppath, exportName(file, &exp)))
 			}
 			if err == nil {
-				n, err = f.Write(out)
-			}
-			if err == nil && n < len(out) {
-				err = io.ErrShortWrite
+				_, err = f.Write(out)
 			}
 			if cerr := f.Close(); err == nil {
 				err = cerr
 			}
-			if err == nil {
-				status.Code = http.StatusOK
-			} else {
+			if err != nil {
 				status.Code, status.Body = errorStatus(err)
+			} else {
+				status.Code = http.StatusOK
 			}
 			status.Done, status.Total = i+1, len(files)
 			status.Text = http.StatusText(status.Code)
