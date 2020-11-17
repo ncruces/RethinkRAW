@@ -11,7 +11,8 @@ import (
 
 var (
 	baseDir, dataDir, tempDir string
-	dcraw, dngConverter       string
+	dcraw, dcraw_emu          string
+	dngConverter              string
 	cameraRawPaths            []string
 )
 
@@ -33,9 +34,10 @@ func setupPaths() (err error) {
 	switch runtime.GOOS {
 	case "windows":
 		dcraw = baseDir + `\utils\dcraw.exe`
+		dcraw_emu = baseDir + `\utils\dcraw_emu.exe`
 		exiftool.Exec = baseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
-		exiftool.Config = baseDir + `\utils\ExifTool_config.pl`
+		exiftool.Config = baseDir + `\utils\exiftool_config.pl`
 		dngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 		cameraRawPaths = []string{
 			os.Getenv("PROGRAMDATA") + `\Adobe\CameraRaw`,
@@ -43,8 +45,9 @@ func setupPaths() (err error) {
 		}
 	case "darwin":
 		dcraw = baseDir + "/utils/dcraw"
+		dcraw_emu = baseDir + "/utils/dcraw_emu"
 		exiftool.Exec = baseDir + "/utils/exiftool/exiftool"
-		exiftool.Config = baseDir + "/utils/ExifTool_config.pl"
+		exiftool.Config = baseDir + "/utils/exiftool_config.pl"
 		dngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
 		cameraRawPaths = []string{
 			"/Library/Application Support/Adobe/CameraRaw",

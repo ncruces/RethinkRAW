@@ -15,7 +15,7 @@ import (
 var newFilenameRE = regexp.MustCompile(`\A(.*?)(?: \((\d{1,4})\))?(\.\w*)?\z`)
 
 // NewFile creates a new named file.
-// If the file already exists, a numeric suffix is added or incremented.
+// If the file already exists, a numeric suffix is appended or incremented.
 func NewFile(name string) (*os.File, error) {
 	for {
 		f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)

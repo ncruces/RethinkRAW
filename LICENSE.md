@@ -17,6 +17,7 @@ RethinkRAW is made possible by the following software:
 
 * ExifTool by Phil Harvey: https://exiftool.org/
 * dcraw by Dave Coffin: https://www.dechifro.org/dcraw/
+* LibRaw by Alex Tutubalin and Illiah Borg: https://www.libraw.org/
 * Go by the Go Authors: https://golang.org/
 * Strawberry Perl by Larry Wall and others: http://strawberryperl.com/
 
