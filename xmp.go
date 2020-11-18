@@ -272,7 +272,7 @@ func extractWhiteBalance(meta, pixels string, coords []float64) (wb xmpWhiteBala
 	}
 	// ColorMatrix1 is required for all non-monochrome DNGs.
 	if _, ok := m["ColorMatrix1"]; !ok {
-		return wb, err
+		return wb, errors.New("unsupported monochrome camera")
 	}
 
 	var profile dng.CameraProfile
