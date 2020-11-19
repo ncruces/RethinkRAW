@@ -59,19 +59,18 @@ void async function() {
         n.remove();
     }
 
-    setTimeout(async () => {
-        try {
-            let wb = await restRequest('GET', '?whiteBalance');
-            if (wb.temperature) {
-                whiteBalancePresets['As Shot'] = wb;
-                let restoreSave = save.disabled;
-                whiteBalanceChange(form.whiteBalance);
-                temperatureInput(form.temperature);
-                save.disabled = restoreSave;
-            }
-        } catch (e) {
+    await sleep();
+    try {
+        let wb = await restRequest('GET', '?whiteBalance');
+        if (wb.temperature) {
+            whiteBalancePresets['As Shot'] = wb;
+            let restoreSave = save.disabled;
+            whiteBalanceChange(form.whiteBalance);
+            temperatureInput(form.temperature);
+            save.disabled = restoreSave;
         }
-    });
+    } catch (e) {
+    }
 }();
 
 window.addEventListener('beforeunload', evt => {
@@ -429,20 +428,21 @@ let updatePhoto = function () {
 
     function load() {
         if (loading) return;
-        if (size >= calcSize() && query === formQuery()) {
+        let newSize = calcSize();
+        let newQuery = formQuery();
+        if (size >= newSize && query === newQuery) {
             spinner.hidden = true;
             loading = false;
             return;
         }
         spinner.hidden = false;
         loading = true;
-        setTimeout(() => {
-            size = calcSize();
-            query = formQuery();
-            photo.addEventListener('load', loaded, { passive: true, once: true });
-            photo.addEventListener('error', loaded, { passive: true, once: true });
-            photo.src = `?preview${Number.isSafeInteger(size) ? '=' + size : ''}&` + query;
-        });
+
+        size = newSize;
+        query = newQuery;
+        photo.addEventListener('load', loaded, { passive: true, once: true });
+        photo.addEventListener('error', loaded, { passive: true, once: true });
+        photo.src = `?preview${Number.isSafeInteger(size) ? '=' + size : ''}&` + query;
     }
 
     function loaded() {
@@ -454,8 +454,14 @@ let updatePhoto = function () {
         load();
     }
 
-    window.addEventListener('resize', load, { passive: true });
-    return load;
+    let loadTimer;
+    function loadDelayed(ms) {
+        clearTimeout(loadTimer);
+        loadTimer = setTimeout(load, ms);
+    }
+
+    window.addEventListener('resize', () => loadDelayed(500), { passive: true });
+    return loadDelayed;
 }();
 
 function formQuery() {

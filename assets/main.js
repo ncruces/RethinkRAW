@@ -15,6 +15,12 @@ window.back = function () {
     }
 };
 
+window.sleep = function (ms) {
+    return new Promise(function (resolve) {
+        return setTimeout(resolve, ms);
+    });
+};
+
 window.addEventListener('pageshow', function createSocket() {
     var host = location.host.replace('[::1]', 'localhost');
     window.heartbeat = new WebSocket('ws://' + host + '/ws');
