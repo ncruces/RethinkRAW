@@ -38,7 +38,7 @@ document.documentElement.addEventListener('keydown', function (evt) {
                 if (minimalUI) {
                     evt.preventDefault();
                     if (evt.repeat) return;
-                    window.open('/', void 0, 'location=off');
+                    window.open('/', void 0, 'location=no,scrollbars=yes');
                 }
                 break;
 

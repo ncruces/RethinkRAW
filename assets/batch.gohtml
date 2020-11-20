@@ -13,10 +13,10 @@
     <link rel="preload" as="style" href="/fontawesome.css">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/webfonts/fa-solid-900.woff2">
     <script src="/dialog-polyfill.js" defer></script>
-    <script src="/raw-editor.js" defer></script>
+    <script src="/main.js" defer></script>
     <script src="/gallery.js" defer></script>
+    <script src="/raw-editor.js" defer></script>
     <script>const template = {{.}}</script>
-    <script src="/main.js" async></script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
 </head>
 
@@ -35,7 +35,9 @@
         <div id=box2>
             <div id=gallery>
                 {{- range .Photos}}
-                <a href="/photo/{{.Path}}"><img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
+                <a href="/photo/{{.Path}}" onclick="return popup(this, event)">
+                    <img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true">
+                </a>
                 {{- else}}
                 <span>No RAW files here.</span>
                 {{- end}}
