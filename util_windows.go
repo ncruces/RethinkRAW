@@ -14,7 +14,7 @@ import (
 	"unsafe"
 )
 
-//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=win.manifest
+//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=windows.manifest
 
 var (
 	kernel32 = syscall.NewLazyDLL("kernel32.dll")
