@@ -5,11 +5,16 @@ tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
 exe="$tgt/rethinkraw"
 dat="$tgt/data"
 
+if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
+    echo Download ExifTool...
+    url="https://github.com/ncruces/go-exiftool/releases/download/dist/exiftool_unix.tgz"
+    curl -L "$url" 2> /dev/null | tar xz -C "$tgt/utils"
+fi
+
 if [[ "$1" == test ]]; then
-    shift
     echo Test build...
     go build -race -o "$exe"
-    exec "$exe" "$@"
+    shift && exec "$exe" "$@"
 else
     echo Release build...
     go clean
