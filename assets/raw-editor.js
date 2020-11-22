@@ -739,6 +739,16 @@ if (photo) {
                 let posy = (evt.offsetY - (photo.height - height) / 2) / height;
                 if (posx < 0 || posy < 0 || posx > 1 || posy > 1) break;
 
+                switch (form.orientation.value) {
+                    case '2': [posx, posy] = [1 - posx, posy/**/]; break;
+                    case '3': [posx, posy] = [1 - posx, 1 - posy]; break;
+                    case '4': [posx, posy] = [posx/**/, 1 - posy]; break;
+                    case '5': [posx, posy] = [posy/**/, posx/**/]; break;
+                    case '6': [posx, posy] = [posy/**/, 1 - posx]; break;
+                    case '7': [posx, posy] = [1 - posy, 1 - posx]; break;
+                    case '8': [posx, posy] = [1 - posy, posx/**/]; break;
+                }
+
                 let wb;
                 try {
                     spinner.hidden = false;
