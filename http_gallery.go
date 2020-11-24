@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -28,12 +29,24 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		data.Title = filepath.Clean(path)
 
 		for _, i := range files {
-			if osutil.HiddenFile(i) || !i.Mode().IsRegular() {
+			if osutil.HiddenFile(i) {
 				continue
 			}
 
 			name := i.Name()
-			item := struct{ Name, Path string }{name, toURLPath(filepath.Join(path, name))}
+			path := filepath.Join(path, name)
+			item := struct{ Name, Path string }{name, toURLPath(path)}
+
+			if i.Mode()&os.ModeSymlink != 0 {
+				i, err = os.Stat(path)
+				if err != nil {
+					continue
+				}
+			}
+			const special = os.ModeType &^ os.ModeDir
+			if i.Mode()&special != 0 {
+				continue
+			}
 
 			if i.IsDir() {
 				data.Dirs = append(data.Dirs, item)
