@@ -6,6 +6,10 @@ RethinkRAW is a RAW photo editor for those who would otherwise shoot JPEG.
 
 [Download](https://github.com/ncruces/RethinkRAW/releases/latest) the latest release.
 
+## Build
+
+Run [`make.cmd`](make.cmd) (Windows) or [`make.sh`](make.sh) (macOS).
+
 ## License
 
 RethinkRAW is provided **free of charge** for **personal**, **non-commercial** use.

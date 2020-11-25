@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eo pipefail
 
+cd -P -- "$(dirname -- "$0")"
+
 tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
 exe="$tgt/rethinkraw"
 dat="$tgt/data"

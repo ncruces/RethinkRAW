@@ -1,5 +1,7 @@
 @ECHO OFF
+SETLOCAL
 
+CD /D "%~dp0"
 
 SET "tgt=RethinkRAW"
 SET "exe=%tgt%\RethinkRAW.exe"
