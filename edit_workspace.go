@@ -42,7 +42,7 @@ type workspace struct {
 }
 
 func openWorkspace(path string) (wk workspace, err error) {
-	wk.hash = hash(filepath.Clean(path))
+	wk.hash = hashedID(filepath.Clean(path))
 	wk.ext = filepath.Ext(path)
 	wk.base = filepath.Join(tempDir, wk.hash) + string(filepath.Separator)
 

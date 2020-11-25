@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/ncruces/zenity"
 )
@@ -32,7 +31,6 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	var path string
 	var paths []string
 
-	nonce := r.Form.Get("nonce")
 	_, photo := r.Form["photo"]
 	_, batch := r.Form["batch"]
 	_, gallery := r.Form["gallery"]
@@ -71,7 +69,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			return HTTPResult{Error: err}
 		}
 	} else if len(paths) != 0 {
-		openMulti.put(nonce, paths)
+		path = batches.New(paths)
 	} else {
 		w.Header().Add("Refresh", "0; url=/")
 		return HTTPResult{Status: http.StatusResetContent}
@@ -80,7 +78,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	var url url.URL
 	switch {
 	case batch:
-		url.Path = "/batch/" + nonce
+		url.Path = "/batch/" + path
 	case photo:
 		url.Path = "/photo/" + toURLPath(path)
 	case gallery:
@@ -90,43 +88,4 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		Status:   http.StatusSeeOther,
 		Location: url.String(),
 	}
-}
-
-var openMulti OpenMulti
-
-type OpenMulti struct {
-	lock  sync.Mutex
-	queue [16]struct {
-		id    string
-		paths []string
-	}
-}
-
-func (p *OpenMulti) put(id string, paths []string) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	for i := len(p.queue) - 1; i > 0; i-- {
-		p.queue[i] = p.queue[i-1]
-	}
-
-	p.queue[0].id = id
-	p.queue[0].paths = paths
-}
-
-func (p *OpenMulti) get(id string) []string {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	for j, t := range p.queue {
-		if t.id == id {
-			for i := j; i > 0; i-- {
-				p.queue[i] = p.queue[i-1]
-			}
-			p.queue[0] = t
-			return t.paths
-		}
-	}
-
-	return nil
 }

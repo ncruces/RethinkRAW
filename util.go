@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"log"
@@ -32,9 +33,17 @@ func btoi(b bool) int {
 	return 0
 }
 
-func hash(data string) string {
-	h := md5.Sum([]byte(data))
-	return base64.URLEncoding.EncodeToString(h[:15])
+func hashedID(data string) string {
+	buf := md5.Sum([]byte(data))
+	return base64.RawURLEncoding.EncodeToString(buf[:15])
+}
+
+func randomID() string {
+	var buf [15]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		panic(err)
+	}
+	return base64.RawURLEncoding.EncodeToString(buf[:])
 }
 
 func index(a []string, x string) int {

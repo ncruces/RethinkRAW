@@ -44,12 +44,12 @@ func run() error {
 			return err
 		} else if abs, err := filepath.Abs(os.Args[1]); err != nil {
 			return err
+		} else if len(os.Args) > 2 {
+			url.Path = "/batch/" + batches.New(os.Args[1:])
+		} else if fi.IsDir() {
+			url.Path = "/gallery/" + toURLPath(abs)
 		} else {
-			if fi.IsDir() {
-				url.Path = "/gallery/" + toURLPath(abs)
-			} else {
-				url.Path = "/photo/" + toURLPath(abs)
-			}
+			url.Path = "/photo/" + toURLPath(abs)
 		}
 	}
 

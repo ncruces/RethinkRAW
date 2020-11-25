@@ -28,7 +28,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	}
 
 	id := strings.TrimPrefix(r.URL.Path, "/")
-	files := openMulti.get(id)
+	files := batches.Get(id)
 	if len(files) == 0 {
 		return HTTPResult{Status: http.StatusGone}
 	}
