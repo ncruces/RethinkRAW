@@ -6,6 +6,10 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+// GetTemperatureFromXY computes a correlated color temperature and offset (tint)
+// from x-y chromaticity coordinates.
+//
+// This can be used to convert an AsShotWhiteXY DNG tag to a temperature and tint.
 func GetTemperatureFromXY(x, y float64) (temperature, tint int) {
 	tmp, tnt := xy64{x, y}.temperature()
 
@@ -32,6 +36,10 @@ func GetTemperatureFromXY(x, y float64) (temperature, tint int) {
 	return int(tmp), int(tnt)
 }
 
+// GetXYFromTemperature computes the x-y chromaticity coordinates
+// of a correlated color temperature and offset (tint).
+//
+// This can be used to convert a temperature and tint to an AsShotWhiteXY DNG tag.
 func GetXYFromTemperature(temperature, tint int) (x, y float64) {
 	xy := getXY(float64(temperature), float64(tint))
 	return xy.x, xy.y
@@ -50,7 +58,7 @@ func newXYZ64(v mat.Vector) xyz64 {
 }
 
 // Port of XYZtoXY.
-func (v xyz64) XY() xy64 {
+func (v xyz64) xy() xy64 {
 	total := v.x + v.y + v.z
 	if total <= 0.0 {
 		return _D50
@@ -99,7 +107,7 @@ var tempTable = [31]struct {
 	{600, 0.33724, 0.36051, -116.45},
 }
 
-// Port dng_temperature::Set_xy_coord.
+// Port of dng_temperature::Set_xy_coord.
 func (xy xy64) temperature() (temperature, tint float64) {
 	// Convert to uv space.
 	u := 2.0 * xy.x / (1.5 - xy.x + 6.0*xy.y)
@@ -170,7 +178,7 @@ func (xy xy64) temperature() (temperature, tint float64) {
 	return temperature, tint
 }
 
-// Port dng_temperature::Get_xy_coord.
+// Port of dng_temperature::Get_xy_coord.
 func getXY(temperature, tint float64) xy64 {
 	var result xy64
 

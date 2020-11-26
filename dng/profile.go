@@ -6,20 +6,32 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+// CameraProfile encapsulates DNG camera color profile and calibration data.
+//
+// This data can be extracted from the same named DNG tags.
 type CameraProfile struct {
-	CalibrationIlluminant1, CalibrationIlluminant2 LightSource
-	ColorMatrix1, ColorMatrix2                     []float64
-	CameraCalibration1, CameraCalibration2         []float64
-	AnalogBalance                                  []float64
+	CalibrationIlluminant1, CalibrationIlluminant2 LightSource // Light sources for up to two calibrations.
+	ColorMatrix1, ColorMatrix2                     []float64   // Color matrices for up to two calibrations.
+	CameraCalibration1, CameraCalibration2         []float64   // Individual camera calibrations.
+	AnalogBalance                                  []float64   // Amount by which each channel has already been scaled.
 
 	temperature1, temperature2 float64
 	colorMatrix1, colorMatrix2 *mat.Dense
 }
 
+// Init initializes the profile.
+//
+// Init is called implicitly when necessary, but
+// changes to profile fields made after Init is called
+// are ignored until Init is called explicitly again.
 func (p *CameraProfile) Init() error {
 	return mat.Maybe(p.init)
 }
 
+// GetTemperature computes a correlated color temperature and offset (tint)
+// from camera color space coordinates of a perfectly neutral color.
+//
+// This can be used to convert an AsShotNeutral DNG tag to a temperature and tint.
 func (p *CameraProfile) GetTemperature(neutral []float64) (temperature, tint int, err error) {
 	err = mat.Maybe(func() {
 		xy := p.neutralToXY(mat.NewVecDense(len(neutral), neutral))
@@ -84,7 +96,7 @@ func (p *CameraProfile) neutralToXY(neutral mat.Vector) xy64 {
 
 		var vec mat.VecDense
 		vec.SolveVec(xyzToCamera, neutral)
-		next := newXYZ64(&vec).XY()
+		next := newXYZ64(&vec).xy()
 
 		if math.Abs(next.x-last.x)+math.Abs(next.y-last.y) < 0.0000001 {
 			return next

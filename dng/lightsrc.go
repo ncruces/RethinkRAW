@@ -1,8 +1,9 @@
 package dng
 
+// LightSource represents a kind of light source.
 type LightSource uint16
 
-// Values for LightSource tag.
+// Values for the LightSource EXIF tag.
 const (
 	LSUnknown LightSource = iota
 	LSDaylight
@@ -34,6 +35,8 @@ const (
 )
 
 // Port of dng_camera_profile::IlluminantToTemperature
+
+// Temperature gets the color temperature of the illuminant.
 func (ls LightSource) Temperature() float64 {
 	switch ls {
 
