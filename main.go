@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"rethinkraw/internal/config"
+	"rethinkraw/internal/util"
 	"rethinkraw/osutil"
 )
 
@@ -19,7 +21,7 @@ var shutdown = make(chan os.Signal, 1)
 
 func init() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	hideConsole()
+	util.HideConsole()
 }
 
 func main() {
@@ -30,7 +32,7 @@ func main() {
 }
 
 func run() error {
-	if err := setupPaths(); err != nil {
+	if err := config.SetupPaths(); err != nil {
 		return err
 	}
 
@@ -68,12 +70,12 @@ func run() error {
 		defer func() {
 			http.Shutdown(context.Background())
 			exif.Shutdown()
-			os.RemoveAll(tempDir)
+			os.RemoveAll(config.TempDir)
 		}()
 		go http.Serve(ln)
 	}
 
-	if chrome := findChrome(); chrome != "" {
+	if chrome := util.FindChrome(); chrome != "" {
 		cmd := setupChrome(chrome, url.String())
 		if err := cmd.Start(); err != nil {
 			return err
@@ -81,7 +83,7 @@ func run() error {
 
 		go func() {
 			<-shutdown
-			exitChrome(cmd)
+			util.ExitChrome(cmd)
 		}()
 		if err := cmd.Wait(); err != nil {
 			return err
@@ -99,8 +101,8 @@ func run() error {
 }
 
 func setupChrome(chrome, url string) *exec.Cmd {
-	data := filepath.Join(dataDir, "chrome")
-	cache := filepath.Join(tempDir, "chrome")
+	data := filepath.Join(config.DataDir, "chrome")
+	cache := filepath.Join(config.TempDir, "chrome")
 
 	prefs := filepath.Join(data, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {

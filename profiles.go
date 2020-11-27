@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"rethinkraw/internal/config"
+	"rethinkraw/internal/util"
 )
 
 var profiles = []string{
@@ -137,7 +140,7 @@ func getCameraProfiles(make, model string) []string {
 
 	var res []string
 
-	for _, root := range cameraRawPaths {
+	for _, root := range config.CameraRawPaths {
 		root = filepath.Join(root, "CameraProfiles/Camera")
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if path == root || err != nil {
@@ -173,7 +176,7 @@ func getCameraProfiles(make, model string) []string {
 		})
 	}
 
-	unique(&res)
+	util.Unique(&res)
 	cameraProfiles[make+" "+model] = res
 	return res
 }

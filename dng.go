@@ -7,10 +7,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+
+	"rethinkraw/internal/config"
 )
 
 func testDNGConverter() error {
-	_, err := os.Stat(dngConverter)
+	_, err := os.Stat(config.DngConverter)
 	return err
 }
 
@@ -43,7 +45,7 @@ func runDNGConverter(input, output string, side int, exp *exportSettings) error 
 	opts = append(opts, "-d", dir, "-o", output, input)
 
 	log.Print("dng converter...")
-	cmd := exec.Command(dngConverter, opts...)
+	cmd := exec.Command(config.DngConverter, opts...)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("DNG Converter: %w", err)
 	}

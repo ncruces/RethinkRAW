@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"rethinkraw/internal/util"
 	"rethinkraw/osutil"
 )
 
@@ -232,11 +233,11 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 	if ex.Fit == "mpix" {
 		mul := math.Sqrt(1e6 * ex.MPixels / float64(size.X*size.Y))
 		if size.X > size.Y {
-			fit.X = MaxInt
+			fit.X = util.MaxInt
 			fit.Y = int(mul * float64(size.Y))
 		} else {
 			fit.X = int(mul * float64(size.X))
-			fit.Y = MaxInt
+			fit.Y = util.MaxInt
 		}
 	} else {
 		mul := 1.0
@@ -263,7 +264,7 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 			if i > 0 {
 				return i
 			}
-			return MaxInt
+			return util.MaxInt
 		}
 
 		if ex.Fit == "dims" {

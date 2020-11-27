@@ -1,14 +1,14 @@
 // +build !windows
 // +build !darwin
 
-package main
+package util
 
 import (
 	"os"
 	"os/exec"
 )
 
-func findChrome() string {
+func FindChrome() string {
 	versions := []string{"google-chrome-stable", "google-chrome", "chromium-browser", "chromium"}
 
 	for _, v := range versions {
@@ -19,14 +19,14 @@ func findChrome() string {
 	return ""
 }
 
-func exitChrome(cmd *exec.Cmd) {
+func ExitChrome(cmd *exec.Cmd) {
 	cmd.Process.Signal(os.Interrupt)
 }
 
-func getANSIPath(path string) (string, error) {
+func GetANSIPath(path string) (string, error) {
 	return path, nil
 }
 
-func bringToTop() {}
+func BringToTop() {}
 
-func hideConsole() {}
+func HideConsole() {}

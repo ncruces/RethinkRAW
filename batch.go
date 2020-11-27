@@ -1,6 +1,10 @@
 package main
 
-import "sync"
+import (
+	"sync"
+
+	"rethinkraw/internal/util"
+)
 
 var batches Batches
 
@@ -20,7 +24,7 @@ func (p *Batches) New(paths []string) string {
 		p.queue[i] = p.queue[i-1]
 	}
 
-	id := randomID()
+	id := util.RandomID()
 	p.queue[0].id = id
 	p.queue[0].paths = paths
 	return id

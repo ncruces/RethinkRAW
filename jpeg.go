@@ -10,13 +10,15 @@ import (
 	"log"
 	"os/exec"
 
+	"rethinkraw/internal/config"
+
 	"github.com/ncruces/go-image/resize"
 	"github.com/ncruces/go-image/rotateflip"
 )
 
 func extractThumb(path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
-	cmd := exec.Command(dcraw, "-e", "-c", path)
+	cmd := exec.Command(config.Dcraw, "-e", "-c", path)
 	return cmd.Output()
 }
 

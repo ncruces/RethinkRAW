@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"rethinkraw/internal/util"
+
 	"github.com/ncruces/zenity"
 )
 
@@ -35,7 +37,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	_, batch := r.Form["batch"]
 	_, gallery := r.Form["gallery"]
 
-	bringToTop()
+	util.BringToTop()
 	switch {
 	case batch:
 		if res, err := zenity.SelectFileMutiple(filters); err != nil {

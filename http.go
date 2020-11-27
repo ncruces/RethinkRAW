@@ -18,6 +18,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"rethinkraw/internal/util"
+
 	"golang.org/x/net/websocket"
 )
 
@@ -212,8 +214,8 @@ func cacheHeaders(path string, req, res http.Header) HTTPResult {
 
 func attachmentHeaders(path string, headers http.Header) {
 	ext := filepath.Ext(path)
-	utf := filename(path)
-	ascii := filename(toASCII(path))
+	utf := util.Filename(path)
+	ascii := util.Filename(util.ToASCII(path))
 
 	disposition := `attachment;filename="` + ascii + `"`
 	if ascii != utf {

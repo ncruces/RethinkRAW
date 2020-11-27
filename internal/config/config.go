@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"os"
@@ -6,50 +6,52 @@ import (
 	"runtime"
 	"strings"
 
+	"rethinkraw/internal/util"
+
 	"github.com/ncruces/go-exiftool"
 )
 
 var (
-	baseDir, dataDir, tempDir string
-	dcraw, dcraw_emu          string
-	dngConverter              string
-	cameraRawPaths            []string
+	BaseDir, DataDir, TempDir string
+	Dcraw, DcrawEmu           string
+	DngConverter              string
+	CameraRawPaths            []string
 )
 
-func setupPaths() (err error) {
+func SetupPaths() (err error) {
 	if exe, err := os.Executable(); err != nil {
 		return err
 	} else {
-		baseDir = filepath.Dir(exe)
+		BaseDir = filepath.Dir(exe)
 	}
 
-	dataDir = filepath.Join(baseDir, "data")
-	tempDir = filepath.Join(os.TempDir(), "RethinkRAW")
+	DataDir = filepath.Join(BaseDir, "data")
+	TempDir = filepath.Join(os.TempDir(), "RethinkRAW")
 
-	tempDir, err = getANSIPath(tempDir)
+	TempDir, err = util.GetANSIPath(TempDir)
 	if err != nil {
 		return err
 	}
 
 	switch runtime.GOOS {
 	case "windows":
-		dcraw = baseDir + `\utils\dcraw.exe`
-		dcraw_emu = baseDir + `\utils\dcraw_emu.exe`
-		exiftool.Exec = baseDir + `\utils\exiftool\exiftool.exe`
+		Dcraw = BaseDir + `\utils\dcraw.exe`
+		DcrawEmu = BaseDir + `\utils\dcraw_emu.exe`
+		exiftool.Exec = BaseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
-		exiftool.Config = baseDir + `\utils\exiftool_config.pl`
-		dngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
-		cameraRawPaths = []string{
+		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
+		DngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+		CameraRawPaths = []string{
 			os.Getenv("PROGRAMDATA") + `\Adobe\CameraRaw`,
 			os.Getenv("APPDATA") + `\Adobe\CameraRaw`,
 		}
 	case "darwin":
-		dcraw = baseDir + "/utils/dcraw"
-		dcraw_emu = baseDir + "/utils/dcraw_emu"
-		exiftool.Exec = baseDir + "/utils/exiftool/exiftool"
-		exiftool.Config = baseDir + "/utils/exiftool_config.pl"
-		dngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
-		cameraRawPaths = []string{
+		Dcraw = BaseDir + "/utils/dcraw"
+		DcrawEmu = BaseDir + "/utils/dcraw_emu"
+		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
+		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
+		DngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
+		CameraRawPaths = []string{
 			"/Library/Application Support/Adobe/CameraRaw",
 			os.Getenv("HOME") + "/Library/Application Support/Adobe/CameraRaw",
 		}
@@ -61,16 +63,16 @@ func setupPaths() (err error) {
 	if data, err := os.UserConfigDir(); err != nil {
 		return err
 	} else {
-		dataDir = filepath.Join(data, "RethinkRAW")
+		DataDir = filepath.Join(data, "RethinkRAW")
 	}
 	return testDataDir()
 }
 
 func testDataDir() error {
-	if err := os.MkdirAll(dataDir, 0700); err != nil {
+	if err := os.MkdirAll(DataDir, 0700); err != nil {
 		return err
 	}
-	if f, err := os.Create(filepath.Join(dataDir, "lastrun")); err != nil {
+	if f, err := os.Create(filepath.Join(DataDir, "lastrun")); err != nil {
 		return err
 	} else {
 		return f.Close()

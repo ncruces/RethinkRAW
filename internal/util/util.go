@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"crypto/md5"
@@ -17,28 +17,35 @@ const MaxInt = int(MaxUint >> 1)
 const MinInt = -MaxInt - 1
 
 func init() {
-	must(mime.AddExtensionType(".dng", "image/x-adobe-dng"))
+	Check(mime.AddExtensionType(".dng", "image/x-adobe-dng"))
 }
 
-func must(err error) {
+func Check(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
-func btoi(b bool) int {
+func Must(v interface{}, err error) interface{} {
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+func Btoi(b bool) int {
 	if b {
 		return 1
 	}
 	return 0
 }
 
-func hashedID(data string) string {
+func HashedID(data string) string {
 	buf := md5.Sum([]byte(data))
 	return base64.RawURLEncoding.EncodeToString(buf[:15])
 }
 
-func randomID() string {
+func RandomID() string {
 	var buf [15]byte
 	if _, err := rand.Read(buf[:]); err != nil {
 		panic(err)
@@ -46,7 +53,7 @@ func randomID() string {
 	return base64.RawURLEncoding.EncodeToString(buf[:])
 }
 
-func index(a []string, x string) int {
+func Index(a []string, x string) int {
 	for k, v := range a {
 		if x == v {
 			return k
@@ -55,7 +62,7 @@ func index(a []string, x string) int {
 	return -1
 }
 
-func unique(a *[]string) {
+func Unique(a *[]string) {
 	s := *a
 	if len(s) < 1 {
 		return
@@ -75,7 +82,7 @@ func unique(a *[]string) {
 	*a = s[:i:i]
 }
 
-func toASCII(str string) string {
+func ToASCII(str string) string {
 	builder := strings.Builder{}
 	for _, r := range str {
 		// control
@@ -92,7 +99,7 @@ func toASCII(str string) string {
 	return builder.String()
 }
 
-func filename(name string) string {
+func Filename(name string) string {
 	builder := strings.Builder{}
 	dots := 0
 
@@ -118,7 +125,7 @@ func filename(name string) string {
 	return ""
 }
 
-func logPretty(v interface{}) (err error) {
+func LogPretty(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err == nil {
 		log.Println(string(b))

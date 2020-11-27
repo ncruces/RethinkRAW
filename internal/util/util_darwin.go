@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"os"
@@ -19,7 +19,7 @@ func init() {
 	}
 }
 
-func findChrome() string {
+func FindChrome() string {
 	versions := []string{"Google Chrome", "Chromium"}
 
 	for _, v := range versions {
@@ -31,14 +31,14 @@ func findChrome() string {
 	return ""
 }
 
-func exitChrome(cmd *exec.Cmd) {
+func ExitChrome(cmd *exec.Cmd) {
 	cmd.Process.Signal(os.Interrupt)
 }
 
-func getANSIPath(path string) (string, error) {
+func GetANSIPath(path string) (string, error) {
 	return path, nil
 }
 
-func bringToTop() {}
+func BringToTop() {}
 
-func hideConsole() {}
+func HideConsole() {}

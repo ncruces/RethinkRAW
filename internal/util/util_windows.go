@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"errors"
@@ -28,7 +28,7 @@ var (
 	setForegroundWindow   = user32.NewProc("SetForegroundWindow")
 )
 
-func findChrome() string {
+func FindChrome() string {
 	versions := []string{`Google\Chrome`, `Chromium`}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
 	suffix := `\Application\chrome.exe`
@@ -46,7 +46,7 @@ func findChrome() string {
 	return ""
 }
 
-func exitChrome(cmd *exec.Cmd) {
+func ExitChrome(cmd *exec.Cmd) {
 	for i := 0; i < 10; i++ {
 		if exec.Command("taskkill", "/pid", strconv.Itoa(cmd.Process.Pid)).Run() != nil {
 			return
@@ -69,7 +69,7 @@ func isANSIString(s string) bool {
 	return n > 0 && used == 0
 }
 
-func getANSIPath(path string) (string, error) {
+func GetANSIPath(path string) (string, error) {
 	path = filepath.Clean(path)
 
 	if len(path) < 260 && isANSIString(path) {
@@ -106,7 +106,7 @@ func getANSIPath(path string) (string, error) {
 	return path, errors.New("could not convert to ANSI path: " + path)
 }
 
-func bringToTop() {
+func BringToTop() {
 	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
 		return // no window
 	} else {
@@ -114,7 +114,7 @@ func bringToTop() {
 	}
 }
 
-func hideConsole() {
+func HideConsole() {
 	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
 		return // no window
 	} else {

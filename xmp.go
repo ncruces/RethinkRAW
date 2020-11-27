@@ -12,6 +12,8 @@ import (
 	"strconv"
 
 	"rethinkraw/dng"
+	"rethinkraw/internal/config"
+	"rethinkraw/internal/util"
 
 	"github.com/ncruces/go-exiftool"
 )
@@ -98,7 +100,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 
 	// load camera profiles
 	xmp.Profiles = append(profiles, getCameraProfiles(string(m["Make"]), string(m["Model"]))...)
-	if index(xmp.Profiles, xmp.Profile) < 0 {
+	if util.Index(xmp.Profiles, xmp.Profile) < 0 {
 		xmp.Profiles = append(xmp.Profiles, xmp.Profile)
 	}
 
@@ -236,8 +238,8 @@ func editXMP(path string, xmp *xmpSettings) error {
 
 	// lens corrections
 	opts = append(opts,
-		"-XMP-crs:AutoLateralCA="+strconv.Itoa(btoi(xmp.AutoLateralCA)),
-		"-XMP-crs:LensProfileEnable="+strconv.Itoa(btoi(xmp.LensProfile)))
+		"-XMP-crs:AutoLateralCA="+strconv.Itoa(util.Btoi(xmp.AutoLateralCA)),
+		"-XMP-crs:LensProfileEnable="+strconv.Itoa(util.Btoi(xmp.LensProfile)))
 
 	opts = append(opts, "-overwrite_original", path)
 
@@ -434,7 +436,7 @@ var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 
 func dngPreview(path string) string {
 	log.Print("dcraw (get thumb size)...")
-	cmd := exec.Command(dcraw, "-i", "-v", path)
+	cmd := exec.Command(config.Dcraw, "-i", "-v", path)
 	out, err := cmd.Output()
 	if err != nil {
 		return ""
@@ -463,7 +465,7 @@ func dngPreview(path string) string {
 
 func getRawPixels(path string) error {
 	log.Print("dcraw (get raw pixels)...")
-	cmd := exec.Command(dcraw_emu,
+	cmd := exec.Command(config.DcrawEmu,
 		"-r", "1", "1", "1", "1",
 		"-o", "0",
 		"-h",
@@ -475,7 +477,7 @@ func getRawPixels(path string) error {
 	if err == nil {
 		return nil
 	}
-	cmd = exec.Command(dcraw,
+	cmd = exec.Command(config.Dcraw,
 		"-r", "1", "1", "1", "1",
 		"-o", "0",
 		"-h",
