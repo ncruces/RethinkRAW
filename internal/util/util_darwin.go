@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-//go:generate osacompile -l JavaScript -o RethinkRAW.app darwin.js
-
 func init() {
 	// ignore Process Serial Number argument
 	for i, a := range os.Args {
