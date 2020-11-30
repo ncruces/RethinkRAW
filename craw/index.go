@@ -57,6 +57,8 @@ func LoadIndex(path string) ([]IndexedRecord, error) {
 			return index, err
 		}
 
+		index[i].Path = fixPath(index[i].Path)
+
 		// Read the 12 byte record header
 		if _, err := io.ReadFull(f, buf[:12]); err != nil {
 			return index, err

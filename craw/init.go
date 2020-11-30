@@ -3,12 +3,19 @@ package craw
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 var (
 	GlobalSettings string
 	UserSettings   string
+)
+
+const (
+	globalPrefixWin = "C:/ProgramData/Adobe/CameraRaw/"
+	globalPrefixMac = "/Library/Application Support/Adobe/CameraRaw/"
 )
 
 func init() {
@@ -20,4 +27,14 @@ func init() {
 		GlobalSettings = "/Library/Application Support/Adobe/CameraRaw"
 		UserSettings = os.Getenv("HOME") + "/Library/Application Support/Adobe/CameraRaw"
 	}
+}
+
+func fixPath(path string) string {
+	if strings.HasPrefix(path, globalPrefixWin) {
+		path = filepath.Join(GlobalSettings, path[len(globalPrefixWin):])
+	}
+	if runtime.GOOS == "windows" && strings.HasPrefix(path, globalPrefixMac) {
+		path = filepath.Join(GlobalSettings, path[len(globalPrefixMac):])
+	}
+	return filepath.FromSlash(path)
 }
