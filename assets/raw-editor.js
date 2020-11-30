@@ -34,6 +34,7 @@ void async function() {
         let group = form.profile.lastElementChild;
         group.prepend(...settings.profiles.map(p => new Option(p)));
     }
+    form.toneCurve.value = settings.toneCurve;
     form.lensProfile.checked = settings.lensProfile;
     form.autoLateralCA.checked = settings.autoLateralCA;
 
@@ -469,23 +470,21 @@ let updatePhoto = function () {
 function formQuery() {
     let query = [];
 
-    if (form.tone.value === 'Auto') query.push('autoTone=1');
-
-    for (let k of ['orientation', 'process', 'profile', 'whiteBalance']) {
-        if (form[k].value) query.push(k + '=' + encodeURIComponent(form[k].value));
+    for (let k of ['orientation', 'process', 'profile', 'whiteBalance', 'toneCurve']) {
+        if (form[k].value) query.push(k + '=' + encodeURIParam(form[k].value));
     }
     if (form.whiteBalance.value === 'Custom') {
-        query.push('temperature=' + encodeURIComponent(form.temperature[0].value));
-        query.push('tint=' + encodeURIComponent(form.tint[0].value));
+        query.push('temperature=' + encodeURIParam(form.temperature[0].value));
+        query.push('tint=' + encodeURIParam(form.tint[0].value));
     }
     if (form.tone.value === 'Auto') query.push('autoTone=1');
     else for (let k of ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation']) {
         if (form[k][0].value == 0) continue;
-        query.push(k + '=' + encodeURIComponent(form[k][0].value));
+        query.push(k + '=' + encodeURIParam(form[k][0].value));
     }
     for (let k of ['texture', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
         if (form[k][0].value == 0) continue;
-        query.push(k + '=' + encodeURIComponent(form[k][0].value));
+        query.push(k + '=' + encodeURIParam(form[k][0].value));
     }
     for (let k of ['lensProfile', 'autoLateralCA']) {
         if (form[k].checked) query.push(k + '=1');
@@ -500,7 +499,7 @@ function exportQuery() {
 
     if (form.format.value === 'DNG') {
         query.push('dng=1');
-        query.push('preview=' + encodeURIComponent(form.preview.value));
+        query.push('preview=' + encodeURIParam(form.preview.value));
         for (let k of ['lossy', 'embed']) {
             if (form[k].checked) query.push(k + '=1');
         }
@@ -510,7 +509,7 @@ function exportQuery() {
 
         query.push('resample=1');
         for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
-            query.push(k + '=' + encodeURIComponent(form[k].value));
+            query.push(k + '=' + encodeURIParam(form[k].value));
         }
     }
 

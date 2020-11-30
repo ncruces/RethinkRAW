@@ -120,6 +120,17 @@
     </fieldset>
 
     <fieldset disabled>
+        <legend>Curve</legend>
+        <select name=toneCurve onchange="valueChange()">
+            <option hidden>
+            <option>Linear</option>
+            <option>Medium Contrast</option>
+            <option>Strong Contrast</option>
+            <option disabled>Custom</option>
+        </select>
+    </fieldset>
+
+    <fieldset disabled>
         <legend>Detail</legend>
 
         <label for=sharpness>Sharpness</label>

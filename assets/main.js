@@ -6,21 +6,6 @@ if (typeof String.prototype.replaceAll !== 'function') {
     location.replace('/browser.html');
 }
 
-window.back = function () {
-    if (document.referrer) {
-        history.back();
-        window.close();
-    } else {
-        location.replace('/');
-    }
-};
-
-window.sleep = function (ms) {
-    return new Promise(function (resolve) {
-        return setTimeout(resolve, ms);
-    });
-};
-
 window.addEventListener('pageshow', function createSocket() {
     var host = location.host.replace('[::1]', 'localhost');
     window.heartbeat = new WebSocket('ws://' + host + '/ws');
@@ -72,3 +57,22 @@ document.documentElement.addEventListener('contextmenu', function (evt) {
 });
 
 }();
+
+function back() {
+    if (document.referrer) {
+        history.back();
+        window.close();
+    } else {
+        location.replace('/');
+    }
+}
+
+function sleep(ms) {
+    return new Promise(function (resolve) {
+        return setTimeout(resolve, ms);
+    });
+}
+
+function encodeURIParam(p) {
+    return encodeURIComponent(p).replace('%20', '+');
+}

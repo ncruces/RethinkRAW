@@ -42,6 +42,7 @@ type xmpSettings struct {
 	Dehaze     int     `json:"dehaze"`
 	Vibrance   int     `json:"vibrance"`
 	Saturation int     `json:"saturation"`
+	ToneCurve  string  `json:"toneCurve,omitempty"`
 
 	Sharpness   int `json:"sharpness"`
 	LuminanceNR int `json:"luminanceNR"`
@@ -69,8 +70,17 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 		return xmp, err
 	}
 
+	// defaults (will be overwritten)
+	xmp.Process = 11.0
+	xmp.Profile = "Adobe Color"
+	xmp.WhiteBalance = "As Shot"
+	xmp.ToneCurve = "Linear"
+	xmp.Sharpness = 40
+	xmp.ColorNR = 25
+
 	// legacy with defaults (will be upgraded/overwritten)
 	shadows, brightness, contrast, clarity := 5, 50, 25, 0
+	loadString(&xmp.ToneCurve, m, "ToneCurveName")
 	loadBool(&xmp.AutoTone, m, "AutoExposure")
 	loadFloat32(&xmp.Exposure, m, "Exposure")
 	loadInt(&brightness, m, "Brightness")
@@ -78,13 +88,6 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadInt(&shadows, m, "Shadows")
 	loadInt(&clarity, m, "Clarity")
 	xmp.update(shadows, brightness, contrast, clarity)
-
-	// defaults (will be overwritten)
-	xmp.Process = 11.0
-	xmp.Profile = "Adobe Color"
-	xmp.WhiteBalance = "As Shot"
-	xmp.Sharpness = 40
-	xmp.ColorNR = 25
 
 	// orientation
 	loadInt(&xmp.Orientation, m, "Orientation")
@@ -105,13 +108,11 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	}
 	if process != 0 || profile != "" || look != "" {
 		switch {
-		case util.Contains(defaultProfiles, look) && profile == "":
+		case util.Contains(defaultProfiles, look) && (profile == adobe || profile == ""):
 			xmp.Profile = look
 		case util.Contains(profiles, profile) && look == "":
 			xmp.Profile = profile
-		case profile == adobe && look == "":
-			xmp.Profile = "Adobe Standard"
-		case profile == "" && look == "":
+		case look == "" && (profile == adobe || profile == ""):
 			xmp.Profile = "Adobe Standard"
 		default:
 			xmp.Profile = "Custom"
@@ -121,6 +122,14 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 		}
 	}
 	xmp.Profiles = profiles
+
+	// curve
+	loadString(&xmp.ToneCurve, m, "ToneCurveName2012")
+	switch xmp.ToneCurve {
+	case "Linear", "Medium Contrast", "Strong Contrast":
+	default:
+		xmp.ToneCurve = "Custom"
+	}
 
 	// white balance
 	loadString(&xmp.WhiteBalance, m, "WhiteBalance")
@@ -157,7 +166,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 
 func editXMP(path string, xmp *xmpSettings) error {
 	// zip means shorter xml output, not compression
-	opts := []string{"--printConv", "-zip"}
+	opts := []string{"--printConv", "-zip", "-sep", "; "}
 
 	// filename
 	if xmp.Filename != "" {
@@ -239,6 +248,27 @@ func editXMP(path string, xmp *xmpSettings) error {
 			"-XMP-crs:Blacks2012="+strconv.Itoa(xmp.Blacks),
 			"-XMP-crs:Vibrance="+strconv.Itoa(xmp.Vibrance),
 			"-XMP-crs:Saturation="+strconv.Itoa(xmp.Saturation))
+	}
+
+	switch xmp.ToneCurve {
+	case "Linear":
+		opts = append(opts, "-XMP-crs:ToneCurve*=")
+	case "Medium Contrast":
+		opts = append(opts,
+			"-XMP-crs:ToneCurve*=",
+			"-XMP-crs:ToneCurveName=Medium Contrast",
+			"-XMP-crs:ToneCurveName2012=Medium Contrast",
+			"-XMP-crs:ToneCurve=0, 0; 32, 22; 64, 56; 128, 128; 192, 196; 255, 255",
+			"-XMP-crs:ToneCurvePV2012=0, 0; 32, 22; 64, 56; 128, 128; 192, 196; 255, 255",
+		)
+	case "Strong Contrast":
+		opts = append(opts,
+			"-XMP-crs:ToneCurve*=",
+			"-XMP-crs:ToneCurveName=Strong Contrast",
+			"-XMP-crs:ToneCurveName2012=Strong Contrast",
+			"-XMP-crs:ToneCurve=0, 0; 32, 16; 64, 50; 128, 128; 192, 202; 255, 255",
+			"-XMP-crs:ToneCurvePV2012=0, 0; 32, 16; 64, 50; 128, 128; 192, 202; 255, 255",
+		)
 	}
 
 	// presence
