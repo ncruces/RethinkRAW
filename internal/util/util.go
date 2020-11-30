@@ -53,13 +53,17 @@ func RandomID() string {
 	return base64.RawURLEncoding.EncodeToString(buf[:])
 }
 
-func Index(a []string, x string) int {
+func Index(a []string, s string) int {
 	for k, v := range a {
-		if x == v {
+		if s == v {
 			return k
 		}
 	}
 	return -1
+}
+
+func Contains(a []string, s string) bool {
+	return Index(a, s) >= 0
 }
 
 func Unique(a *[]string) {

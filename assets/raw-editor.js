@@ -17,21 +17,23 @@ void async function() {
         return;
     }
 
-    let processChanged = false;
-
+    let upgraded = false;
     if (settings.process == null || settings.process < 6.7 || settings > 11) {
         if (settings.process) alert('This file was processed with an incompatible version of Camera Raw.\nPrevious edits will not be faithfully reproduced.');
         settings.process = 11;
-        processChanged = true;
+        upgraded = true;
     }
     if (settings.process < 11 && confirm('This file was processed with an older version of Camera Raw.\nPrevious edits may not be faithfully reproduced.\n\nUpdate to the current Camera Raw process version?')) {
         settings.process = 11;
-        processChanged = true;
+        upgraded = true;
     }
 
     if (settings.orientation) form.orientation.value = settings.orientation;
     if (settings.process) form.process.value = settings.process.toFixed(1);
-    for (let p of settings.profiles) form.profile.add(new Option(p));
+    if (settings.profiles) {
+        let group = form.profile.lastElementChild;
+        group.prepend(...settings.profiles.map(p => new Option(p)));
+    }
     form.lensProfile.checked = settings.lensProfile;
     form.autoLateralCA.checked = settings.autoLateralCA;
 
@@ -51,7 +53,7 @@ void async function() {
     if (settings.autoTone) tone = 'Auto';
     toneChange(form.tone, tone);
 
-    save.disabled = !processChanged;
+    save.disabled = !upgraded;
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }

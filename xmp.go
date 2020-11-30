@@ -90,19 +90,37 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadInt(&xmp.Orientation, m, "Orientation")
 
 	// process/profile
+	var process float32
 	var grayscale bool
-	loadFloat32(&xmp.Process, m, "ProcessVersion")
-	loadString(&xmp.Profile, m, "CameraProfile")
+	var profile, look string
+	loadFloat32(&process, m, "ProcessVersion")
+	loadString(&profile, m, "CameraProfile")
+	loadString(&look, m, "LookName")
 	loadBool(&grayscale, m, "ConvertToGrayscale")
-	if grayscale && xmp.Profile == "Adobe Standard" {
-		xmp.Profile = "Adobe Standard B&W"
-	}
 
-	// load camera profiles
-	xmp.Profiles = append(profiles, getCameraProfiles(string(m["Make"]), string(m["Model"]))...)
-	if util.Index(xmp.Profiles, xmp.Profile) < 0 {
-		xmp.Profiles = append(xmp.Profiles, xmp.Profile)
+	adobe, profiles := getCameraProfiles(string(m["Make"]), string(m["Model"]))
+
+	if process != 0 {
+		xmp.Process = process
 	}
+	if process != 0 || profile != "" || look != "" {
+		switch {
+		case util.Contains(defaultProfiles, look) && profile == "":
+			xmp.Profile = look
+		case util.Contains(profiles, profile) && look == "":
+			xmp.Profile = profile
+		case profile == adobe && look == "":
+			xmp.Profile = "Adobe Standard"
+		case profile == "" && look == "":
+			xmp.Profile = "Adobe Standard"
+		default:
+			xmp.Profile = "Custom"
+		}
+		if xmp.Profile == "Adobe Standard" && grayscale {
+			xmp.Profile = "Adobe Standard B&W"
+		}
+	}
+	xmp.Profiles = profiles
 
 	// white balance
 	loadString(&xmp.WhiteBalance, m, "WhiteBalance")
@@ -159,7 +177,7 @@ func editXMP(path string, xmp *xmpSettings) error {
 		opts = append(opts, "-XMP-crs:ProcessVersion="+fmt.Sprintf("%.1f", xmp.Process))
 	}
 	// profile
-	if xmp.Profile != "" {
+	if xmp.Profile != "" && xmp.Profile != "Custom" {
 		if settings, ok := profileSettings[xmp.Profile]; ok {
 			opts = append(opts, settings...)
 		} else {
