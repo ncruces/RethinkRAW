@@ -81,7 +81,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		for i, file := range files {
 			var status multiStatus
 			xmp.Filename = file
-			if err := saveEdit(file, &xmp); err != nil {
+			if err := saveEdit(file, xmp); err != nil {
 				status.Code, status.Body = errorStatus(err)
 			} else {
 				status.Code = http.StatusOK
@@ -127,9 +127,9 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			var status multiStatus
 			var f io.WriteCloser
 			xmp.Filename = file
-			out, err := exportEdit(file, &xmp, &exp)
+			out, err := exportEdit(file, xmp, exp)
 			if err == nil {
-				f, err = osutil.NewFile(filepath.Join(exppath, exportName(file, &exp)))
+				f, err = osutil.NewFile(filepath.Join(exppath, exportName(file, exp)))
 			}
 			if err == nil {
 				_, err = f.Write(out)

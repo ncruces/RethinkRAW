@@ -47,7 +47,7 @@ func previewJPEG(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func exportJPEG(path string, settings *exportSettings) ([]byte, error) {
+func exportJPEG(path string, settings exportSettings) ([]byte, error) {
 	data, err := extractThumb(path)
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func exifOrientation(data []byte) int {
 	return -2
 }
 
-func jfifHeader(settings *exportSettings) []byte {
+func jfifHeader(settings exportSettings) []byte {
 	if settings.DimUnit == "px" {
 		return []byte{'\xff', '\xd8'}
 	}

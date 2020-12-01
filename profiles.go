@@ -105,8 +105,8 @@ func getCameraProfiles(make, model string) (string, []string) {
 	paths, _ := craw.GetCameraProfiles(make, model)
 	for _, path := range paths {
 		log.Print("exiftool (load profile)...")
-		n, _ := exifserver.Command("--printConv", "-short3", "-fast2", "-ProfileName", path)
-		name := string(bytes.TrimSpace(n))
+		out, _ := exifserver.Command("--printConv", "-short3", "-fast2", "-ProfileName", path)
+		name := string(bytes.TrimSpace(out))
 		if strings.HasPrefix(name, "Adobe Standard") {
 			res.adobe = name
 		} else {

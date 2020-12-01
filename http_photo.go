@@ -49,7 +49,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Filename = path
 
-		if err := saveEdit(path, &xmp); err != nil {
+		if err := saveEdit(path, xmp); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			return HTTPResult{Status: http.StatusNoContent}
@@ -68,7 +68,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Filename = path
 
-		exppath := exportName(path, &exp)
+		exppath := exportName(path, exp)
 		if res, err := zenity.SelectFileSave(zenity.Filename(exppath), zenity.ConfirmOverwrite()); err != nil {
 			return HTTPResult{Error: err}
 		} else if res == "" {
@@ -77,7 +77,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			exppath = res
 		}
 
-		if out, err := exportEdit(path, &xmp, &exp); err != nil {
+		if out, err := exportEdit(path, xmp, exp); err != nil {
 			return HTTPResult{Error: err}
 		} else if err := ioutil.WriteFile(exppath, out, 0666); err != nil {
 			return HTTPResult{Error: err}
@@ -96,7 +96,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if err := dec.Decode(&size, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
-		if out, err := previewEdit(path, size.Preview, &xmp); err != nil {
+		if out, err := previewEdit(path, size.Preview, xmp); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "image/jpeg")

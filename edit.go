@@ -25,7 +25,7 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	return loadXMP(wk.loadXMP())
 }
 
-func saveEdit(path string, xmp *xmpSettings) error {
+func saveEdit(path string, xmp xmpSettings) error {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func saveEdit(path string, xmp *xmpSettings) error {
 	return os.Rename(dest+".bak", dest)
 }
 
-func previewEdit(path string, size int, xmp *xmpSettings) ([]byte, error) {
+func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return nil, err
@@ -122,6 +122,63 @@ func previewEdit(path string, size int, xmp *xmpSettings) ([]byte, error) {
 	}
 }
 
+func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error) {
+	wk, err := openWorkspace(path)
+	if err != nil {
+		return nil, err
+	}
+	defer wk.close()
+
+	err = editXMP(wk.origXMP(), xmp)
+	if err != nil {
+		return nil, err
+	}
+
+	var reader io.ReadCloser
+	var writer io.WriteCloser
+	if !exp.DNG && !exp.Resample {
+		writer, reader, err = fixMetaJPEGAsync(wk.orig())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = runDNGConverter(wk.orig(), wk.temp(), 0, &exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if exp.DNG {
+		err = fixMetaDNG(wk.orig(), wk.temp(), path)
+		if err != nil {
+			return nil, err
+		}
+
+		return ioutil.ReadFile(wk.temp())
+	} else {
+		data, err := exportJPEG(wk.temp(), exp)
+		if err != nil || exp.Resample {
+			return data, err
+		}
+
+		go func() {
+			writer.Write(data)
+			writer.Close()
+		}()
+		return ioutil.ReadAll(reader)
+	}
+}
+
+func exportName(path string, exp exportSettings) string {
+	var ext string
+	if exp.DNG {
+		ext = ".dng"
+	} else {
+		ext = ".jpg"
+	}
+	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)) + ext
+}
+
 func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
@@ -150,64 +207,7 @@ func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err er
 		}
 	}
 
-	return extractWhiteBalance(wk.edit(), wk.pixels(), coords)
-}
-
-func exportEdit(path string, xmp *xmpSettings, exp *exportSettings) ([]byte, error) {
-	wk, err := openWorkspace(path)
-	if err != nil {
-		return nil, err
-	}
-	defer wk.close()
-
-	err = editXMP(wk.origXMP(), xmp)
-	if err != nil {
-		return nil, err
-	}
-
-	var reader io.ReadCloser
-	var writer io.WriteCloser
-	if !exp.DNG && !exp.Resample {
-		writer, reader, err = fixMetaJPEGAsync(wk.orig())
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = runDNGConverter(wk.orig(), wk.temp(), 0, exp)
-	if err != nil {
-		return nil, err
-	}
-
-	if exp.DNG {
-		err = fixMetaDNG(wk.orig(), wk.temp(), path)
-		if err != nil {
-			return nil, err
-		}
-
-		return ioutil.ReadFile(wk.temp())
-	} else {
-		data, err := exportJPEG(wk.temp(), exp)
-		if err != nil || exp.Resample {
-			return data, err
-		}
-
-		go func() {
-			writer.Write(data)
-			writer.Close()
-		}()
-		return ioutil.ReadAll(reader)
-	}
-}
-
-func exportName(path string, exp *exportSettings) string {
-	var ext string
-	if exp.DNG {
-		ext = ".dng"
-	} else {
-		ext = ".jpg"
-	}
-	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)) + ext
+	return computeWhiteBalance(wk.edit(), wk.pixels(), coords)
 }
 
 type exportSettings struct {

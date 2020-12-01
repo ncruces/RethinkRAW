@@ -164,7 +164,7 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	return xmp, nil
 }
 
-func editXMP(path string, xmp *xmpSettings) error {
+func editXMP(path string, xmp xmpSettings) error {
 	// zip means shorter xml output, not compression
 	opts := []string{"--printConv", "-zip", "-sep", "; "}
 
@@ -305,7 +305,7 @@ func extractXMP(path, dest string) error {
 	return err
 }
 
-func extractWhiteBalance(meta, pixels string, coords []float64) (wb xmpWhiteBalance, err error) {
+func computeWhiteBalance(meta, pixels string, coords []float64) (wb xmpWhiteBalance, err error) {
 	log.Print("exiftool (load camera profile)...")
 
 	out, err := exifserver.Command("--printConv", "-short2", "-fast2",
