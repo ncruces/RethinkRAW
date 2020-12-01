@@ -28,7 +28,29 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	}
 
 	id := strings.TrimPrefix(r.URL.Path, "/")
-	files := batches.Get(id)
+	var files []string
+	for _, f := range batches.Get(id) {
+		err := filepath.Walk(f, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if osutil.HiddenFile(info) {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if info.Mode().IsRegular() {
+				if _, ok := extensions[strings.ToUpper(filepath.Ext(path))]; ok {
+					files = append(files, path)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return HTTPResult{Error: err}
+		}
+	}
 	if len(files) == 0 {
 		return HTTPResult{Status: http.StatusGone}
 	}
