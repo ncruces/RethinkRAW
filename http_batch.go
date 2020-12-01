@@ -27,10 +27,17 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{Status: http.StatusBadRequest}
 	}
 
+	// get batch
 	id := strings.TrimPrefix(r.URL.Path, "/")
+	batch := batches.Get(id)
+	if len(batch) == 0 {
+		return HTTPResult{Status: http.StatusGone}
+	}
+
+	// get files in batch
 	var files []string
-	for _, f := range batches.Get(id) {
-		err := filepath.Walk(f, func(path string, info os.FileInfo, err error) error {
+	for _, path := range batch {
+		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -50,9 +57,6 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		if err != nil {
 			return HTTPResult{Error: err}
 		}
-	}
-	if len(files) == 0 {
-		return HTTPResult{Status: http.StatusGone}
 	}
 
 	_, save := r.Form["save"]
@@ -168,14 +172,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			Photos []struct{ Name, Path string }
 		}{}
 
-		for _, f := range files {
-			if fi, err := os.Stat(f); err != nil {
-				return HTTPResult{Error: err}
-			} else {
-				name := fi.Name()
-				item := struct{ Name, Path string }{name, toURLPath(f)}
-				data.Photos = append(data.Photos, item)
-			}
+		for _, file := range files {
+			name := filepath.Base(file)
+			item := struct{ Name, Path string }{name, toURLPath(file)}
+			data.Photos = append(data.Photos, item)
 		}
 
 		return HTTPResult{
