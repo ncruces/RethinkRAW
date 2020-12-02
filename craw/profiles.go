@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// GetCameraProfiles gets all the profiles that apply to a given camera.
 func GetCameraProfiles(make, model string) ([]string, error) {
 	glb, err := LoadIndex(filepath.Join(GlobalSettings, filepath.FromSlash("CameraProfiles/Index.dat")))
 	if err != nil {

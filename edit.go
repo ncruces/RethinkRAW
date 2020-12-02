@@ -32,6 +32,10 @@ func saveEdit(path string, xmp xmpSettings) error {
 	}
 	defer wk.close()
 
+	if xmp.WhiteBalance == "Camera Matching…" {
+		xmp.WhiteBalance = cameraMatchingWhiteBalance(wk.orig())
+	}
+
 	err = editXMP(wk.origXMP(), xmp)
 	if err != nil {
 		return err
@@ -54,7 +58,7 @@ func saveEdit(path string, xmp xmpSettings) error {
 			return err
 		}
 
-		err = osutil.Lnky(wk.temp(), dest+".bak")
+		err = osutil.Move(wk.temp(), dest+".bak")
 	} else {
 		err = osutil.Copy(wk.origXMP(), dest+".bak")
 	}
@@ -71,6 +75,10 @@ func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 		return nil, err
 	}
 	defer wk.close()
+
+	if xmp.WhiteBalance == "Camera Matching…" {
+		xmp.WhiteBalance = cameraMatchingWhiteBalance(wk.orig())
+	}
 
 	if size == 0 {
 		// use the original RAW file for a full resolution preview
@@ -108,12 +116,7 @@ func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 			return nil, err
 		}
 
-		err = runDNGConverter(wk.orig(), wk.temp(), 2560, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		err = os.Rename(wk.temp(), wk.edit())
+		err = runDNGConverter(wk.orig(), wk.edit(), 2560, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -128,6 +131,10 @@ func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error
 		return nil, err
 	}
 	defer wk.close()
+
+	if xmp.WhiteBalance == "Camera Matching…" {
+		xmp.WhiteBalance = cameraMatchingWhiteBalance(wk.orig())
+	}
 
 	err = editXMP(wk.origXMP(), xmp)
 	if err != nil {
@@ -189,12 +196,7 @@ func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err er
 	if !wk.hasEdit {
 		// create edit.dng (downscaled to at most 2560 on the widest side)
 
-		err = runDNGConverter(wk.orig(), wk.temp(), 2560, nil)
-		if err != nil {
-			return wb, err
-		}
-
-		err = os.Rename(wk.temp(), wk.edit())
+		err = runDNGConverter(wk.orig(), wk.edit(), 2560, nil)
 		if err != nil {
 			return wb, err
 		}

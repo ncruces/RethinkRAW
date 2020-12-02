@@ -15,7 +15,6 @@ var (
 	BaseDir, DataDir, TempDir string
 	Dcraw, DcrawEmu           string
 	DngConverter              string
-	CameraRawPaths            []string
 )
 
 func SetupPaths() (err error) {
@@ -41,20 +40,12 @@ func SetupPaths() (err error) {
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
 		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
 		DngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
-		CameraRawPaths = []string{
-			os.Getenv("PROGRAMDATA") + `\Adobe\CameraRaw`,
-			os.Getenv("APPDATA") + `\Adobe\CameraRaw`,
-		}
 	case "darwin":
 		Dcraw = BaseDir + "/utils/dcraw"
 		DcrawEmu = BaseDir + "/utils/dcraw_emu"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
 		DngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
-		CameraRawPaths = []string{
-			"/Library/Application Support/Adobe/CameraRaw",
-			os.Getenv("HOME") + "/Library/Application Support/Adobe/CameraRaw",
-		}
 	}
 
 	if testDataDir() == nil {

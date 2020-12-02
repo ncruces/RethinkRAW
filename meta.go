@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -48,7 +49,7 @@ func hasEdits(path string) bool {
 	return err == nil && len(out) > 0
 }
 
-func tiffOrientation(path string) int {
+func rawOrientation(path string) int {
 	log.Print("exiftool (get orientation)...")
 	out, err := exifserver.Command("--printConv", "-short3", "-fast2", "-Orientation", path)
 	if err != nil {
@@ -62,4 +63,26 @@ func tiffOrientation(path string) int {
 	}
 
 	return orientation
+}
+
+func cameraMatchingWhiteBalance(path string) string {
+	log.Print("exiftool (get camera matching white balance)...")
+	out, err := exifserver.Command("-duplicates", "-short3", "-fast", "-WhiteBalance", path)
+	if err != nil {
+		return ""
+	}
+
+	for scan := bufio.NewScanner(bytes.NewReader(out)); scan.Scan(); {
+		switch wb := scan.Text(); wb {
+		case "Auto", "Daylight", "Cloudy", "Shade", "Tungsten", "Fluorescent", "Flash":
+			return wb
+		case "Sunny":
+			return "Daylight"
+		case "Overcast":
+			return "Cloudy"
+		case "Incandescent":
+			return "Tungsten"
+		}
+	}
+	return "As Shot"
 }

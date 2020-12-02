@@ -1,4 +1,3 @@
-// Package craw provides support for loading Camera Raw settings.
 package craw
 
 import (

@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	GlobalSettings string
-	UserSettings   string
+	GlobalSettings string // The global Camera Raw settings directory.
+	UserSettings   string // The user's Camera Raw settings directory.
 )
 
 const (

@@ -131,7 +131,7 @@ window.whiteBalanceChange = (e, val) => {
 
     let temp = e.form.temperature;
     let tint = e.form.tint;
-    let auto = false;
+    let lock = false;
     if (e.value in whiteBalancePresets) {
         let k = whiteBalancePresets[e.value].temperature;
         let t = whiteBalancePresets[e.value].tint;
@@ -140,10 +140,10 @@ window.whiteBalanceChange = (e, val) => {
         temp[0].value = k;
         temp[1].value = Math.log(k);
     } else if (e.value !== 'Custom') {
-        auto = true;
+        lock = true;
     }
     for (let n of e.form.querySelectorAll('div.manualWB')) {
-        n.classList.toggle('disabled-wb', auto);
+        n.classList.toggle('disabled-wb', lock);
         disableInputs(n);
     }
 

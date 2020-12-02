@@ -1,6 +1,8 @@
+// Package xmp provides support for extracting XMP packets from data.
 package xmp
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 )
@@ -28,4 +30,14 @@ func splitPacket(data []byte, atEOF bool) (advance int, token []byte, err error)
 		return 0, nil, io.EOF
 	}
 	return advance, nil, nil
+}
+
+// ExtractXMP extracts a XMP packet from the reader.
+func ExtractXMP(r io.Reader) ([]byte, error) {
+	scan := bufio.NewScanner(r)
+	scan.Split(splitPacket)
+	if scan.Scan() {
+		return scan.Bytes(), nil
+	}
+	return nil, scan.Err()
 }

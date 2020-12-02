@@ -37,7 +37,7 @@ func previewJPEG(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	exf := rotateflip.Orientation(tiffOrientation(path))
+	exf := rotateflip.Orientation(rawOrientation(path))
 	img = rotateflip.Image(img, exf.Op())
 
 	buf := bytes.Buffer{}
