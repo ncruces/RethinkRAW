@@ -31,6 +31,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	id := strings.TrimPrefix(r.URL.Path, "/")
 	batch := batches.Get(id)
 	if len(batch) == 0 {
+		path := fromURLPath(r.URL.Path)
+		if fi, _ := os.Stat(path); fi != nil && fi.IsDir() {
+			return HTTPResult{Location: "/batch/" + batches.New([]string{path})}
+		}
 		return HTTPResult{Status: http.StatusGone}
 	}
 

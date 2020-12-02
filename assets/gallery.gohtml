@@ -23,6 +23,7 @@
         <div id=menu>
             <div class="toolbar">
                 <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="Batch edit photos…" onclick="location='/batch/{{.Path}}'"><i class="fas fa-tasks"></i></button>
                 <span>{{.Title}}</span>
             </div>
             {{- range .Dirs}}

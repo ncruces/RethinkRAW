@@ -23,32 +23,35 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{Error: err}
 	} else {
 		data := struct {
-			Title        string
+			Title, Path  string
 			Dirs, Photos []struct{ Name, Path string }
-		}{}
-		data.Title = filepath.Clean(path)
+		}{
+			filepath.Clean(path),
+			toURLPath(filepath.Clean(path)),
+			nil, nil,
+		}
 
-		for _, i := range files {
-			if osutil.HiddenFile(i) {
+		for _, info := range files {
+			if osutil.HiddenFile(info) {
 				continue
 			}
 
-			name := i.Name()
+			name := info.Name()
 			path := filepath.Join(path, name)
 			item := struct{ Name, Path string }{name, toURLPath(path)}
 
-			if i.Mode()&os.ModeSymlink != 0 {
-				i, err = os.Stat(path)
+			if info.Mode()&os.ModeSymlink != 0 {
+				info, err = os.Stat(path)
 				if err != nil {
 					continue
 				}
 			}
 			const special = os.ModeType &^ os.ModeDir
-			if i.Mode()&special != 0 {
+			if info.Mode()&special != 0 {
 				continue
 			}
 
-			if i.IsDir() {
+			if info.IsDir() {
 				data.Dirs = append(data.Dirs, item)
 			} else if _, ok := extensions[strings.ToUpper(filepath.Ext(name))]; ok {
 				data.Photos = append(data.Photos, item)
