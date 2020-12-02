@@ -88,7 +88,7 @@ func Lnky(src, dst string) error {
 	}
 
 	err = os.Link(src, dst)
-	if isNotSameDevice(err) {
+	if os.IsExist(err) || isNotSameDevice(err) {
 		return Copy(src, dst)
 	}
 	return err

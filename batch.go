@@ -46,3 +46,32 @@ func (p *Batches) Get(id string) []string {
 
 	return nil
 }
+
+func BatchProcessor(files []string, proc func(file string) error) <-chan error {
+	const parallelism = 2
+
+	output := make(chan error, parallelism)
+	input := make(chan string)
+	wait := sync.WaitGroup{}
+	wait.Add(parallelism)
+
+	for n := 0; n < parallelism; n++ {
+		go func() {
+			for file := range input {
+				output <- proc(file)
+			}
+			wait.Done()
+		}()
+	}
+
+	go func() {
+		for _, file := range files {
+			input <- file
+		}
+		close(input)
+		wait.Wait()
+		close(output)
+	}()
+
+	return output
+}

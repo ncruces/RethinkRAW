@@ -73,27 +73,15 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Orientation = 0
 
+		results := BatchProcessor(files, func(file string) error {
+			xmp := xmp
+			xmp.Filename = file
+			return saveEdit(file, xmp)
+		})
+
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		w.WriteHeader(http.StatusMultiStatus)
-
-		enc := json.NewEncoder(w)
-		flush, _ := w.(http.Flusher)
-		for i, file := range files {
-			var status multiStatus
-			xmp.Filename = file
-			if err := saveEdit(file, xmp); err != nil {
-				status.Code, status.Body = errorStatus(err)
-			} else {
-				status.Code = http.StatusOK
-			}
-			status.Done, status.Total = i+1, len(files)
-			status.Text = http.StatusText(status.Code)
-			enc.Encode(status)
-
-			if flush != nil {
-				flush.Flush()
-			}
-		}
+		batchResultWriter(w, results, len(files))
 		return HTTPResult{}
 
 	case export:
@@ -118,14 +106,9 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			exppath = res
 		}
 
-		w.Header().Set("Content-Type", "application/x-ndjson")
-		w.WriteHeader(http.StatusMultiStatus)
-
-		enc := json.NewEncoder(w)
-		flush, _ := w.(http.Flusher)
-		for i, file := range files {
-			var status multiStatus
+		results := BatchProcessor(files, func(file string) error {
 			var f io.WriteCloser
+			xmp := xmp
 			xmp.Filename = file
 			out, err := exportEdit(file, xmp, exp)
 			if err == nil {
@@ -137,19 +120,12 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			if cerr := f.Close(); err == nil {
 				err = cerr
 			}
-			if err != nil {
-				status.Code, status.Body = errorStatus(err)
-			} else {
-				status.Code = http.StatusOK
-			}
-			status.Done, status.Total = i+1, len(files)
-			status.Text = http.StatusText(status.Code)
-			enc.Encode(status)
+			return err
+		})
 
-			if flush != nil {
-				flush.Flush()
-			}
-		}
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.WriteHeader(http.StatusMultiStatus)
+		batchResultWriter(w, results, len(files))
 		return HTTPResult{}
 
 	case settings:
@@ -180,6 +156,28 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 		return HTTPResult{
 			Error: templates.ExecuteTemplate(w, "batch.gohtml", data),
+		}
+	}
+}
+
+func batchResultWriter(w http.ResponseWriter, results <-chan error, total int) {
+	i := 0
+	enc := json.NewEncoder(w)
+	flush, _ := w.(http.Flusher)
+	for err := range results {
+		i += 1
+		var status multiStatus
+		if err != nil {
+			status.Code, status.Body = errorStatus(err)
+		} else {
+			status.Code = http.StatusOK
+		}
+		status.Done, status.Total = i, total
+		status.Text = http.StatusText(status.Code)
+		enc.Encode(status)
+
+		if flush != nil {
+			flush.Flush()
 		}
 	}
 }
