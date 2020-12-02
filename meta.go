@@ -67,7 +67,7 @@ func rawOrientation(path string) int {
 
 func cameraMatchingWhiteBalance(path string) string {
 	log.Print("exiftool (get camera matching white balance)...")
-	out, err := exifserver.Command("-duplicates", "-short3", "-fast", "-WhiteBalance", path)
+	out, err := exifserver.Command("-duplicates", "-short3", "-fast", "-ExifIFD:WhiteBalance", "-MakerNotes:WhiteBalance", path)
 	if err != nil {
 		return ""
 	}
