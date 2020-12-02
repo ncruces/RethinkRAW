@@ -203,7 +203,7 @@ window.saveFile = async () => {
     let dialog = document.getElementById('progress-dialog');
     let progress = dialog.querySelector('progress');
     progress.removeAttribute('value');
-    dialog.firstChild.textContent = 'Exporting…';
+    dialog.firstChild.textContent = 'Saving…';
     dialog.showModal();
     try {
         await restRequest('POST', '?save&' + query, { progress: progress });

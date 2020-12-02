@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/photo.css">
     <link rel="stylesheet" href="/raw-editor.css">
     <link rel="stylesheet" href="/dialog-polyfill.css">
+    <link rel="preload" as="style" href="/normalize.css">
     <link rel="preload" as="style" href="/fontawesome.css">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/webfonts/fa-solid-900.woff2">
     <script src="/dialog-polyfill.js" defer></script>
@@ -22,12 +23,12 @@
     <div id=box1>
         <div id=menu>
             <div class="toolbar">
-                <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
-                <button type=button title="S̲ave" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fa-save"></i></button>
+                <button type=button title="Go back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="S̲ave changes" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fa-save"></i></button>
                 <button type=button title="Ex̲port JPEG (⌥-click for options)" accesskey="x" class="alt-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
                 <button type=button title="Export…" class="alt-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
                 <button type=button title="Z̲oom" accesskey="z" onclick="toggleZoom(event)" id=zoom><i class="fas fa-search-plus"></i><i class="fas fa-search-minus pushed"></i></button>
-                <button type=button title="W̲hite balance" accesskey="w" onclick="toggleWhite(event)" id=white><i class="fas fa-eye-dropper"></i><i class="fas fa-eye-dropper pushed"></i></button>
+                <button type=button title="Pick w̲hite balance" accesskey="w" onclick="toggleWhite(event)" id=white><i class="fas fa-eye-dropper"></i><i class="fas fa-eye-dropper pushed"></i></button>
                 <button type=button title="Rotate couterclockwise (⌥-click to flip horizontally)" class="alt-off" onclick="orientationChange('ccw')"><i class="fas fa-rotate-ccw"></i></button>
                 <button type=button title="Rotate clockwise (⌥-click to flip vertically)" class="alt-off" onclick="orientationChange('cw')"><i class="fas fa-rotate-cw"></i></button>
                 <button type=button title="Flip horizontally" class="alt-on" onclick="orientationChange('hz')"><i class="fas fa-arrows-alt-h"></i></button>

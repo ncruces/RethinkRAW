@@ -7,6 +7,9 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
+    <link rel="preload" as="style" href="/normalize.css">
+    <link rel="preload" as="style" href="/fontawesome.css">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/webfonts/fa-solid-900.woff2">
     <script src="/main.js" defer></script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
 
@@ -41,10 +44,10 @@
 <body>
     <form>
         <h1>What do you want to do?</h1>
-        <button formmethod=post formaction="/dialog?gallery">Browse photos…</button>
-        <button formmethod=post formaction="/dialog?photo">Edit a photo…</button>
+        <button formmethod=post formaction="/dialog?gallery"><i class="fas fa-folder-open"></i> Browse photos…</button>
+        <button formmethod=post formaction="/dialog?photo"><i class="fas fa-image"></i> Edit a photo…</button>
         <p>
-        <button formmethod=post formaction="/dialog?batch">Batch edit photos…</button>
+        <button formmethod=post formaction="/dialog?batch"><i class="fas fa-tasks"></i> Batch edit photos…</button>
     </form>
     <span><a href="/about.html">About RethinkRAW</a></span>
 </body>

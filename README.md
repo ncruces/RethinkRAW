@@ -38,8 +38,8 @@ To achieve this, RethinkRAW leverages the free
 
 #### Browsing photos
 
-![Browsing photos](screens/browse.jpg)
+![Browsing photos](screens/browse.png)
 
 #### Editing a photo
 
-![Editing a photo](screens/edit.jpg)
+![Editing a photo](screens/edit.png)

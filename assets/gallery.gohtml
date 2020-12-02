@@ -7,6 +7,7 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/main.css">
+    <link rel="preload" as="style" href="/normalize.css">
     <link rel="preload" as="style" href="/fontawesome.css">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/webfonts/fa-solid-900.woff2">
     <script src="/main.js" defer></script>
@@ -22,7 +23,8 @@
     <div id=menu-sticker>
         <div id=menu>
             <div class="toolbar">
-                <button type=button title="Back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="Go back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="Reload page" class="minimal-ui" onclick="location.reload()"><i class="fas fa-sync"></i></button>
                 <button type=button title="Batch edit photos…" onclick="location='/batch/{{.Path}}'"><i class="fas fa-tasks"></i></button>
                 <span>{{.Title}}</span>
             </div>

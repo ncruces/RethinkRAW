@@ -66,6 +66,10 @@ body {
     display: none;
 }
 
+#menu .toolbar>span {
+    margin-left: 1ch;
+}
+
 @media (display-mode: browser) {
     #menu .minimal-ui {
         display: none;
