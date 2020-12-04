@@ -663,14 +663,14 @@ function formatNumber(val, step) {
     if (!navigator.platform.includes('Mac')) {
         for (let n of document.querySelectorAll('.alt-off')) n.title = n.title.replace('⌥', 'alt');
     }
-    function toogleAlt(evt) {
+    function toggleAlt(evt) {
         let key = evt.altKey && !(evt.ctrlKey || evt.metaKey || evt.shiftKey);
         for (let n of document.querySelectorAll('.alt-off')) n.hidden = key;
         for (let n of document.querySelectorAll('.alt-on')) n.hidden = !key;
     }
-    window.addEventListener('keydown', toogleAlt);
-    window.addEventListener('keyup', toogleAlt);
-    toogleAlt({});
+    window.addEventListener('keydown', toggleAlt);
+    window.addEventListener('keyup', toggleAlt);
+    toggleAlt({});
 
     for (let n of document.querySelectorAll('fieldset legend')) {
         n.addEventListener('click', () => {
