@@ -72,7 +72,3 @@ function sleep(ms) {
         return setTimeout(resolve, ms);
     });
 }
-
-function encodeURIParam(p) {
-    return encodeURIComponent(p).replace('%20', '+');
-}

@@ -67,10 +67,9 @@ void async function() {
         let wb = await restRequest('GET', '?whiteBalance');
         if (wb.temperature) {
             whiteBalancePresets['As Shot'] = wb;
-            let restoreSave = save.disabled;
             whiteBalanceChange(form.whiteBalance);
             temperatureInput(form.temperature);
-            save.disabled = restoreSave;
+            save.disabled = !upgraded;
         }
     } catch (e) {
     }
@@ -468,52 +467,49 @@ let updatePhoto = function () {
 }();
 
 function formQuery() {
-    let query = [];
+    let query = new URLSearchParams();
 
     for (let k of ['orientation', 'process', 'profile', 'whiteBalance', 'toneCurve']) {
-        if (form[k].value) query.push(k + '=' + encodeURIParam(form[k].value));
+        if (form[k].value) query.set(k, form[k].value);
     }
     if (form.whiteBalance.value === 'Custom') {
-        query.push('temperature=' + encodeURIParam(form.temperature[0].value));
-        query.push('tint=' + encodeURIParam(form.tint[0].value));
+        query.set('temperature', form.temperature[0].value);
+        query.set('tint', form.tint[0].value);
     }
-    if (form.tone.value === 'Auto') query.push('autoTone=1');
+    if (form.tone.value === 'Auto') query.set('autoTone', '1');
     else for (let k of ['exposure', 'contrast', 'highlights', 'shadows', 'whites', 'blacks', 'vibrance', 'saturation']) {
         if (form[k][0].value == 0) continue;
-        query.push(k + '=' + encodeURIParam(form[k][0].value));
+        query.set(k, form[k][0].value);
     }
     for (let k of ['texture', 'clarity', 'dehaze', 'sharpness', 'luminanceNR', 'colorNR']) {
         if (form[k][0].value == 0) continue;
-        query.push(k + '=' + encodeURIParam(form[k][0].value));
+        query.set(k, form[k][0].value);
     }
     for (let k of ['lensProfile', 'autoLateralCA']) {
-        if (form[k].checked) query.push(k + '=1');
+        if (form[k].checked) query.set(k, '1');
     }
 
-    return query.join('&');
+    return query.toString();
 }
 
 function exportQuery() {
+    let query = new URLSearchParams();
+
     let form = document.getElementById('export-form');
-    let query = [];
-
     if (form.format.value === 'DNG') {
-        query.push('dng=1');
-        query.push('preview=' + encodeURIParam(form.preview.value));
+        query.set('dng', '1');
+        query.set('preview', form.preview.value);
         for (let k of ['lossy', 'embed']) {
-            if (form[k].checked) query.push(k + '=1');
+            if (form[k].checked) query.set(k, '1');
         }
-    } else {
-        let resample = form.resample.checked;
-        if (!resample) return '';
-
-        query.push('resample=1');
+    } else if (form.resample.checked) {
+        query.set('resample', '1');
         for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
-            query.push(k + '=' + encodeURIParam(form[k].value));
+            query.set(l, form[k].value);
         }
     }
 
-    return query.join('&');
+    return query.toString();
 }
 
 function restRequest(method, url, { body, progress } = {}) {
