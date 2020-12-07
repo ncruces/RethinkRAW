@@ -2,12 +2,15 @@ void function () {
 
 let form = document.getElementById('settings');
 let save = document.getElementById('save');
+let edit = document.getElementById('edit') || {};
 let zoom = document.getElementById('zoom');
 let white = document.getElementById('white');
 let photo = document.getElementById('photo');
 let spinner = document.getElementById('spinner');
 
-void async function() {
+async function init() {
+    if (form.hidden || !form.querySelector('fieldset').disabled) return;
+
     let settings;
     try {
         settings = await restRequest('GET', '?settings');
@@ -55,6 +58,7 @@ void async function() {
     toneChange(form.tone, tone);
 
     save.disabled = !upgraded;
+    edit.disabled = upgraded;
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }
@@ -66,14 +70,16 @@ void async function() {
     try {
         let wb = await restRequest('GET', '?whiteBalance');
         if (wb.temperature) {
+            let restore = save.disabled;
             whiteBalancePresets['As Shot'] = wb;
             whiteBalanceChange(form.whiteBalance);
             temperatureInput(form.temperature);
-            save.disabled = !upgraded;
+            save.disabled = restore;
+            edit.disabled = !restore;
         }
     } catch (e) {
     }
-}();
+}
 
 window.addEventListener('beforeunload', evt => {
     if (!save.disabled) {
@@ -82,8 +88,14 @@ window.addEventListener('beforeunload', evt => {
     }
 });
 
+window.toggleEdit = () => {
+    form.hidden = !form.hidden;
+    init();
+};
+
 window.valueChange = () => {
     save.disabled = false;
+    edit.disabled = true;
     updatePhoto();
 };
 
@@ -207,6 +219,7 @@ window.saveFile = async () => {
     try {
         await restRequest('POST', '?save&' + query, { progress: progress });
         save.disabled = true;
+        edit.disabled = false;
     } catch (e) {
         alertError('Save failed', e);
     }
@@ -467,6 +480,7 @@ let updatePhoto = function () {
 }();
 
 function formQuery() {
+    if (form.hidden) return '';
     let query = new URLSearchParams();
 
     for (let k of ['orientation', 'process', 'profile', 'whiteBalance', 'toneCurve']) {
@@ -766,6 +780,8 @@ if (photo) {
             }
         }
     });
+
+    init();
 }
 
 JSON.parseLast = (ndjson) => {

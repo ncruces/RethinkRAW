@@ -24,6 +24,7 @@
         <div id=menu>
             <div class="toolbar">
                 <button type=button title="Go back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
+                <button type=button title="Reload photo" class="minimal-ui" onclick="location.reload()"><i class="fas fa-sync"></i></button>
                 <button type=button title="S̲ave changes" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fa-save"></i></button>
                 <button type=button title="Ex̲port JPEG (⌥-click for options)" accesskey="x" class="alt-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
                 <button type=button title="Export…" class="alt-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
@@ -42,7 +43,7 @@
         </div>
     </div>
 
-    {{- template "raw-editor.gohtml" }}
+    {{template "raw-editor.gohtml"}}
 
     <dialog id=meta-dialog></dialog>
 </body>

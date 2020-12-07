@@ -24,8 +24,8 @@
         <div id=menu>
             <div class="toolbar">
                 <button type=button title="Go back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
-                <button type=button title="Reload page" class="minimal-ui" onclick="location.reload()"><i class="fas fa-sync"></i></button>
-                <button type=button title="Batch edit photos…" onclick="location='/batch/{{.Path}}'"><i class="fas fa-tasks"></i></button>
+                <button type=button title="Reload folder" class="minimal-ui" onclick="location.reload()"><i class="fas fa-sync"></i></button>
+                <button type=button title="Batch process folder…" onclick="location='/batch/{{.Path}}'"><i class="fas fa-tasks"></i></button>
                 <span>{{.Title}}</span>
             </div>
             {{- range .Dirs}}
