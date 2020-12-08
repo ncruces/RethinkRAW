@@ -8,7 +8,7 @@ let white = document.getElementById('white');
 let photo = document.getElementById('photo');
 let spinner = document.getElementById('spinner');
 
-async function init() {
+async function loadSettings() {
     if (form.hidden || !form.querySelector('fieldset').disabled) return;
 
     let settings;
@@ -90,7 +90,7 @@ window.addEventListener('beforeunload', evt => {
 
 window.toggleEdit = () => {
     form.hidden = !form.hidden;
-    init();
+    loadSettings();
 };
 
 window.valueChange = () => {
@@ -242,7 +242,7 @@ window.exportFile = async (state) => {
     }
 
     let query = formQuery();
-    if (state === 'export') query += '&' + exportQuery();
+    if (state === 'export') exportQuery(query);
 
     let dialog = document.getElementById('progress-dialog');
     let progress = dialog.querySelector('progress');
@@ -444,7 +444,7 @@ let updatePhoto = function () {
     function load() {
         if (loading) return;
         let newSize = calcSize();
-        let newQuery = formQuery();
+        let newQuery = formQuery().toString();
         if (size >= newSize && query === newQuery) {
             spinner.hidden = true;
             loading = false;
@@ -479,9 +479,9 @@ let updatePhoto = function () {
     return loadDelayed;
 }();
 
-function formQuery() {
-    if (form.hidden) return '';
-    let query = new URLSearchParams();
+function formQuery(query) {
+    if (query === void 0) query = new URLSearchParams();
+    if (form.hidden) return query;
 
     for (let k of ['orientation', 'process', 'profile', 'whiteBalance', 'toneCurve']) {
         if (form[k].value) query.set(k, form[k].value);
@@ -503,11 +503,11 @@ function formQuery() {
         if (form[k].checked) query.set(k, '1');
     }
 
-    return query.toString();
+    return query;
 }
 
-function exportQuery() {
-    let query = new URLSearchParams();
+function exportQuery(query) {
+    if (query === void 0) query = new URLSearchParams();
 
     let form = document.getElementById('export-form');
     if (form.format.value === 'DNG') {
@@ -519,11 +519,12 @@ function exportQuery() {
     } else if (form.resample.checked) {
         query.set('resample', '1');
         for (let k of ['quality', 'fit', 'long', 'short', 'width', 'height', 'dimunit', 'density', 'denunit', 'mpixels']) {
-            query.set(l, form[k].value);
+            if (form[k].value == 0) continue;
+            query.set(k, form[k].value);
         }
     }
 
-    return query.toString();
+    return query;
 }
 
 function restRequest(method, url, { body, progress } = {}) {
@@ -781,7 +782,7 @@ if (photo) {
         }
     });
 
-    init();
+    loadSettings();
 }
 
 JSON.parseLast = (ndjson) => {

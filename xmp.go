@@ -165,8 +165,15 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 }
 
 func editXMP(path string, xmp xmpSettings) error {
+	// no process means don't edit
+	if xmp.Process == 0 {
+		return nil
+	}
+
 	// zip means shorter xml output, not compression
-	opts := []string{"--printConv", "-zip", "-sep", "; "}
+	opts := []string{
+		"--printConv", "-zip", "-sep", "; ",
+		"-XMP-crs:ProcessVersion=" + fmt.Sprintf("%.1f", xmp.Process)}
 
 	// filename
 	if xmp.Filename != "" {
@@ -181,10 +188,6 @@ func editXMP(path string, xmp xmpSettings) error {
 	if xmp.Orientation != 0 {
 		opts = append(opts, "-Orientation="+strconv.Itoa(xmp.Orientation))
 	}
-	// process
-	if xmp.Process != 0 {
-		opts = append(opts, "-XMP-crs:ProcessVersion="+fmt.Sprintf("%.1f", xmp.Process))
-	}
 	// profile
 	if xmp.Profile != "" && xmp.Profile != "Custom" {
 		if settings, ok := profileSettings[xmp.Profile]; ok {
@@ -198,13 +201,14 @@ func editXMP(path string, xmp xmpSettings) error {
 	}
 
 	// white balance
-	opts = append(opts, "-XMP-crs:WhiteBalance="+xmp.WhiteBalance)
 	if xmp.WhiteBalance == "Custom" {
 		opts = append(opts,
 			"-XMP-crs:ColorTemperature="+strconv.Itoa(xmp.Temperature),
-			"-XMP-crs:Tint="+strconv.Itoa(xmp.Tint))
-	} else {
+			"-XMP-crs:Tint="+strconv.Itoa(xmp.Tint),
+			"-XMP-crs:WhiteBalance=Custom")
+	} else if xmp.WhiteBalance != "" {
 		opts = append(opts,
+			"-XMP-crs:WhiteBalance="+xmp.WhiteBalance,
 			"-XMP-crs:ColorTemperature=",
 			"-XMP-crs:Tint=")
 	}
