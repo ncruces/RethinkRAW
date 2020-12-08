@@ -262,11 +262,15 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 		}
 
 		round := func(x float64) int {
+			if x == 0.0 {
+				return util.MaxInt
+			}
 			i := int(x + 0.5)
-			if i > 0 {
+			if i < 16 {
+				return 16
+			} else {
 				return i
 			}
-			return util.MaxInt
 		}
 
 		if ex.Fit == "dims" {
@@ -279,8 +283,8 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 				fit.X = round(mul * long)
 				fit.Y = round(mul * short)
 			} else {
-				fit.X = round(mul * long)
-				fit.Y = round(mul * short)
+				fit.X = round(mul * short)
+				fit.Y = round(mul * long)
 			}
 		} else {
 			fit.X = round(mul * ex.Width)
