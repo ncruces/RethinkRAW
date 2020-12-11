@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 
+	"rethinkraw/internal/chrome"
 	"rethinkraw/internal/util"
 
 	"github.com/ncruces/go-exiftool"
@@ -15,6 +16,7 @@ var (
 	BaseDir, DataDir, TempDir string
 	Dcraw, DcrawEmu           string
 	DngConverter              string
+	ChromeCmd                 *chrome.Cmd
 )
 
 func SetupPaths() (err error) {

@@ -2,8 +2,6 @@ package util
 
 import (
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -15,22 +13,6 @@ func init() {
 			break
 		}
 	}
-}
-
-func FindChrome() string {
-	versions := []string{"Google Chrome", "Chromium"}
-
-	for _, v := range versions {
-		c := filepath.Join("/Applications", v+".app", "Contents/MacOS", v)
-		if _, err := os.Stat(c); err == nil {
-			return c
-		}
-	}
-	return ""
-}
-
-func ExitChrome(cmd *exec.Cmd) {
-	cmd.Process.Signal(os.Interrupt)
 }
 
 func GetANSIPath(path string) (string, error) {

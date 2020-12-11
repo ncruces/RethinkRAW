@@ -26,33 +26,6 @@ var (
 	setForegroundWindow   = user32.NewProc("SetForegroundWindow")
 )
 
-func FindChrome() string {
-	versions := []string{`Google\Chrome`, `Chromium`}
-	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
-	suffix := `\Application\chrome.exe`
-
-	for _, v := range versions {
-		for _, p := range prefixes {
-			if p != "" {
-				c := filepath.Join(p, v, suffix)
-				if _, err := os.Stat(c); err == nil {
-					return c
-				}
-			}
-		}
-	}
-	return ""
-}
-
-func ExitChrome(cmd *exec.Cmd) {
-	for i := 0; i < 10; i++ {
-		if exec.Command("taskkill", "/pid", strconv.Itoa(cmd.Process.Pid)).Run() != nil {
-			return
-		}
-		time.Sleep(time.Second / 10)
-	}
-}
-
 func isANSIString(s string) bool {
 	if s == "" {
 		return true

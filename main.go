@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 
+	"rethinkraw/internal/chrome"
 	"rethinkraw/internal/config"
 	"rethinkraw/internal/util"
 	"rethinkraw/osutil"
@@ -75,15 +74,18 @@ func run() error {
 		go http.Serve(ln)
 	}
 
-	if chrome := util.FindChrome(); chrome != "" {
-		cmd := setupChrome(chrome, url.String())
+	if chrome.Installed() {
+		data := filepath.Join(config.DataDir, "chrome")
+		cache := filepath.Join(config.TempDir, "chrome")
+		cmd := chrome.New(url.String(), data, cache)
+		config.ChromeCmd = cmd
+
 		if err := cmd.Start(); err != nil {
 			return err
 		}
-
 		go func() {
 			<-shutdown
-			util.ExitChrome(cmd)
+			cmd.Exit()
 		}()
 		if err := cmd.Wait(); err != nil {
 			return err
@@ -98,24 +100,4 @@ func run() error {
 	}
 
 	return nil
-}
-
-func setupChrome(chrome, url string) *exec.Cmd {
-	data := filepath.Join(config.DataDir, "chrome")
-	cache := filepath.Join(config.TempDir, "chrome")
-
-	prefs := filepath.Join(data, "Default", "Preferences")
-	if _, err := os.Stat(prefs); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(prefs), 0755); err == nil {
-			ioutil.WriteFile(prefs, []byte(`{
-				"profile": {"block_third_party_cookies": true},
-				"enable_do_not_track": true
-			}`), 0666)
-		}
-	}
-
-	// https://source.chromium.org/chromium/chromium/src/+/master:chrome/test/chromedriver/chrome_launcher.cc
-	return exec.Command(chrome, "--app="+url, "--homepage="+url, "--user-data-dir="+data, "--disk-cache-dir="+cache,
-		"--no-first-run", "--no-service-autorun", "--disable-sync", "--disable-extensions", "--disable-default-apps",
-		"--disable-background-networking", "--disable-client-side-phishing-detection")
 }
