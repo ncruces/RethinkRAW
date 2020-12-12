@@ -37,7 +37,7 @@
         {{- range .Photos}}
         <a href="/photo/{{.Path}}"><img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
         {{- else}}
-        <span>No RAW files here.</span>
+        <span>No RAW photos here.</span>
         {{- end}}
     </div>
 </body>
