@@ -68,7 +68,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Filename = path
 
-		exppath := exportName(path, exp)
+		exppath := exportPath(path, exp)
 		if res, err := zenity.SelectFileSave(zenity.Filename(exppath), zenity.ConfirmOverwrite()); err != nil {
 			return HTTPResult{Error: err}
 		} else if res == "" {

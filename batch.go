@@ -1,9 +1,13 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"rethinkraw/internal/util"
+	"rethinkraw/osutil"
 )
 
 var batches Batches
@@ -47,26 +51,70 @@ func (p *Batches) Get(id string) []string {
 	return nil
 }
 
-func BatchProcessor(files []string, proc func(file string) error) <-chan error {
+type BatchPhoto struct {
+	Path string
+	Name string
+}
+
+func FindPhotos(batch []string) ([]BatchPhoto, error) {
+	var photos []BatchPhoto
+	for _, path := range batch {
+		var prefix string
+		if len(batch) > 1 {
+			prefix, _ = filepath.Split(path)
+		} else {
+			prefix = path + string(filepath.Separator)
+		}
+		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if osutil.HiddenFile(info) {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if info.Mode().IsRegular() {
+				if _, ok := extensions[strings.ToUpper(filepath.Ext(path))]; ok {
+					var name string
+					if strings.HasPrefix(path, prefix) {
+						name = path[len(prefix):]
+					} else {
+						_, name = filepath.Split(path)
+					}
+					photos = append(photos, BatchPhoto{path, name})
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return photos, nil
+}
+
+func BatchProcess(photos []BatchPhoto, proc func(photo BatchPhoto) error) <-chan error {
 	const parallelism = 2
 
 	output := make(chan error, parallelism)
-	input := make(chan string)
+	input := make(chan BatchPhoto)
 	wait := sync.WaitGroup{}
 	wait.Add(parallelism)
 
 	for n := 0; n < parallelism; n++ {
 		go func() {
-			for file := range input {
-				output <- proc(file)
+			for photo := range input {
+				output <- proc(photo)
 			}
 			wait.Done()
 		}()
 	}
 
 	go func() {
-		for _, file := range files {
-			input <- file
+		for _, photo := range photos {
+			input <- photo
 		}
 		close(input)
 		wait.Wait()

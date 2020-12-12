@@ -176,14 +176,14 @@ func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error
 	}
 }
 
-func exportName(path string, exp exportSettings) string {
+func exportPath(path string, exp exportSettings) string {
 	var ext string
 	if exp.DNG {
 		ext = ".dng"
 	} else {
 		ext = ".jpg"
 	}
-	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)) + ext
+	return strings.TrimSuffix(path, filepath.Ext(path)) + ext
 }
 
 func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err error) {
@@ -321,7 +321,7 @@ func loadSidecar(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dst, d, 0666)
+	return ioutil.WriteFile(dst, d, 0600)
 }
 
 func destSidecar(src string) (string, error) {

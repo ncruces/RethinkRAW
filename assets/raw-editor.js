@@ -20,6 +20,8 @@ async function loadSettings() {
         return;
     }
 
+    if (settings === '') return;
+
     let upgraded = false;
     if (settings.process == null || settings.process < 6.7 || settings > 11) {
         if (settings.process) alert('This file was processed with an incompatible version of Camera Raw.\nPrevious edits will not be faithfully reproduced.');

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,30 +36,9 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		return HTTPResult{Status: http.StatusGone}
 	}
-
-	// get files in batch
-	var files []string
-	for _, path := range batch {
-		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if osutil.HiddenFile(info) {
-				if info.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
-			if info.Mode().IsRegular() {
-				if _, ok := extensions[strings.ToUpper(filepath.Ext(path))]; ok {
-					files = append(files, path)
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return HTTPResult{Error: err}
-		}
+	photos, err := FindPhotos(batch)
+	if err != nil {
+		return HTTPResult{Error: err}
 	}
 
 	_, save := r.Form["save"]
@@ -77,15 +55,15 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Orientation = 0
 
-		results := BatchProcessor(files, func(file string) error {
+		results := BatchProcess(photos, func(photo BatchPhoto) error {
 			xmp := xmp
-			xmp.Filename = file
-			return saveEdit(file, xmp)
+			xmp.Filename = photo.Path
+			return saveEdit(photo.Path, xmp)
 		})
 
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		w.WriteHeader(http.StatusMultiStatus)
-		batchResultWriter(w, results, len(files))
+		batchResultWriter(w, results, len(photos))
 		return HTTPResult{}
 
 	case export:
@@ -101,39 +79,55 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 		xmp.Orientation = 0
 
-		exppath := filepath.Dir(files[0])
-		if res, err := zenity.SelectFile(zenity.Directory(), zenity.Filename(exppath)); err != nil {
-			return HTTPResult{Error: err}
-		} else if res == "" {
-			return HTTPResult{Status: http.StatusNoContent}
-		} else {
-			exppath = res
+		var exppath string
+		if len(photos) > 0 {
+			exppath = filepath.Dir(photos[0].Path)
+			if res, err := zenity.SelectFile(zenity.Directory(), zenity.Filename(exppath)); err != nil {
+				return HTTPResult{Error: err}
+			} else if res == "" {
+				return HTTPResult{Status: http.StatusNoContent}
+			} else {
+				exppath = res
+			}
 		}
 
-		results := BatchProcessor(files, func(file string) error {
-			var f io.WriteCloser
+		results := BatchProcess(photos, func(photo BatchPhoto) (err error) {
 			xmp := xmp
-			xmp.Filename = file
-			out, err := exportEdit(file, xmp, exp)
-			if err == nil {
-				f, err = osutil.NewFile(filepath.Join(exppath, exportName(file, exp)))
+			xmp.Filename = photo.Path
+			out, err := exportEdit(photo.Path, xmp, exp)
+			if err != nil {
+				return err
 			}
-			if err == nil {
-				_, err = f.Write(out)
+
+			exppath := filepath.Join(exppath, exportPath(photo.Name, exp))
+			if err := os.MkdirAll(filepath.Dir(exppath), 0777); err != nil {
+				return err
 			}
-			if cerr := f.Close(); err == nil {
-				err = cerr
+			f, err := osutil.NewFile(exppath)
+			if err != nil {
+				return err
 			}
+			defer func() {
+				cerr := f.Close()
+				if err == nil {
+					err = cerr
+				}
+			}()
+
+			_, err = f.Write(out)
 			return err
 		})
 
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		w.WriteHeader(http.StatusMultiStatus)
-		batchResultWriter(w, results, len(files))
+		batchResultWriter(w, results, len(photos))
 		return HTTPResult{}
 
 	case settings:
-		if xmp, err := loadEdit(files[0]); err != nil {
+		if len(photos) == 0 {
+			return HTTPResult{Status: http.StatusNoContent}
+		}
+		if xmp, err := loadEdit(photos[0].Path); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "application/json")
@@ -152,9 +146,8 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			Photos []struct{ Name, Path string }
 		}{}
 
-		for _, file := range files {
-			name := filepath.Base(file)
-			item := struct{ Name, Path string }{name, toURLPath(file)}
+		for _, photo := range photos {
+			item := struct{ Name, Path string }{photo.Name, toURLPath(photo.Path)}
 			data.Photos = append(data.Photos, item)
 		}
 

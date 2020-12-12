@@ -28,11 +28,11 @@ func New(url string, dataDir, tempDir string) *Cmd {
 
 	prefs := filepath.Join(dataDir, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(prefs), 0755); err == nil {
+		if err := os.MkdirAll(filepath.Dir(prefs), 0700); err == nil {
 			ioutil.WriteFile(prefs, []byte(`{
 				"profile": {"block_third_party_cookies": true},
 				"enable_do_not_track": true
-			}`), 0666)
+			}`), 0600)
 		}
 	}
 
