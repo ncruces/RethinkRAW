@@ -613,8 +613,8 @@ function restRequest(method, url, { body, progress } = {}) {
                     return;
                 }
                 if (evt.lengthComputable) {
-                    progress.value = pe.loaded;
-                    progress.max = pe.total;
+                    progress.value = evt.loaded;
+                    progress.max = evt.total;
                     return;
                 }
             };
