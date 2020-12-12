@@ -3,11 +3,6 @@
 
 package util
 
-import (
-	"os"
-	"os/exec"
-)
-
 func GetANSIPath(path string) (string, error) {
 	return path, nil
 }

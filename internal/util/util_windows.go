@@ -4,12 +4,9 @@ import (
 	"errors"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
-	"time"
 	"unicode/utf16"
 	"unsafe"
 )
