@@ -55,6 +55,10 @@ func (c *Cmd) Wait() error {
 	return c.cmd.Wait()
 }
 
-func (c *Cmd) Pid() int {
-	return c.cmd.Process.Pid
+func (c *Cmd) Process() *os.Process {
+	return c.cmd.Process
+}
+
+func (c *Cmd) ProcessState() *os.ProcessState {
+	return c.cmd.ProcessState
 }

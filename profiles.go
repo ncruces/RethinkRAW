@@ -87,8 +87,10 @@ var profileSettings = map[string][]string{
 	},
 }
 
+type makeModel struct{ make, model string }
+
 var cameraProfilesMtx sync.Mutex
-var cameraProfiles = map[string]struct {
+var cameraProfiles = map[makeModel]struct {
 	adobe string
 	other []string
 }{}
@@ -97,7 +99,7 @@ func getCameraProfiles(make, model string) (string, []string) {
 	cameraProfilesMtx.Lock()
 	defer cameraProfilesMtx.Unlock()
 
-	res, ok := cameraProfiles[make+" "+model]
+	res, ok := cameraProfiles[makeModel{make, model}]
 	if ok {
 		return res.adobe, res.other
 	}
@@ -113,6 +115,6 @@ func getCameraProfiles(make, model string) (string, []string) {
 			res.other = append(res.other, string(name))
 		}
 	}
-	cameraProfiles[make+" "+model] = res
+	cameraProfiles[makeModel{make, model}] = res
 	return res.adobe, res.other
 }

@@ -78,7 +78,6 @@ func run() error {
 		data := filepath.Join(config.DataDir, "chrome")
 		cache := filepath.Join(config.TempDir, "chrome")
 		cmd := chrome.New(url.String(), data, cache)
-		config.ChromeCmd = cmd
 
 		if err := cmd.Start(); err != nil {
 			return err
