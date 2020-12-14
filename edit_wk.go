@@ -68,10 +68,10 @@ func openWorkspace(path string) (wk workspace, err error) {
 	fi, err := os.Stat(wk.base + "edit.dng")
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
 		wk.hasEdit = true
-		_, e := os.Stat(wk.base + "orig.xmp")
-		wk.hasXMP = e == nil
-		_, e = os.Stat(wk.base + "orig.ppm")
+		_, e := os.Stat(wk.base + "edit.ppm")
 		wk.hasPixels = e == nil
+		_, e = os.Stat(wk.base + "orig.xmp")
+		wk.hasXMP = e == nil
 		return wk, err
 	}
 
@@ -80,8 +80,6 @@ func openWorkspace(path string) (wk workspace, err error) {
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
-		_, e = os.Stat(wk.base + "orig.ppm")
-		wk.hasPixels = e == nil
 		return wk, err
 	}
 
@@ -113,19 +111,19 @@ func (wk *workspace) orig() string {
 	return wk.base + "orig" + wk.ext
 }
 
-// A DNG conversion of the original RAW file used for editing previews (downscaled to 2560).
-func (wk *workspace) edit() string {
-	return wk.base + "edit.dng"
-}
-
 // A DNG used as the target for all conversions.
 func (wk *workspace) temp() string {
 	return wk.base + "temp.dng"
 }
 
-// A pixel map for orig.EXT.
+// A DNG conversion of the original RAW file used for editing previews (downscaled to 2560).
+func (wk *workspace) edit() string {
+	return wk.base + "edit.dng"
+}
+
+// A RAW pixel map for edit.dng.
 func (wk *workspace) pixels() string {
-	return wk.base + "orig.ppm"
+	return wk.base + "edit.ppm"
 }
 
 // A sidecar for orig.EXT.

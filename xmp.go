@@ -517,26 +517,14 @@ func dngPreview(path string) string {
 
 func getRawPixels(path string) error {
 	log.Print("dcraw (get raw pixels)...")
-	cmd := exec.Command(config.DcrawEmu,
-		"-r", "1", "1", "1", "1",
-		"-o", "0",
-		"-h",
-		"-4",
-		"-t", "0",
-		"-Z", "ppm",
-		path)
-	err := cmd.Run()
-	if err == nil {
-		return nil
-	}
-	cmd = exec.Command(config.Dcraw,
+	cmd := exec.Command(config.Dcraw,
 		"-r", "1", "1", "1", "1",
 		"-o", "0",
 		"-h",
 		"-4",
 		"-t", "0",
 		path)
-	_, err = cmd.Output()
+	_, err := cmd.Output()
 	return err
 }
 

@@ -13,8 +13,7 @@ import (
 
 var (
 	BaseDir, DataDir, TempDir string
-	Dcraw, DcrawEmu           string
-	DngConverter              string
+	Dcraw, DngConverter       string
 )
 
 func SetupPaths() (err error) {
@@ -35,14 +34,12 @@ func SetupPaths() (err error) {
 	switch runtime.GOOS {
 	case "windows":
 		Dcraw = BaseDir + `\utils\dcraw.exe`
-		DcrawEmu = BaseDir + `\utils\dcraw_emu.exe`
 		exiftool.Exec = BaseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
 		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
 		DngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 	case "darwin":
 		Dcraw = BaseDir + "/utils/dcraw"
-		DcrawEmu = BaseDir + "/utils/dcraw_emu"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
 		DngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
