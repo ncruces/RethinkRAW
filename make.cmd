@@ -13,16 +13,21 @@ IF NOT EXIST %tgt%\utils\exiftool\exiftool (
     go run github.com/ncruces/go-fetch -unpack %url% %tgt%\utils
 )
 
-IF NOT EXIST assets\fontawesome.css (
-    ECHO Download Font Awesome...
-    go run github.com/ncruces/go-fetch "https://unpkg.com/@fortawesome/fontawesome-free@5.x/css/fontawesome.css"         assets\fontawesome.css
-    go run github.com/ncruces/go-fetch "https://unpkg.com/@fortawesome/fontawesome-free@5.x/webfonts/fa-solid-900.woff2" assets\fa-solid-900.woff2
+IF NOT EXIST assets\normalize.css (
+    ECHO Download normalize.css...
+    go run github.com/ncruces/go-fetch "https://unpkg.com/normalize.css" > assets/normalize.css
 )
 
 IF NOT EXIST assets\dialog-polyfill.js (
     ECHO Download dialog-polyfill...
     go run github.com/ncruces/go-fetch "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.js"  assets\dialog-polyfill.js
     go run github.com/ncruces/go-fetch "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.css" assets\dialog-polyfill.css
+)
+
+IF NOT EXIST assets\fontawesome.css (
+    ECHO Download Font Awesome...
+    go run github.com/ncruces/go-fetch "https://unpkg.com/@fortawesome/fontawesome-free@5.x/css/fontawesome.css"         assets\fontawesome.css
+    go run github.com/ncruces/go-fetch "https://unpkg.com/@fortawesome/fontawesome-free@5.x/webfonts/fa-solid-900.woff2" assets\fa-solid-900.woff2
 )
 
 IF [%1]==[test] (

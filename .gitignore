@@ -28,9 +28,10 @@ Thumbs.db
 ## Project
 /stuff
 /assets_gen.go
-/assets/fontawesome.css
-/assets/fa-solid-900.woff2
+/assets/normalize.css
 /assets/dialog-polyfill.*
+/assets/fa-solid-900.woff2
+/assets/fontawesome.css
 /RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/data
 /RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/rethinkraw
 /RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/utils/exiftool

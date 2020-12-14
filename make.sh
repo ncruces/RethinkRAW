@@ -10,19 +10,24 @@ dat="$tgt/data"
 if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
     url="https://github.com/ncruces/go-exiftool/releases/download/dist/exiftool_unix.tgz"
-    curl -L "$url" 2> /dev/null | tar xz -C "$tgt/utils"
+    curl -sL "$url" | tar xz -C "$tgt/utils"
 fi
 
-if [ ! -f "assets/fontawesome.css" ]; then
-    echo Download Font Awesome...
-    curl -L "https://unpkg.com/@fortawesome/fontawesome-free@5.x/css/fontawesome.css"         2> /dev/null > assets/fontawesome.css
-    curl -L "https://unpkg.com/@fortawesome/fontawesome-free@5.x/webfonts/fa-solid-900.woff2" 2> /dev/null > assets/fa-solid-900.woff2
+if [ ! -f "assets/normalize.css" ]; then
+    echo Download normalize.css...
+    curl -sL "https://unpkg.com/normalize.css" > assets/normalize.css
 fi
 
 if [ ! -f "assets/dialog-polyfill.js" ]; then
     echo Download dialog-polyfill...
-    curl -L "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.js"  2> /dev/null > assets/dialog-polyfill.js
-    curl -L "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.css" 2> /dev/null > assets/dialog-polyfill.css
+    curl -sL "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.js"  > assets/dialog-polyfill.js
+    curl -sL "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.css" > assets/dialog-polyfill.css
+fi
+
+if [ ! -f "assets/fontawesome.css" ]; then
+    echo Download Font Awesome...
+    curl -sL "https://unpkg.com/@fortawesome/fontawesome-free@5.x/css/fontawesome.css"         > assets/fontawesome.css
+    curl -sL "https://unpkg.com/@fortawesome/fontawesome-free@5.x/webfonts/fa-solid-900.woff2" > assets/fa-solid-900.woff2
 fi
 
 if [[ "$1" == test ]]; then
