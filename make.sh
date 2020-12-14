@@ -13,6 +13,12 @@ if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     curl -sL "$url" | tar xz -C "$tgt/utils"
 fi
 
+if [ ! -f "$tgt/utils/dcraw" ]; then
+    echo Download dcraw...
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.2/dcraw.gz"
+    curl -sL "$url" | gzcat > "$tgt/utils/dcraw" && chmod +x "$tgt/utils/dcraw"
+fi
+
 if [ ! -f "assets/normalize.css" ]; then
     echo Download normalize.css...
     curl -sL "https://unpkg.com/normalize.css" > assets/normalize.css
@@ -32,11 +38,11 @@ fi
 
 if [[ "$1" == test ]]; then
     echo Test build...
-    go build -race -o "$exe"
-    shift && exec "$exe" "$@"
+    go build -race -o "$exe" && shift && exec "$exe" "$@"
 else
     echo Release build...
     osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
+    CGO_ENABLED=0
     go clean
     go generate
     go build -tags memfs -ldflags "-s -w" -o "$exe"
