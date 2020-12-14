@@ -13,6 +13,12 @@ IF NOT EXIST %tgt%\utils\exiftool\exiftool (
     go run github.com/ncruces/go-fetch -unpack %url% %tgt%\utils
 )
 
+IF NOT EXIST assets\fontawesome.css (
+    ECHO Download Font Awesome...
+    go run github.com/ncruces/go-fetch "https://unpkg.com/@fortawesome/fontawesome-free@5.x/css/fontawesome.css"         assets\fontawesome.css
+    go run github.com/ncruces/go-fetch "https://unpkg.com/@fortawesome/fontawesome-free@5.x/webfonts/fa-solid-900.woff2" assets\fa-solid-900.woff2
+)
+
 IF NOT EXIST assets\dialog-polyfill.js (
     ECHO Download dialog-polyfill...
     go run github.com/ncruces/go-fetch "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.js"  assets\dialog-polyfill.js
@@ -25,10 +31,10 @@ IF [%1]==[test] (
     %exe%
 ) ELSE (
     ECHO Release build...
-    go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=windows.manifest || EXIT /B
-    go clean || EXIT /B
-    go generate || EXIT /B
-    go build -tags memfs -ldflags "-s -w" -o %exe% || EXIT /B
-    go mod tidy || EXIT /B
+    go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=windows.manifest
+    go clean
+    go generate
+    go build -tags memfs -ldflags "-s -w" -o %exe%
+    go mod tidy
     IF EXIST %dat% RD /S /Q %dat%
 )
