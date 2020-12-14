@@ -36,7 +36,7 @@ IF [%1]==[test] (
     %exe%
 ) ELSE (
     ECHO Release build...
-    go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=windows.manifest
+    go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 -icon=assets/favicon.ico -manifest=build/app.manifest build/versioninfo.json
     go clean
     go generate
     go build -tags memfs -ldflags "-s -w" -o %exe%

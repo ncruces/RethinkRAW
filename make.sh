@@ -36,7 +36,7 @@ if [[ "$1" == test ]]; then
     shift && exec "$exe" "$@"
 else
     echo Release build...
-    osacompile -l JavaScript -o RethinkRAW.app darwin.js
+    osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
     go clean
     go generate
     go build -tags memfs -ldflags "-s -w" -o "$exe"
