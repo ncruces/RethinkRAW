@@ -13,12 +13,19 @@ if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     curl -L "$url" 2> /dev/null | tar xz -C "$tgt/utils"
 fi
 
+if [ ! -f "assets/dialog-polyfill.js" ]; then
+    echo Download dialog-polyfill...
+    curl -L "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.js"  2> /dev/null > assets/dialog-polyfill.js
+    curl -L "https://unpkg.com/dialog-polyfill@0.5/dist/dialog-polyfill.css" 2> /dev/null > assets/dialog-polyfill.css
+fi
+
 if [[ "$1" == test ]]; then
     echo Test build...
     go build -race -o "$exe"
     shift && exec "$exe" "$@"
 else
     echo Release build...
+    osacompile -l JavaScript -o RethinkRAW.app darwin.js
     go clean
     go generate
     go build -tags memfs -ldflags "-s -w" -o "$exe"
