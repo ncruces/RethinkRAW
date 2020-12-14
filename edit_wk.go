@@ -67,31 +67,17 @@ func openWorkspace(path string) (wk workspace, err error) {
 	// Have we edited this file recently (10 min)?
 	fi, err := os.Stat(wk.base + "edit.dng")
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
+		wk.hasEdit = true
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
 		_, e = os.Stat(wk.base + "orig.ppm")
 		wk.hasPixels = e == nil
-		wk.hasEdit = true
 		return wk, err
 	}
 
 	// Was this just copied (1 min)?
 	fi, err = os.Stat(wk.base + "orig" + wk.ext)
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
-		_, e := os.Stat(wk.base + "orig.xmp")
-		wk.hasXMP = e == nil
-		_, e = os.Stat(wk.base + "orig.ppm")
-		wk.hasPixels = e == nil
-		return wk, err
-	}
-
-	sfi, err := os.Stat(path)
-	if err != nil {
-		return wk, err
-	}
-
-	// Is it the same file?
-	if os.SameFile(fi, sfi) {
 		_, e := os.Stat(wk.base + "orig.xmp")
 		wk.hasXMP = e == nil
 		_, e = os.Stat(wk.base + "orig.ppm")
@@ -106,11 +92,12 @@ func openWorkspace(path string) (wk workspace, err error) {
 	}
 
 	// And look for a sidecar.
-	err = loadSidecar(path, wk.base+"orig.xmp")
+	err = copySidecar(path, wk.base+"orig.xmp")
+	if err == nil {
+		wk.hasXMP = true
+	}
 	if os.IsNotExist(err) {
 		err = nil
-	} else if err == nil {
-		wk.hasXMP = true
 	}
 	return wk, err
 }

@@ -294,7 +294,7 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 	return fit
 }
 
-func loadSidecar(src, dst string) error {
+func copySidecar(src, dst string) error {
 	var data []byte
 	err := os.ErrNotExist
 	ext := filepath.Ext(src)
