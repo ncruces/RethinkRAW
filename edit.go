@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/xml"
 	"image"
 	"io"
 	"io/ioutil"
@@ -13,6 +12,7 @@ import (
 
 	"rethinkraw/internal/util"
 	"rethinkraw/osutil"
+	"rethinkraw/xmp"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {
@@ -295,22 +295,22 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 }
 
 func loadSidecar(src, dst string) error {
-	var d []byte
+	var data []byte
 	err := os.ErrNotExist
 	ext := filepath.Ext(src)
 
 	if ext != "" {
 		// if NAME.XMP is there for NAME.EXT, use it
-		xmp := strings.TrimSuffix(src, ext) + ".xmp"
-		d, err = ioutil.ReadFile(xmp)
-		if err == nil && !isSidecarForExt(bytes.NewReader(d), ext) {
+		name := strings.TrimSuffix(src, ext) + ".xmp"
+		data, err = ioutil.ReadFile(name)
+		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			err = os.ErrNotExist
 		}
 	}
 	if os.IsNotExist(err) {
 		// if NAME.EXT.XMP is there for NAME.EXT, use it
-		d, err = ioutil.ReadFile(src + ".xmp")
-		if err == nil && !isSidecarForExt(bytes.NewReader(d), ext) {
+		data, err = ioutil.ReadFile(src + ".xmp")
+		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			err = os.ErrNotExist
 		}
 	}
@@ -321,7 +321,7 @@ func loadSidecar(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dst, d, 0600)
+	return ioutil.WriteFile(dst, data, 0600)
 }
 
 func destSidecar(src string) (string, error) {
@@ -329,15 +329,13 @@ func destSidecar(src string) (string, error) {
 
 	if ext != "" {
 		// if NAME.XMP is there for NAME.EXT, use it
-		xmp := strings.TrimSuffix(src, ext) + ".xmp"
-		if f, err := os.Open(xmp); err == nil {
-			defer f.Close()
-			if isSidecarForExt(f, ext) {
-				return xmp, nil
-			}
-			f.Close()
-		} else if !os.IsNotExist(err) {
+		name := strings.TrimSuffix(src, ext) + ".xmp"
+		data, err := ioutil.ReadFile(name)
+		if !os.IsNotExist(err) {
 			return "", err
+		}
+		if xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
+			return name, nil
 		}
 	}
 
@@ -355,32 +353,4 @@ func destSidecar(src string) (string, error) {
 
 	// fallback to NAME.XMP
 	return strings.TrimSuffix(src, ext) + ".xmp", nil
-}
-
-func isSidecarForExt(r io.Reader, ext string) bool {
-	test := func(name xml.Name) bool {
-		return name.Local == "SidecarForExtension" &&
-			(name.Space == "http://ns.adobe.com/photoshop/1.0/" || name.Space == "photoshop")
-	}
-
-	dec := xml.NewDecoder(r)
-	for {
-		t, err := dec.Token()
-		if err != nil {
-			return err == io.EOF // assume yes
-		}
-
-		if s, ok := t.(xml.StartElement); ok {
-			if test(s.Name) {
-				t, _ := dec.Token()
-				v, ok := t.(xml.CharData)
-				return ok && strings.EqualFold(ext, "."+string(v))
-			}
-			for _, a := range s.Attr {
-				if test(a.Name) {
-					return strings.EqualFold(ext, "."+a.Value)
-				}
-			}
-		}
-	}
 }

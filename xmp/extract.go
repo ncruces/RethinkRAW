@@ -32,7 +32,7 @@ func splitPacket(data []byte, atEOF bool) (advance int, token []byte, err error)
 	return advance, nil, nil
 }
 
-// ExtractXMP extracts a XMP packet from the reader.
+// ExtractXMP extracts a XMP packet from a reader.
 func ExtractXMP(r io.Reader) ([]byte, error) {
 	scan := bufio.NewScanner(r)
 	scan.Split(splitPacket)
