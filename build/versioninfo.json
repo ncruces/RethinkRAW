@@ -2,13 +2,13 @@
 	"FixedFileInfo": {
 		"FileVersion": {
 			"Major": 0,
-			"Minor": 1,
+			"Minor": 2,
 			"Patch": 0,
 			"Build": 0
 		},
 		"ProductVersion": {
 			"Major": 0,
-			"Minor": 1,
+			"Minor": 2,
 			"Patch": 0,
 			"Build": 0
 		},
@@ -22,14 +22,14 @@
 		"Comments": "RethinkRAW",
 		"CompanyName": "Nuno Cruces",
 		"FileDescription": "",
-		"FileVersion": "0.1.0.0",
+		"FileVersion": "0.2.0.0",
 		"InternalName": "rethinkraw",
 		"LegalCopyright": "© 2019-2020 Nuno Cruces",
 		"LegalTrademarks": "",
 		"OriginalFilename": "RethinkRAW.exe",
 		"PrivateBuild": "",
 		"ProductName": "RethinkRAW",
-		"ProductVersion": "0.1.0",
+		"ProductVersion": "0.2.0",
 		"SpecialBuild": ""
 	},
 	"VarFileInfo": {
