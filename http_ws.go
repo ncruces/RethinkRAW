@@ -31,6 +31,7 @@ func (ws *websocketManager) Unregister(conn *websocket.Conn) {
 func (ws *websocketManager) SendPing(conn *websocket.Conn) error {
 	ws.RLock()
 	defer ws.RUnlock()
+	conn.PayloadType = websocket.PingFrame
 	conn.SetWriteDeadline(time.Now().Add(time.Second))
 	_, err := conn.Write(nil)
 	return err
@@ -46,8 +47,8 @@ func (ws *websocketManager) ReadPong(conn *websocket.Conn) error {
 func (ws *websocketManager) Broadcast(message string) {
 	ws.Lock()
 	defer ws.Unlock()
-	for c := range ws.conns {
-		c.PayloadType = websocket.TextFrame
-		c.Write([]byte(message))
+	for conn := range ws.conns {
+		conn.PayloadType = websocket.TextFrame
+		conn.Write([]byte(message))
 	}
 }
