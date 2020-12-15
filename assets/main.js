@@ -9,9 +9,11 @@ if (typeof String.prototype.replaceAll !== 'function') {
 window.addEventListener('pageshow', function createSocket() {
     var host = location.host.replace('[::1]', 'localhost');
     window.heartbeat = new WebSocket('ws://' + host + '/ws');
+    window.heartbeat.onmessage = function (event) {
+      console.error(event.data);
+    };
     window.heartbeat.onclose = createSocket;
 });
-
 document.documentElement.addEventListener('keydown', function (evt) {
     if (navigator.platform.includes('Mac') && evt.metaKey && !(evt.altKey || evt.ctrlKey) ||
        !navigator.platform.includes('Mac') && evt.ctrlKey && !(evt.altKey || evt.metaKey)) {
