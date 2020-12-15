@@ -14,13 +14,13 @@ import (
 var exifserver *exiftool.Server
 
 func setupExifTool() (s *exiftool.Server, err error) {
-	exifserver, err = exiftool.NewServer()
+	exifserver, err = exiftool.NewServer("-ignoreMinorErrors")
 	return exifserver, err
 }
 
 func getMetaHTML(path string) ([]byte, error) {
 	log.Print("exiftool (get meta)...")
-	return exifserver.Command("-htmlFormat", "-groupHeadings", "-long", "-fixBase", "-ignoreMinorErrors", path)
+	return exifserver.Command("-htmlFormat", "-groupHeadings", "-long", "-fixBase", path)
 }
 
 func fixMetaDNG(orig, dest, name string) error {
@@ -37,7 +37,7 @@ func fixMetaDNG(orig, dest, name string) error {
 
 func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
 	// https://exiftool.org/forum/index.php?topic=8378.msg43043#msg43043
-	opts := []string{"-tagsFromFile", orig, "-fixBase", "-CommonIFD0", "-ExifIFD:all", "-GPS:all", "-fast", "-"}
+	opts := []string{"-tagsFromFile", orig, "-fixBase", "-CommonIFD0", "-ExifIFD:all", "-GPS:all", "-fast", "-ignoreMinorErrors", "-"}
 
 	log.Print("exiftool (fix jpeg)...")
 	return exiftool.CommandAsync(opts...)
