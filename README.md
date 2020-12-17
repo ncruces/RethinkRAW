@@ -15,6 +15,7 @@ Run [`make.cmd`](make.cmd) (Windows) or [`make.sh`](make.sh) (macOS).
 RethinkRAW is provided **free of charge** for **personal**, **non-commercial** use.
 
 See [LICENSE.md](LICENSE.md).
+Commercial users should also read [LICENSE-notice.md](LICENSE-notice.md).
 
 ## Features
 

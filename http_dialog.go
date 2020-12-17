@@ -6,8 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"rethinkraw/internal/util"
-
+	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/zenity"
 )
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"rethinkraw/craw"
+	"github.com/ncruces/rethinkraw/pkg/craw"
 )
 
 var defaultProfiles = []string{

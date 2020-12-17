@@ -10,10 +10,9 @@ import (
 	"log"
 	"os/exec"
 
-	"rethinkraw/internal/config"
-
 	"github.com/ncruces/go-image/resize"
 	"github.com/ncruces/go-image/rotateflip"
+	"github.com/ncruces/rethinkraw/internal/config"
 )
 
 func extractThumb(path string) ([]byte, error) {

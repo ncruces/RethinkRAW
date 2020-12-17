@@ -1,9 +1,12 @@
+// Copyright (c) 2020 Nuno Cruces
+// SPDX-License-Identifier: MIT
+
 package dng_test
 
 import (
 	"testing"
 
-	"rethinkraw/dng"
+	"github.com/ncruces/rethinkraw/pkg/dng"
 )
 
 func TestGetTemperatureFromXY(t *testing.T) {

@@ -16,8 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"rethinkraw/internal/util"
-
+	"github.com/ncruces/rethinkraw/internal/util"
 	"golang.org/x/net/websocket"
 )
 

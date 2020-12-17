@@ -1,3 +1,6 @@
+// Copyright (c) 2020 Nuno Cruces
+// SPDX-License-Identifier: MIT
+
 package craw
 
 import (

@@ -1,3 +1,6 @@
+// Copyright (c) 2020 Nuno Cruces
+// SPDX-License-Identifier: MIT
+
 // Package osutil provides additional platform-independent access to operating system functionality.
 package osutil
 

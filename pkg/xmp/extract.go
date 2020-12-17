@@ -1,3 +1,6 @@
+// Copyright (c) 2020 Nuno Cruces
+// SPDX-License-Identifier: MIT
+
 // Package xmp provides support for extracting XMP packets from data.
 package xmp
 

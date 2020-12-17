@@ -6,9 +6,8 @@ import (
 	"runtime"
 	"strings"
 
-	"rethinkraw/internal/util"
-
 	"github.com/ncruces/go-exiftool"
+	"github.com/ncruces/rethinkraw/internal/util"
 )
 
 var (

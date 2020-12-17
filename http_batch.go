@@ -7,9 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"rethinkraw/osutil"
-
 	"github.com/gorilla/schema"
+	"github.com/ncruces/rethinkraw/pkg/osutil"
 	"github.com/ncruces/zenity"
 )
 

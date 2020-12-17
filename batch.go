@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"rethinkraw/internal/util"
-	"rethinkraw/osutil"
+	"github.com/ncruces/rethinkraw/internal/util"
+	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
 var batches Batches

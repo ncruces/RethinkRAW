@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"rethinkraw/internal/chrome"
-	"rethinkraw/internal/config"
-	"rethinkraw/internal/util"
-	"rethinkraw/osutil"
+	"github.com/ncruces/rethinkraw/internal/chrome"
+	"github.com/ncruces/rethinkraw/internal/config"
+	"github.com/ncruces/rethinkraw/internal/util"
+	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
 var shutdown = make(chan os.Signal, 1)

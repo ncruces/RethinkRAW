@@ -1,4 +1,4 @@
-module rethinkraw
+module github.com/ncruces/rethinkraw
 
 go 1.15
 

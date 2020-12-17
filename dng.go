@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"rethinkraw/internal/config"
+	"github.com/ncruces/rethinkraw/internal/config"
 )
 
 func testDNGConverter() error {

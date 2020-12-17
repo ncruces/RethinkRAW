@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"rethinkraw/osutil"
+	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
 func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
