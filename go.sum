@@ -25,6 +25,8 @@ github.com/ncruces/go-image v0.1.0 h1:PCbPeiqA2Pbc7m3jWBjhJodwkGew8HEB7fC8SVM+8E
 github.com/ncruces/go-image v0.1.0/go.mod h1:DUnNl2l0T6tEuK266gUGy3Xq8C+A/71XuoWsAHh8bzg=
 github.com/ncruces/rethinkraw-pkg v0.0.0-20201218013338-cc0531de0bc3 h1:Js0es/G5tB42aJpixzL2dYOkE8B/hUfN4c4NNESIe80=
 github.com/ncruces/rethinkraw-pkg v0.0.0-20201218013338-cc0531de0bc3/go.mod h1:IM/VpLSmcQnikhXn+ZBv+KpRDwQIYESY1Jfn2yz0fOA=
+github.com/ncruces/rethinkraw-pkg v0.3.0 h1:adNwgi+xUYH754F83OTkov8UUIAzaOpV6s3srnCxbEI=
+github.com/ncruces/rethinkraw-pkg v0.3.0/go.mod h1:IM/VpLSmcQnikhXn+ZBv+KpRDwQIYESY1Jfn2yz0fOA=
 github.com/ncruces/zenity v0.5.1 h1:m/P8k5ZO4siaiLLptnDsPklXQAi+D3ddvCmPF3BC7sM=
 github.com/ncruces/zenity v0.5.1/go.mod h1:FPwYbb/qb/eMG2psReJl+L1+0LtXeDkj4R+pinA6ZjE=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
