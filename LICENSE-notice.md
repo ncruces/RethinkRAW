@@ -5,7 +5,7 @@ RethinkRAW is provided **free of charge** for **personal**, **non-commercial** u
 See [LICENSE.md](LICENSE.md).
 
 Additionally, the source code to RethinkRAW is made available for all to inspect and learn from.
-But, because of restrictions on commercial use,
+But, because of the restriction on commercial use,
 RethinkRAW is **not** “free and open-source software.”
 
 The rationale behind this decision is as follows.
@@ -23,7 +23,7 @@ RethinkRAW relies heavily on other software to do what it does.
 </dl>
 
 **ExifTool** and **dcraw** are both free and open source software.
-Using them commercially is allowed,
+Using them commercially is allowed,<sup>[1](#legal)</sup>
 but you should consider donating to those projects if you do so:
 - https://exiftool.org/#donate
 - https://www.dechifro.org/dcraw/
@@ -36,9 +36,15 @@ Adobe invests heavily in its photography software.
 DNG Converter decodes RAW photos from hundreds of cameras
 (with calibration profiles for hundreds of cameras and lenses),
 and generates high quality, full size previews of them.
+DNG Converter can also be used commercially,<sup>[1](#legal)</sup>
+but it was probably not envisioned by Adobe that it might be used this way.
 
 If you’re making money from photography, and find RethinkRAW useful,
 you should license _some_ Adobe photography software yourself.
 If you hold a valid license to any of Photoshop/Lightroom/Elements,
-you’re free to use my comparatively small contribution however you want,
-_including commercially_.
+you can consider the non-commercial requirement in [LICENSE.md](LICENSE.md) waived.
+
+---
+
+<a name="legal">[1]</a>
+This is not legal advice, please read the respective licenses.
