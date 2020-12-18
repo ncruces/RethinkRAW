@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/schema"
-	"github.com/ncruces/rethinkraw/pkg/osutil"
+	"github.com/ncruces/rethinkraw-pkg/osutil"
 	"github.com/ncruces/zenity"
 )
 

@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ncruces/rethinkraw-pkg/osutil"
+	"github.com/ncruces/rethinkraw-pkg/xmp"
 	"github.com/ncruces/rethinkraw/internal/util"
-	"github.com/ncruces/rethinkraw/pkg/osutil"
-	"github.com/ncruces/rethinkraw/pkg/xmp"
 )
 
 func loadEdit(path string) (xmp xmpSettings, err error) {

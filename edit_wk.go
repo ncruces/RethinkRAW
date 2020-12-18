@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ncruces/rethinkraw-pkg/osutil"
 	"github.com/ncruces/rethinkraw/internal/config"
 	"github.com/ncruces/rethinkraw/internal/util"
-	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
 // RethinkRAW edits happen in a workspace.

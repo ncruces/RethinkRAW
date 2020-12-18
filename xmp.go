@@ -12,9 +12,9 @@ import (
 	"strconv"
 
 	"github.com/ncruces/go-exiftool"
+	"github.com/ncruces/rethinkraw-pkg/dng"
 	"github.com/ncruces/rethinkraw/internal/config"
 	"github.com/ncruces/rethinkraw/internal/util"
-	"github.com/ncruces/rethinkraw/pkg/dng"
 )
 
 type xmpSettings struct {
