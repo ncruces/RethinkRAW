@@ -68,7 +68,8 @@ func exportJPEG(path string, settings exportSettings) ([]byte, error) {
 		img = resize.Thumbnail(uint(fit.X), uint(fit.Y), img, resize.Lanczos2)
 
 		buf := bytes.Buffer{}
-		opt := jpeg.Options{Quality: [13]int{46, 52, 63, 66, 71, 75, 78, 81, 84, 88, 92, 96, 98}[settings.Quality]}
+		// https://fotoforensics.com/tutorial.php?tt=estq
+		opt := jpeg.Options{Quality: [13]int{30, 34, 47, 62, 69, 76, 79, 82, 86, 90, 93, 97, 99}[settings.Quality]}
 		if err := jpeg.Encode(&buf, img, &opt); err != nil {
 			return nil, err
 		}
