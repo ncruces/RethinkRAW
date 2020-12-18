@@ -331,11 +331,11 @@ func destSidecar(src string) (string, error) {
 		// if NAME.XMP is there for NAME.EXT, use it
 		name := strings.TrimSuffix(src, ext) + ".xmp"
 		data, err := ioutil.ReadFile(name)
+		if err == nil && xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
+			return name, nil
+		}
 		if !os.IsNotExist(err) {
 			return "", err
-		}
-		if xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
-			return name, nil
 		}
 	}
 
