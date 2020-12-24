@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"log"
+	"sort"
 	"strings"
 	"sync"
 
@@ -104,6 +105,10 @@ func getCameraProfiles(make, model string) (string, []string) {
 		return res.adobe, res.other
 	}
 
+	if make == "FUJIFILM" {
+		res.other, _ = craw.FujifilmCameraProfiles(model)
+	}
+
 	paths, _ := craw.GetCameraProfiles(make, model)
 	for _, path := range paths {
 		log.Print("exiftool (load profile)...")
@@ -115,6 +120,9 @@ func getCameraProfiles(make, model string) (string, []string) {
 			res.other = append(res.other, string(name))
 		}
 	}
+
+	sort.Strings(res.other)
+
 	cameraProfiles[makeModel{make, model}] = res
 	return res.adobe, res.other
 }
