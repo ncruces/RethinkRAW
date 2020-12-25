@@ -3,7 +3,6 @@ package craw
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -18,7 +17,7 @@ func FujifilmCameraProfiles(model string) ([]string, error) {
 		return nil, err
 	}
 
-	prefix := fmt.Sprintf("_kProfileData_Fujifilm_Full_%s_Camera_", strings.ReplaceAll(model, " ", "_"))
+	prefix := strings.ReplaceAll(model, " ", "_") + "_Camera_"
 
 	scan := bufio.NewScanner(f)
 	scan.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -44,6 +43,8 @@ func FujifilmCameraProfiles(model string) ([]string, error) {
 		id := strings.ToUpper(scan.Text())
 
 		switch strings.TrimSuffix(id, "_V2") {
+		default:
+			continue
 		case "PROVIA_STANDARD":
 			name = "Camera PROVIA/Standard"
 		case "VELVIA_VIVID":
@@ -74,9 +75,6 @@ func FujifilmCameraProfiles(model string) ([]string, error) {
 			name = "Camera CLASSIC CHROME"
 		case "ETERNA_CINEMA":
 			name = "Camera ETERNA/Cinema"
-
-		default:
-			continue
 		}
 		if strings.HasSuffix(id, "_V2") {
 			name += " v2"

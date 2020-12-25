@@ -5,6 +5,7 @@ import (
 )
 
 func TestFujifilmCameraProfiles(t *testing.T) {
+	// EmbedProfiles = "/Users/cruces/Desktop/Adobe DNG Converter.exe"
 	profiles, err := FujifilmCameraProfiles("FinePix X100")
 	if err != nil {
 		t.Error(err)
