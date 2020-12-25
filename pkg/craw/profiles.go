@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ncruces/rethinkraw/pkg/dng"
 )
 
 // GetCameraProfiles gets all the profiles that apply to a given camera.
@@ -27,7 +29,11 @@ func GetCameraProfiles(make, model string) ([]string, error) {
 	for _, rec := range append(glb, usr...) {
 		camera := strings.ToUpper(rec.Prop["model_restriction"])
 		if camera == model || camera == makeModel {
-			profiles = append(profiles, rec.Path)
+			profile, err := dng.GetDCPProfileName(rec.Path)
+			if err != nil {
+				return nil, err
+			}
+			profiles = append(profiles, profile)
 		}
 	}
 

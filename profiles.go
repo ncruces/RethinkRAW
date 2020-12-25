@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -109,11 +107,8 @@ func getCameraProfiles(make, model string) (string, []string) {
 		res.other, _ = craw.FujifilmCameraProfiles(model)
 	}
 
-	paths, _ := craw.GetCameraProfiles(make, model)
-	for _, path := range paths {
-		log.Print("exiftool (load profile)...")
-		out, _ := exifserver.Command("--printConv", "-short3", "-fast2", "-ProfileName", path)
-		name := string(bytes.TrimSpace(out))
+	profiles, _ := craw.GetCameraProfiles(make, model)
+	for _, name := range profiles {
 		if strings.HasPrefix(name, "Adobe Standard") {
 			res.adobe = name
 		} else {
