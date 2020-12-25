@@ -7,6 +7,8 @@ import (
 )
 
 // GetCameraProfiles gets all the profiles that apply to a given camera.
+// It looks for profiles under the GlobalSettings and UserSettings directories.
+// Returns a list of paths to DCP files for the profiles.
 func GetCameraProfiles(make, model string) ([]string, error) {
 	glb, err := LoadIndex(filepath.Join(GlobalSettings, filepath.FromSlash("CameraProfiles/Index.dat")))
 	if err != nil {

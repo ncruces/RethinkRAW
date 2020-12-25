@@ -14,7 +14,7 @@ type IndexedRecord struct {
 }
 
 // LoadIndex loads an Index.dat file.
-// Index.dat files index the many profiles, presets and other settings
+// Index.dat files index the profiles, presets and other settings
 // in a Camera Raw settings directory for faster access.
 func LoadIndex(path string) ([]IndexedRecord, error) {
 	f, err := os.Open(path)

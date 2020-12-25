@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// Paths used to find Camera Raw settings.
+// The defaults are fine if you have a recent version of DNG Converter installed.
 var (
 	GlobalSettings string // The global Camera Raw settings directory.
 	UserSettings   string // The user's Camera Raw settings directory.
