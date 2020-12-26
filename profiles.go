@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ncruces/rethinkraw/internal/config"
+	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/rethinkraw/pkg/craw"
 )
 
@@ -16,7 +17,7 @@ var defaultProfiles = []string{
 
 var profileSettings = map[string][]string{
 	"Adobe Standard": {
-		"-XMP-crs:ConvertToGrayscale=False",
+		"-XMP-crs:ConvertToGrayscale=",
 		"-XMP-crs:CameraProfile=",
 		"-XMP-crs:Look*=",
 	},
@@ -26,7 +27,7 @@ var profileSettings = map[string][]string{
 		"-XMP-crs:Look*=",
 	},
 	"Adobe Color": {
-		"-XMP-crs:ConvertToGrayscale=False",
+		"-XMP-crs:ConvertToGrayscale=",
 		"-XMP-crs:CameraProfile=",
 		"-XMP-crs:Look*=",
 		"-XMP-crs:LookName=Adobe Color",
@@ -46,7 +47,7 @@ var profileSettings = map[string][]string{
 		"-XMP-crs:LookParametersLookTable=73ED6C18DDE909DD7EA2D771F5AC282D",
 	},
 	"Adobe Landscape": {
-		"-XMP-crs:ConvertToGrayscale=False",
+		"-XMP-crs:ConvertToGrayscale=",
 		"-XMP-crs:CameraProfile=",
 		"-XMP-crs:Look*=",
 		"-XMP-crs:LookName=Adobe Landscape",
@@ -58,7 +59,7 @@ var profileSettings = map[string][]string{
 		"-XMP-crs:LookParametersLookTable=0B3BFB5CFB7DBF7FF175E98F24D316B0",
 	},
 	"Adobe Neutral": {
-		"-XMP-crs:ConvertToGrayscale=False",
+		"-XMP-crs:ConvertToGrayscale=",
 		"-XMP-crs:CameraProfile=",
 		"-XMP-crs:Look*=",
 		"-XMP-crs:LookName=Adobe Neutral",
@@ -67,7 +68,7 @@ var profileSettings = map[string][]string{
 		"-XMP-crs:LookParametersLookTable=7740BB918B2F6D93D7B95A4DBB78DB23",
 	},
 	"Adobe Portrait": {
-		"-XMP-crs:ConvertToGrayscale=False",
+		"-XMP-crs:ConvertToGrayscale=",
 		"-XMP-crs:CameraProfile=",
 		"-XMP-crs:Look*=",
 		"-XMP-crs:LookName=Adobe Portrait",
@@ -76,7 +77,7 @@ var profileSettings = map[string][]string{
 		"-XMP-crs:LookParametersLookTable=E5A76DBB8B3F132A04C01AF45DC2EF1B",
 	},
 	"Adobe Vivid": {
-		"-XMP-crs:ConvertToGrayscale=False",
+		"-XMP-crs:ConvertToGrayscale=",
 		"-XMP-crs:CameraProfile=",
 		"-XMP-crs:Look*=",
 		"-XMP-crs:LookName=Adobe Vivid",
@@ -95,27 +96,53 @@ var cameraProfiles = map[makeModel]struct {
 	other []string
 }{}
 
-func getCameraProfiles(make, model string) (string, []string) {
-	cameraProfilesMtx.Lock()
-	defer cameraProfilesMtx.Unlock()
+func loadProfiles(make, model string, process float32, grayscale bool, profile, look string) (string, []string) {
+	adobe, other := func() (string, []string) {
+		cameraProfilesMtx.Lock()
+		defer cameraProfilesMtx.Unlock()
 
-	res, ok := cameraProfiles[makeModel{make, model}]
-	if ok {
+		res, ok := cameraProfiles[makeModel{make, model}]
+		if ok {
+			return res.adobe, res.other
+		}
+
+		craw.EmbedProfiles = config.DngConverter
+		profiles, _ := craw.GetCameraProfileNames(make, model)
+
+		res.adobe = "Adobe Standard"
+		for _, name := range profiles {
+			if util.Contains(profiles, name+" v2") {
+				// skip legacy
+				continue
+			}
+			if strings.HasPrefix(name, "Adobe Standard") {
+				res.adobe = name
+			} else {
+				res.other = append(res.other, string(name))
+			}
+		}
+
+		sort.Strings(res.other)
+
+		cameraProfiles[makeModel{make, model}] = res
 		return res.adobe, res.other
-	}
+	}()
 
-	craw.EmbedProfiles = config.DngConverter
-	profiles, _ := craw.GetCameraProfileNames(make, model)
-	for _, name := range profiles {
-		if strings.HasPrefix(name, "Adobe Standard") {
-			res.adobe = name
-		} else {
-			res.other = append(res.other, string(name))
+	if process != 0 || profile != "" || look != "" {
+		switch {
+		case look == "" && (profile == "" || profile == adobe):
+			profile = "Adobe Standard"
+		case util.Contains(defaultProfiles, look) && (profile == "" || profile == adobe):
+			profile = look
+		case util.Contains(other, profile) && look == "" && !grayscale:
+			//
+		default:
+			profile = "Custom"
+		}
+		if profile == "Adobe Standard" && grayscale {
+			profile = "Adobe Standard B&W"
 		}
 	}
 
-	sort.Strings(res.other)
-
-	cameraProfiles[makeModel{make, model}] = res
-	return res.adobe, res.other
+	return profile, other
 }

@@ -100,27 +100,12 @@ func loadXMP(path string) (xmp xmpSettings, err error) {
 	loadString(&look, m, "LookName")
 	loadBool(&grayscale, m, "ConvertToGrayscale")
 
-	adobe, profiles := getCameraProfiles(string(m["Make"]), string(m["Model"]))
-
 	if process != 0 {
 		xmp.Process = process
 	}
-	if process != 0 || profile != "" || look != "" {
-		switch {
-		case util.Contains(defaultProfiles, look) && (profile == adobe || profile == ""):
-			xmp.Profile = look
-		case util.Contains(profiles, profile) && look == "":
-			xmp.Profile = profile
-		case look == "" && (profile == adobe || profile == ""):
-			xmp.Profile = "Adobe Standard"
-		default:
-			xmp.Profile = "Custom"
-		}
-		if xmp.Profile == "Adobe Standard" && grayscale {
-			xmp.Profile = "Adobe Standard B&W"
-		}
-	}
-	xmp.Profiles = profiles
+	xmp.Profile, xmp.Profiles = loadProfiles(
+		string(m["Make"]), string(m["Model"]),
+		process, grayscale, profile, look)
 
 	// curve
 	loadString(&xmp.ToneCurve, m, "ToneCurveName2012")
