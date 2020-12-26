@@ -90,15 +90,15 @@ func exifOrientation(data []byte) int {
 		var marker = binary.BigEndian.Uint16(data)
 
 		switch {
-		case marker == 0xffff:
+		case marker == 0xffff: // padding
 			data = data[1:]
 
-		case marker == 0xffe1:
+		case marker == 0xffe1: // APP1
 			if len(data) > 4 {
 				size := int(binary.BigEndian.Uint16(data[2:])) + 2
 				if 4 <= size && size <= len(data) {
 					data = data[4:size]
-					if len(data) < 6 || string(data[0:6]) != "Exif\x00\x00" {
+					if !bytes.HasPrefix(data, []byte("Exif\x00\x00")) {
 						return 0
 					}
 
@@ -122,20 +122,24 @@ func exifOrientation(data []byte) int {
 						return -2
 					}
 
-					tags := int(endian.Uint16(data[offset:]))
-					data = data[offset+2:]
-
-					if len(data) < 12*tags {
+					count := endian.Uint16(data[offset:])
+					entries := data[offset+2:]
+					if len(data) < 12*int(count) {
 						return -2
+					} else {
+						entries = entries[:12*count]
 					}
 
-					for i := 0; i < tags; i++ {
-						if endian.Uint16(data[i*12:]) == 0x0112 {
-							v := int(endian.Uint16(data[i*12+8:]))
-							if v > 9 {
-								v = -2
+					for i := 0; i < len(entries); i += 12 {
+						tag := endian.Uint16(entries[i:])
+						if tag == 0x0112 { // Orientation
+							typ := endian.Uint16(entries[i+2:]) // SHORT
+							cnt := endian.Uint32(entries[i+4:]) // 1
+							val := endian.Uint32(entries[i+8:])
+							if typ == 3 && cnt == 1 && val <= 9 {
+								return int(val)
 							}
-							return v
+							return -2
 						}
 					}
 					return 0
@@ -143,7 +147,7 @@ func exifOrientation(data []byte) int {
 			}
 			return -2
 
-		case marker >= 0xffe0:
+		case marker >= 0xffe0: // APPn, JPGn, COM
 			if len(data) > 4 {
 				size := int(binary.BigEndian.Uint16(data[2:])) + 2
 				if 4 <= size && size <= len(data) {
@@ -153,7 +157,7 @@ func exifOrientation(data []byte) int {
 			}
 			return -2
 
-		case marker == 0xff00:
+		case marker == 0xff00: // invalid
 			return -2
 
 		default:
