@@ -13,7 +13,7 @@ import (
 var (
 	GlobalSettings string // The global Camera Raw settings directory.
 	UserSettings   string // The user's Camera Raw settings directory.
-	EmbedProfiles  string // The file where to look for embed profiles (DNG Converter by default).
+	EmbedProfiles  string // The file where to look for embed profiles.
 )
 
 const (
@@ -26,11 +26,9 @@ func init() {
 	case "windows":
 		GlobalSettings = os.Getenv("PROGRAMDATA") + `\Adobe\CameraRaw`
 		UserSettings = os.Getenv("APPDATA") + `\Adobe\CameraRaw`
-		EmbedProfiles = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 	case "darwin":
 		GlobalSettings = "/Library/Application Support/Adobe/CameraRaw"
 		UserSettings = os.Getenv("HOME") + "/Library/Application Support/Adobe/CameraRaw"
-		EmbedProfiles = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
 	}
 }
 

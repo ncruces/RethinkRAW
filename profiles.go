@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ncruces/rethinkraw/internal/config"
 	"github.com/ncruces/rethinkraw/pkg/craw"
 )
 
@@ -103,11 +104,8 @@ func getCameraProfiles(make, model string) (string, []string) {
 		return res.adobe, res.other
 	}
 
-	if make == "FUJIFILM" {
-		res.other, _ = craw.FujifilmCameraProfiles(model)
-	}
-
-	profiles, _ := craw.GetCameraProfiles(make, model)
+	craw.EmbedProfiles = config.DngConverter
+	profiles, _ := craw.GetCameraProfileNames(make, model)
 	for _, name := range profiles {
 		if strings.HasPrefix(name, "Adobe Standard") {
 			res.adobe = name

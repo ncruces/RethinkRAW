@@ -9,8 +9,8 @@ import (
 )
 
 // GetCameraProfiles gets all the profiles that apply to a given camera.
+// Returns the DCP file paths for the profiles.
 // It looks for profiles under the GlobalSettings and UserSettings directories.
-// Returns a list of paths to DCP files for the profiles.
 func GetCameraProfiles(make, model string) ([]string, error) {
 	glb, err := LoadIndex(filepath.Join(GlobalSettings, filepath.FromSlash("CameraProfiles/Index.dat")))
 	if err != nil {
@@ -29,13 +29,38 @@ func GetCameraProfiles(make, model string) ([]string, error) {
 	for _, rec := range append(glb, usr...) {
 		camera := strings.ToUpper(rec.Prop["model_restriction"])
 		if camera == model || camera == makeModel {
-			profile, err := dng.GetDCPProfileName(rec.Path)
-			if err != nil {
-				return nil, err
-			}
-			profiles = append(profiles, profile)
+			profiles = append(profiles, rec.Path)
 		}
 	}
 
 	return profiles, nil
+}
+
+// GetCameraProfileNames gets the names of all profiles that apply to a given camera.
+// It looks for profiles under the GlobalSettings and UserSettings directories,
+// and in the EmbedProfiles file, if set.
+func GetCameraProfileNames(make, model string) ([]string, error) {
+	profiles, err := GetCameraProfiles(make, model)
+	if err != nil {
+		return nil, err
+	}
+
+	var names []string
+	for _, profile := range profiles {
+		name, err := dng.GetDCPProfileName(profile)
+		if err != nil {
+			return nil, err
+		}
+		names = append(names, name)
+	}
+
+	if make == "FUJIFILM" {
+		embed, err := fujiCameraProfiles(model)
+		if err != nil {
+			return nil, err
+		}
+		names = append(names, embed...)
+	}
+
+	return names, nil
 }

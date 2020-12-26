@@ -8,10 +8,11 @@ import (
 	"strings"
 )
 
-// FujifilmCameraProfiles gets all the profiles that apply to a given Fujifilm camera.
-// It looks for profiles in the EmbedProfiles file.
-// Returns a list of names of the profiles.
-func FujifilmCameraProfiles(model string) ([]string, error) {
+func fujiCameraProfiles(model string) ([]string, error) {
+	if EmbedProfiles == "" {
+		return nil, nil
+	}
+
 	f, err := os.Open(EmbedProfiles)
 	if err != nil {
 		return nil, err
