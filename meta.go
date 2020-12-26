@@ -37,17 +37,16 @@ func fixMetaDNG(orig, dest, name string) error {
 }
 
 func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
-	// https://exiftool.org/forum/index.php?topic=8378.msg43043#msg43043
 	opts := []string{"-tagsFromFile", orig, "-fixBase",
-		"-CommonIFD0", "-ExifIFD:all", "-GPS:all",
-		"-XMP-dc:all", "-XMP-dc:Format=",
+		"-CommonIFD0", "-ExifIFD:all", "-GPS:all", // https://exiftool.org/forum/index.php?topic=8378.msg43043#msg43043
+		"-IPTC:all", "-XMP-dc:all", "-XMP-dc:Format=",
 		"-fast", "-ignoreMinorErrors", "-"}
 
 	log.Print("exiftool (fix jpeg)...")
 	return exiftool.CommandAsync(opts...)
 }
 
-func hasEdits(path string) bool {
+func dngHasEdits(path string) bool {
 	log.Print("exiftool (has edits?)...")
 	out, err := exifserver.Command("-XMP-photoshop:all", path)
 	return err == nil && len(out) > 0

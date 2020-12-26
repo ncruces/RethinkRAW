@@ -348,7 +348,7 @@ func destSidecar(src string) (string, error) {
 	}
 
 	// if NAME.DNG was edited, use it
-	if strings.EqualFold(ext, ".dng") && hasEdits(src) {
+	if strings.EqualFold(ext, ".dng") && dngHasEdits(src) {
 		return src, nil
 	}
 
