@@ -22,7 +22,7 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	}
 	defer wk.close()
 
-	return loadXMP(wk.loadXMP())
+	return loadXMP(wk.origXMP())
 }
 
 func saveEdit(path string, xmp xmpSettings) error {
@@ -294,13 +294,13 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 	return fit
 }
 
-func copySidecar(src, dst string) error {
+func loadSidecar(src, dst string) error {
 	var data []byte
 	err := os.ErrNotExist
 	ext := filepath.Ext(src)
 
 	if ext != "" {
-		// if NAME.XMP is there for NAME.EXT, use it
+		// if NAME.xmp is there for NAME.EXT, use it
 		name := strings.TrimSuffix(src, ext) + ".xmp"
 		data, err = ioutil.ReadFile(name)
 		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
@@ -308,27 +308,28 @@ func copySidecar(src, dst string) error {
 		}
 	}
 	if os.IsNotExist(err) {
-		// if NAME.EXT.XMP is there for NAME.EXT, use it
+		// if NAME.EXT.xmp is there for NAME.EXT, use it
 		data, err = ioutil.ReadFile(src + ".xmp")
 		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			err = os.ErrNotExist
 		}
 	}
-	if os.IsNotExist(err) {
-		// extract embed XMP
+	if err == nil {
+		// copy xmp file
+		err = ioutil.WriteFile(dst, data, 0600)
+	}
+	if err == nil || os.IsNotExist(err) {
+		// extract embed XMP data
 		return extractXMP(src, dst)
 	}
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(dst, data, 0600)
+	return err
 }
 
 func destSidecar(src string) (string, error) {
 	ext := filepath.Ext(src)
 
 	if ext != "" {
-		// if NAME.XMP is there for NAME.EXT, use it
+		// if NAME.xmp is there for NAME.EXT, use it
 		name := strings.TrimSuffix(src, ext) + ".xmp"
 		data, err := ioutil.ReadFile(name)
 		if err == nil && xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
@@ -339,7 +340,7 @@ func destSidecar(src string) (string, error) {
 		}
 	}
 
-	// if NAME.EXT.XMP exists, use it
+	// if NAME.EXT.xmp exists, use it
 	if _, err := os.Stat(src + ".xmp"); err == nil {
 		return src + ".xmp", nil
 	} else if !os.IsNotExist(err) {
@@ -351,6 +352,6 @@ func destSidecar(src string) (string, error) {
 		return src, nil
 	}
 
-	// fallback to NAME.XMP
+	// fallback to NAME.xmp
 	return strings.TrimSuffix(src, ext) + ".xmp", nil
 }

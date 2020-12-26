@@ -38,7 +38,6 @@ type workspace struct {
 	hash      string // a hash of the original RAW file path
 	ext       string // the extension of the original RAW file
 	base      string // base directory for the workspace
-	hasXMP    bool   // did the original RAW file have a XMP sidecar?
 	hasPixels bool   // have we extracted pixel data?
 	hasEdit   bool   // any recent edits?
 }
@@ -58,45 +57,35 @@ func openWorkspace(path string) (wk workspace, err error) {
 		}
 	}()
 
-	// Create directory
+	// create directory
 	err = os.MkdirAll(wk.base, 0700)
 	if err != nil {
 		return wk, err
 	}
 
-	// Have we edited this file recently (10 min)?
+	// have we edited this file recently (10 min)?
 	fi, err := os.Stat(wk.base + "edit.dng")
 	if err == nil && time.Since(fi.ModTime()) < 10*time.Minute {
+		pi, _ := os.Stat(wk.base + "edit.ppm")
+		wk.hasPixels = pi != nil && !pi.ModTime().Before(fi.ModTime())
 		wk.hasEdit = true
-		_, e := os.Stat(wk.base + "edit.ppm")
-		wk.hasPixels = e == nil
-		_, e = os.Stat(wk.base + "orig.xmp")
-		wk.hasXMP = e == nil
 		return wk, err
 	}
 
-	// Was this just copied (1 min)?
+	// was this just copied (1 min)?
 	fi, err = os.Stat(wk.base + "orig" + wk.ext)
 	if err == nil && time.Since(fi.ModTime()) < time.Minute {
-		_, e := os.Stat(wk.base + "orig.xmp")
-		wk.hasXMP = e == nil
 		return wk, err
 	}
 
-	// Otherwise, copy the original RAW file to orig.EXT
+	// otherwise, copy the original RAW file to orig.EXT
 	err = osutil.Lnky(path, wk.base+"orig"+wk.ext)
 	if err != nil {
 		return wk, err
 	}
 
-	// And look for a sidecar.
-	err = copySidecar(path, wk.base+"orig.xmp")
-	if err == nil {
-		wk.hasXMP = true
-	}
-	if os.IsNotExist(err) {
-		err = nil
-	}
+	// and load a sidecar for it
+	err = loadSidecar(path, wk.base+"orig.xmp")
 	return wk, err
 }
 
@@ -129,15 +118,6 @@ func (wk *workspace) pixels() string {
 // A sidecar for orig.EXT.
 func (wk *workspace) origXMP() string {
 	return wk.base + "orig.xmp"
-}
-
-// The file from which to load editing settings.
-func (wk *workspace) loadXMP() string {
-	if wk.hasXMP {
-		return wk.base + "orig.xmp"
-	} else {
-		return wk.base + "orig" + wk.ext
-	}
 }
 
 // HTTP is stateless. There is no notion of a file being opened for editing.
