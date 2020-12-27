@@ -27,8 +27,15 @@ func GetCameraProfiles(make, model string) ([]string, error) {
 
 	var profiles []string
 	for _, rec := range append(glb, usr...) {
-		camera := strings.ToUpper(rec.Prop["model_restriction"])
-		if camera == model || camera == makeModel {
+		test := strings.ToUpper(rec.Prop["model_restriction"])
+		var matches bool
+		if test == "" || test == model || test == makeModel {
+			matches = true
+		} else if n := strings.IndexByte(test, ' '); n > 0 {
+			testMake, testModel := test[:n], test[n+1:]
+			matches = testModel == model && strings.Contains(make, testMake)
+		}
+		if matches {
 			profiles = append(profiles, rec.Path)
 		}
 	}
