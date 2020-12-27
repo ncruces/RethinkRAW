@@ -116,7 +116,7 @@ func HiddenFile(fi os.FileInfo) bool {
 	return isHidden(fi)
 }
 
-// ShellOpen opens a file (or a directory or URL),
+// ShellOpen opens a file (or a directory, or URL),
 // just as if you had double-clicked the file's icon.
 func ShellOpen(file string) error {
 	return open(file)

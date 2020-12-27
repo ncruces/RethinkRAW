@@ -26,11 +26,13 @@ func findChrome() {
 	}
 }
 
-func (c *Cmd) Exit() {
+func exitProcess(p *os.Process) error {
+	pid := strconv.Itoa(c.Process.Pid)
 	for i := 0; i < 10; i++ {
-		if exec.Command("taskkill", "/pid", strconv.Itoa(c.cmd.Process.Pid)).Run() != nil {
-			return
+		if exec.Command("taskkill", "/pid", pid).Run() != nil {
+			break
 		}
 		time.Sleep(time.Second / 10)
 	}
+	return nil
 }

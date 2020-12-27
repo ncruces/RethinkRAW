@@ -19,6 +19,6 @@ func findChrome() {
 	}
 }
 
-func (c *Cmd) Exit() {
-	c.cmd.Process.Signal(os.Interrupt)
+func exitProcess(p *os.Process) error {
+	return p.Signal(os.Interrupt)
 }

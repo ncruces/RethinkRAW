@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/ncruces/rethinkraw/internal/chrome"
 	"github.com/ncruces/rethinkraw/internal/config"
 	"github.com/ncruces/rethinkraw/internal/util"
+	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
@@ -74,10 +74,10 @@ func run() error {
 		go http.Serve(ln)
 	}
 
-	if chrome.Installed() {
+	if chrome.IsInstalled() {
 		data := filepath.Join(config.DataDir, "chrome")
 		cache := filepath.Join(config.TempDir, "chrome")
-		cmd := chrome.New(url.String(), data, cache)
+		cmd := chrome.Command(url.String(), data, cache)
 
 		if err := cmd.Start(); err != nil {
 			return err

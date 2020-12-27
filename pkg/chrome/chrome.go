@@ -1,3 +1,4 @@
+// Package chrome provides support to locate and run Google Chrome.
 package chrome
 
 import (
@@ -11,16 +12,18 @@ import (
 var once sync.Once
 var chrome string
 
-func Installed() bool {
+// IsInstalled checks if Chrome is installed.
+func IsInstalled() bool {
 	once.Do(findChrome)
 	return chrome != ""
 }
 
-type Cmd struct {
-	cmd *exec.Cmd
-}
+// Cmd represents a Chrome instance being prepared or run.
+type Cmd exec.Cmd
 
-func New(url string, dataDir, tempDir string) *Cmd {
+// Command returns the Cmd struct to execute a Chrome app loaded from url,
+// and with the given user data and disk cache directories.
+func Command(url string, dataDir, cacheDir string) *Cmd {
 	once.Do(findChrome)
 	if chrome == "" {
 		return nil
@@ -37,28 +40,28 @@ func New(url string, dataDir, tempDir string) *Cmd {
 	}
 
 	// https://source.chromium.org/chromium/chromium/src/+/master:chrome/test/chromedriver/chrome_launcher.cc
-	cmd := exec.Command(chrome, "--app="+url, "--homepage="+url, "--user-data-dir="+dataDir, "--disk-cache-dir="+tempDir,
+	cmd := exec.Command(chrome, "--app="+url, "--homepage="+url, "--user-data-dir="+dataDir, "--disk-cache-dir="+cacheDir,
 		"--no-first-run", "--no-service-autorun", "--disable-sync", "--disable-extensions", "--disable-default-apps",
 		"--disable-background-networking", "--disable-client-side-phishing-detection")
-	return &Cmd{cmd}
+	return (*Cmd)(cmd)
 }
 
+// Run starts Chrome and waits for it to complete.
 func (c *Cmd) Run() error {
-	return c.cmd.Run()
+	return (*exec.Cmd)(c).Run()
 }
 
+// Start starts Chrome but does not wait for it to complete.
 func (c *Cmd) Start() error {
-	return c.cmd.Start()
+	return (*exec.Cmd)(c).Start()
 }
 
+// Wait for Chrome to exit.
 func (c *Cmd) Wait() error {
-	return c.cmd.Wait()
+	return (*exec.Cmd)(c).Wait()
 }
 
-func (c *Cmd) Process() *os.Process {
-	return c.cmd.Process
-}
-
-func (c *Cmd) ProcessState() *os.ProcessState {
-	return c.cmd.ProcessState
+// Exit signals Chrome to exit but does not wait until it has actually exited.
+func (c *Cmd) Exit() error {
+	return exitProcess(c.Process)
 }
