@@ -37,15 +37,24 @@ if [ ! -f "assets/fontawesome.css" ]; then
 fi
 
 if [[ "$1" == test ]]; then
-    echo Test build...
+    echo Run tests...
+    go test ./...
+elif [[ "$1" == run ]]; then
+    echo Run app...
     go build -race -o "$exe" && shift && exec "$exe" "$@"
+elif [[ "$1" == install ]]; then
+    echo Build installer...
+    rm -rf "$dat"
+    tmp="$(mktemp -d)"
+    ln -s /Applications "$tmp"
+    cp -r RethinkRAW.app "$tmp"
+    hdiutil create -volname RethinkRAW -srcfolder "$tmp" -format UDBZ -ov RethinkRAW.dmg
 else
-    echo Release build...
+    echo Build release...
     osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
     CGO_ENABLED=0
     go clean
     go generate
     go build -tags memfs -ldflags "-s -w" -o "$exe"
     go mod tidy
-    rm -rf "$dat"
 fi

@@ -27,7 +27,7 @@ func findChrome() {
 }
 
 func exitProcess(p *os.Process) error {
-	pid := strconv.Itoa(c.Process.Pid)
+	pid := strconv.Itoa(p.Pid)
 	for i := 0; i < 10; i++ {
 		if exec.Command("taskkill", "/pid", pid).Run() != nil {
 			break

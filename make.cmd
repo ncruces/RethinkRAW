@@ -37,8 +37,18 @@ IF NOT EXIST assets\fontawesome.css (
 )
 
 IF [%1]==[test] (
-    ECHO Test build...
+    ECHO Run tests...
+    go test .\...
+) ELSE IF [%1]==[run] (
+    ECHO Run app...
     go build -race -o %exe% && %exe%
+) ELSE IF [%1]==[install] (
+    ECHO Build installer...
+    IF EXIST %dat% RD /S /Q %dat%
+    7za a -sfx7z.sfx RethinkRAW.exe %tgt%
+    REM
+    REM
+    REM
 ) ELSE (
     ECHO Release build...
     go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 build/versioninfo.json
@@ -47,5 +57,4 @@ IF [%1]==[test] (
     go generate
     go build -tags memfs -ldflags "-s -w" -o %exe%
     go mod tidy
-    IF EXIST %dat% RD /S /Q %dat%
 )
