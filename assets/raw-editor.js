@@ -121,7 +121,8 @@ window.profileChange = (e, val) => {
     let bw = e.value.includes('B&W') ||
         e.value.includes('Monochrome') ||
         e.value.includes('Monotone') ||
-        e.value.includes('ACROS');
+        e.value.includes('ACROS') ||
+        e.value.includes('BW');
 
     for (let n of e.form.querySelectorAll('div.color')) {
         n.classList.toggle('disabled-color', bw);
