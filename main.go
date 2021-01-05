@@ -20,7 +20,7 @@ var shutdown = make(chan os.Signal, 1)
 
 func init() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	util.HideConsole()
+	printSplash()
 }
 
 func main() {
@@ -79,14 +79,12 @@ func run() error {
 		cache := filepath.Join(config.TempDir, "chrome")
 		cmd := chrome.Command(url.String(), data, cache)
 
-		if err := cmd.Start(); err != nil {
-			return err
-		}
 		go func() {
+			util.HideConsole()
 			<-shutdown
 			cmd.Exit()
 		}()
-		if err := cmd.Wait(); err != nil {
+		if err := cmd.Run(); err != nil {
 			return err
 		}
 	} else {
@@ -94,6 +92,7 @@ func run() error {
 			return err
 		}
 		if server {
+			util.HideConsole()
 			<-shutdown
 		}
 	}
