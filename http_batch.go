@@ -81,7 +81,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		var exppath string
 		if len(photos) > 0 {
 			exppath = filepath.Dir(photos[0].Path)
-			if res, err := zenity.SelectFile(zenity.Directory(), zenity.Filename(exppath)); err != nil {
+			if res, err := zenity.SelectFile(zenity.Context(r.Context()), zenity.Directory(), zenity.Filename(exppath)); err != nil {
 				return HTTPResult{Error: err}
 			} else if res == "" {
 				return HTTPResult{Status: http.StatusNoContent}

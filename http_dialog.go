@@ -37,21 +37,21 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	switch {
 	case batch:
-		if res, err := zenity.SelectFileMutiple(filters); err != nil {
+		if res, err := zenity.SelectFileMutiple(zenity.Context(r.Context()), filters); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			paths = res
 		}
 
 	case photo:
-		if res, err := zenity.SelectFile(filters); err != nil {
+		if res, err := zenity.SelectFile(zenity.Context(r.Context()), filters); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			path = res
 		}
 
 	case gallery:
-		if res, err := zenity.SelectFile(zenity.Directory()); err != nil {
+		if res, err := zenity.SelectFile(zenity.Context(r.Context()), zenity.Directory()); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			path = res
