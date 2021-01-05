@@ -12,27 +12,8 @@ import (
 // This can be used to convert an AsShotWhiteXY DNG tag to a temperature and tint.
 func GetTemperatureFromXY(x, y float64) (temperature, tint int) {
 	tmp, tnt := xy64{x, y}.temperature()
-
-	// temperature range 2000 to 50000
-	switch {
-	case tmp < 2000.0:
-		tmp = 2000.0
-	case tmp > 50000.0:
-		tmp = 50000.0
-	default:
-		tmp = math.RoundToEven(tmp)
-	}
-
-	// tint range -150 to +150
-	switch {
-	case tnt < -150.0:
-		tnt = -150.0
-	case tint > +150.0:
-		tnt = +150.0
-	default:
-		tnt = math.RoundToEven(tnt)
-	}
-
+	tmp = math.RoundToEven(tmp)
+	tnt = math.RoundToEven(tnt)
 	return int(tmp), int(tnt)
 }
 
