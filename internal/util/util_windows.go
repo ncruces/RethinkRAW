@@ -20,7 +20,6 @@ var (
 	getConsoleProcessList = kernel32.NewProc("GetConsoleProcessList")
 	getConsoleWindow      = kernel32.NewProc("GetConsoleWindow")
 	showWindow            = user32.NewProc("ShowWindow")
-	setForegroundWindow   = user32.NewProc("SetForegroundWindow")
 )
 
 func isANSIString(s string) bool {
@@ -72,14 +71,6 @@ func GetANSIPath(path string) (string, error) {
 	}
 
 	return path, errors.New("could not convert to ANSI path: " + path)
-}
-
-func BringToTop() {
-	if hwnd, _, _ := getConsoleWindow.Call(); hwnd == 0 {
-		return // no window
-	} else {
-		setForegroundWindow.Call(hwnd)
-	}
 }
 
 func HideConsole() {
