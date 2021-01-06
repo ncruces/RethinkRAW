@@ -7,16 +7,13 @@ import (
 	"errors"
 	"html/template"
 	"log"
-	"mime"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/ncruces/rethinkraw/internal/util"
 	"golang.org/x/net/websocket"
 )
 
@@ -146,20 +143,6 @@ func cacheHeaders(path string, req, res http.Header) HTTPResult {
 		}
 	}
 	return HTTPResult{}
-}
-
-func attachmentHeaders(path string, headers http.Header) {
-	ext := filepath.Ext(path)
-	utf := util.Filename(path)
-	ascii := util.Filename(util.ToASCII(path))
-
-	disposition := `attachment;filename="` + ascii + `"`
-	if ascii != utf {
-		disposition += `;filename*=UTF-8''` + url.PathEscape(utf)
-	}
-
-	headers.Set("Content-Disposition", disposition)
-	headers.Set("Content-Type", mime.TypeByExtension(ext))
 }
 
 func toURLPath(path string) string {

@@ -7,9 +7,6 @@ import (
 	"encoding/json"
 	"log"
 	"mime"
-	"sort"
-	"strconv"
-	"strings"
 )
 
 const MaxUint = ^uint(0)
@@ -64,69 +61,6 @@ func Index(a []string, s string) int {
 
 func Contains(a []string, s string) bool {
 	return Index(a, s) >= 0
-}
-
-func Unique(a *[]string) {
-	s := *a
-	if len(s) < 1 {
-		return
-	}
-
-	sort.Strings(s)
-
-	i := 0
-	for j := 1; j < len(s); j++ {
-		if s[i] != s[j] {
-			i++
-			s[i] = s[j]
-		}
-	}
-	i++
-
-	*a = s[:i:i]
-}
-
-func ToASCII(str string) string {
-	builder := strings.Builder{}
-	for _, r := range str {
-		// control
-		if r <= 0x1f || 0x7f <= r && r <= 0x9f {
-			continue
-		}
-		// unicode
-		if r >= 0xa0 {
-			builder.WriteByte('?')
-		} else {
-			builder.WriteRune(r)
-		}
-	}
-	return builder.String()
-}
-
-func Filename(name string) string {
-	builder := strings.Builder{}
-	dots := 0
-
-	for _, r := range name {
-		switch r {
-		case '\\', '/', ':', '*', '?', '<', '>', '|':
-			// Windows doesn't like these.
-		case '"':
-			builder.WriteByte('\'')
-		case '.':
-			builder.WriteByte('.')
-			dots += 1
-		default:
-			if strconv.IsPrint(r) {
-				builder.WriteRune(r)
-			}
-		}
-	}
-
-	if builder.Len() > dots {
-		return builder.String()
-	}
-	return ""
 }
 
 func LogPretty(v interface{}) (err error) {
