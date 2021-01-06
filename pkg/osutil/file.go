@@ -121,3 +121,18 @@ func HiddenFile(fi os.FileInfo) bool {
 func ShellOpen(file string) error {
 	return open(file)
 }
+
+// GetANSIPath converts path so that it is valid for use with Windows ANSI APIs.
+// Outside of Windows, path is returned unchanged.
+//
+// On Windows, if path length exceeds MAX_PATH, or if it contains characters
+// that cannot be represented in the system's ANSI code page,
+// GetShortPathName is used to try to construct an equivalent, valid path.
+//
+// Note: path is assumed to be UTF-8 encoded, and is returned UTF-8 encoded.
+// GetANSIPath can be used to obtain an equivalent path that you can offer
+// as a command line argument to an external program that uses ANSI APIs,
+// not to encode path so that you can access ANSI APIs directly.
+func GetANSIPath(path string) (string, error) {
+	return getANSIPath(path)
+}

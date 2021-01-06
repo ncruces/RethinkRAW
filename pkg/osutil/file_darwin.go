@@ -14,3 +14,7 @@ func isHidden(fi os.FileInfo) bool {
 func open(file string) error {
 	return exec.Command("open", file).Run()
 }
+
+func getANSIPath(path string) (string, error) {
+	return path, nil
+}

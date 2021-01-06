@@ -15,8 +15,4 @@ func init() {
 	}
 }
 
-func GetANSIPath(path string) (string, error) {
-	return path, nil
-}
-
 func HideConsole() {}

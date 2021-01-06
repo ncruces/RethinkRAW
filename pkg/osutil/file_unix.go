@@ -15,3 +15,7 @@ func isHidden(fi os.FileInfo) bool {
 func open(file string) error {
 	return exec.Command("xdg-open", file).Run()
 }
+
+func getANSIPath(path string) (string, error) {
+	return path, nil
+}

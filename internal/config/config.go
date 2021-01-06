@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/ncruces/go-exiftool"
-	"github.com/ncruces/rethinkraw/internal/util"
+	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
 var (
@@ -25,7 +25,7 @@ func SetupPaths() (err error) {
 	DataDir = filepath.Join(BaseDir, "data")
 	TempDir = filepath.Join(os.TempDir(), "RethinkRAW")
 
-	TempDir, err = util.GetANSIPath(TempDir)
+	TempDir, err = osutil.GetANSIPath(TempDir)
 	if err != nil {
 		return err
 	}
