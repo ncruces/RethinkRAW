@@ -20,7 +20,7 @@ var shutdown = make(chan os.Signal, 1)
 
 func init() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	printSplash()
+	util.HideConsole()
 }
 
 func main() {
@@ -80,7 +80,6 @@ func run() error {
 		cmd := chrome.Command(url.String(), data, cache)
 
 		go func() {
-			util.HideConsole()
 			<-shutdown
 			cmd.Exit()
 		}()
@@ -92,7 +91,6 @@ func run() error {
 			return err
 		}
 		if server {
-			util.HideConsole()
 			<-shutdown
 		}
 	}
