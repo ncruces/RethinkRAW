@@ -11,7 +11,6 @@ import (
 	"syscall"
 
 	"github.com/ncruces/rethinkraw/internal/config"
-	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
@@ -20,7 +19,8 @@ var shutdown = make(chan os.Signal, 1)
 
 func init() {
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	util.HideConsole()
+	osutil.CreateConsole()
+	osutil.CleanupArgs()
 }
 
 func main() {

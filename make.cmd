@@ -55,6 +55,6 @@ IF [%1]==[test] (
     SET CGO_ENABLED=0
     go clean
     go generate
-    go build -tags memfs -ldflags "-s -w" -o %exe%
+    go build -tags memfs -ldflags "-s -w -H windowsgui" -o %exe%
     go mod tidy
 )
