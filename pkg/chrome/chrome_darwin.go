@@ -6,7 +6,7 @@ import (
 )
 
 func findChrome() {
-	versions := []string{"Google Chrome", "Chromium"}
+	versions := []string{"Google Chrome", "Chromium", "Microsoft Edge"}
 
 	for _, v := range versions {
 		c := filepath.Join("/Applications", v+".app", "Contents/MacOS", v)

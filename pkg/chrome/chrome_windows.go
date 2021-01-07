@@ -10,17 +10,19 @@ import (
 )
 
 func findChrome() {
-	versions := []string{`Google\Chrome`, `Chromium`}
+	versions := []string{`Google\Chrome`, `Chromium`, `Microsoft\Edge`}
+	suffixes := []string{`\Application\chrome.exe`, `\Application\msedge.exe`}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
-	suffix := `\Application\chrome.exe`
 
 	for _, v := range versions {
-		for _, p := range prefixes {
-			if p != "" {
-				c := filepath.Join(p, v, suffix)
-				if _, err := os.Stat(c); err == nil {
-					chrome = c
-					return
+		for _, s := range suffixes {
+			for _, p := range prefixes {
+				if p != "" {
+					c := filepath.Join(p, v, s)
+					if _, err := os.Stat(c); err == nil {
+						chrome = c
+						return
+					}
 				}
 			}
 		}
