@@ -7,6 +7,6 @@
 	<key>CFBundleIconFile</key>
 	<string>icon.icns</string>
 	<key>CFBundleVersion</key>
-	<string>0.5.1</string>
+	<string>0.5.5</string>
 </dict>
 </plist>

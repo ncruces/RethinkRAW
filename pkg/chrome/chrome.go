@@ -33,8 +33,22 @@ func Command(url string, dataDir, cacheDir string) *Cmd {
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(prefs), 0700); err == nil {
 			ioutil.WriteFile(prefs, []byte(`{
-				"profile": {"block_third_party_cookies": true},
+				"profile": {"cookie_controls_mode": 1},
+				"search":  {"suggest_enabled": false},
+				"signin":  {"allowed_on_next_startup": false},
 				"enable_do_not_track": true
+			}`), 0600)
+		}
+	}
+	local := filepath.Join(dataDir, "Local State")
+	if _, err := os.Stat(local); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(local), 0700); err == nil {
+			ioutil.WriteFile(local, []byte(`{
+				"profiles": {
+					"edge_implicitly_signed_in": [{
+						"edge_account_type": 1
+					}]
+				}
 			}`), 0600)
 		}
 	}

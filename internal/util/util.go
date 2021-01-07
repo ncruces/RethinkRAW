@@ -6,16 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"log"
-	"mime"
 )
 
 const MaxUint = ^uint(0)
 const MaxInt = int(MaxUint >> 1)
 const MinInt = -MaxInt - 1
-
-func init() {
-	Check(mime.AddExtensionType(".dng", "image/x-adobe-dng"))
-}
 
 func Check(err error) {
 	if err != nil {

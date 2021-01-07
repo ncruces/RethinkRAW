@@ -1,6 +1,7 @@
 package config
 
 import (
+	"mime"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,6 +15,10 @@ var (
 	BaseDir, DataDir, TempDir string
 	Dcraw, DngConverter       string
 )
+
+func init() {
+	mime.AddExtensionType(".dng", "image/x-adobe-dng")
+}
 
 func SetupPaths() (err error) {
 	if exe, err := os.Executable(); err != nil {

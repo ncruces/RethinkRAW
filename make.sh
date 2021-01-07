@@ -5,7 +5,6 @@ cd -P -- "$(dirname -- "$0")"
 
 tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
 exe="$tgt/rethinkraw"
-dat="$tgt/data"
 
 if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
@@ -44,7 +43,7 @@ elif [[ "$1" == run ]]; then
     go build -race -o "$exe" && shift && exec "$exe" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
-    rm -rf "$dat"
+    rm -rf "$tgt/data"
     tmp="$(mktemp -d)"
     ln -s /Applications "$tmp"
     cp -r RethinkRAW.app "$tmp"

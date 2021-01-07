@@ -11,7 +11,7 @@ import (
 
 func findChrome() {
 	versions := []string{`Google\Chrome`, `Chromium`, `Microsoft\Edge`}
-	suffixes := []string{`\Application\chrome.exe`, `\Application\msedge.exe`}
+	suffixes := []string{`Application\chrome.exe`, `Application\msedge.exe`}
 	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
 
 	for _, v := range versions {
@@ -39,7 +39,7 @@ func signal(p *os.Process, sig os.Signal) error {
 
 		go func() {
 			time.Sleep(time.Second)
-			exec.Command("taskkill", "/f", "/t", "/pid", pid).Run()
+			exec.Command("taskkill", "/pid", pid, "/t", "/f").Run()
 		}()
 		_, err = p.Wait()
 		return err
