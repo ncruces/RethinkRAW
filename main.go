@@ -79,11 +79,14 @@ func run() error {
 		cache := filepath.Join(config.TempDir, "chrome")
 		cmd := chrome.Command(url.String(), data, cache)
 
+		if err := cmd.Start(); err != nil {
+			return err
+		}
 		go func() {
 			<-shutdown
 			cmd.Exit()
 		}()
-		if err := cmd.Run(); err != nil {
+		if err := cmd.Wait(); err != nil {
 			return err
 		}
 	} else {
