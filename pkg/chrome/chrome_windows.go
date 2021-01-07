@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -26,13 +27,20 @@ func findChrome() {
 	}
 }
 
-func exitProcess(p *os.Process) error {
-	pid := strconv.Itoa(p.Pid)
-	for i := 0; i < 10; i++ {
-		if exec.Command("taskkill", "/pid", pid).Run() != nil {
-			break
+func signal(p *os.Process, sig os.Signal) error {
+	if sig == syscall.SIGINT || sig == syscall.SIGTERM {
+		pid := strconv.Itoa(p.Pid)
+		err := exec.Command("taskkill", "/pid", pid).Run()
+		if sig == syscall.SIGINT {
+			return err
 		}
-		time.Sleep(time.Second / 10)
+
+		go func() {
+			time.Sleep(time.Second)
+			exec.Command("taskkill", "/f", "/t", "/pid", pid).Run()
+		}()
+		_, err = p.Wait()
+		return err
 	}
-	return nil
+	return p.Signal(sig)
 }

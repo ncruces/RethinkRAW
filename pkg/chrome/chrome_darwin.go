@@ -17,6 +17,6 @@ func findChrome() {
 	}
 }
 
-func exitProcess(p *os.Process) error {
-	return p.Signal(os.Interrupt)
+func signal(p *os.Process, sig os.Signal) error {
+	return p.Signal(sig)
 }

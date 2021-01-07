@@ -83,8 +83,9 @@ func run() error {
 			return err
 		}
 		go func() {
-			<-shutdown
-			cmd.Exit()
+			for s := range shutdown {
+				cmd.Signal(s)
+			}
 		}()
 		if err := cmd.Wait(); err != nil {
 			return err

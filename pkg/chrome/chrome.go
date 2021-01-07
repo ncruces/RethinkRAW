@@ -61,7 +61,7 @@ func (c *Cmd) Wait() error {
 	return (*exec.Cmd)(c).Wait()
 }
 
-// Exit signals Chrome to exit but does not wait until it has actually exited.
-func (c *Cmd) Exit() error {
-	return exitProcess(c.Process)
+// Signal sends a signal to Chrome.
+func (c *Cmd) Signal(sig os.Signal) error {
+	return signal(c.Process, sig)
 }
