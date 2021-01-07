@@ -18,7 +18,7 @@ import (
 var shutdown = make(chan os.Signal, 1)
 
 func init() {
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(shutdown, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	osutil.CreateConsole()
 	osutil.CleanupArgs()
 }
@@ -37,7 +37,7 @@ func run() error {
 
 	url := url.URL{
 		Scheme: "http",
-		Host:   "[::1]:39639",
+		Host:   "localhost:39639",
 	}
 
 	if len(os.Args) > 1 {
