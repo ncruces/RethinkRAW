@@ -4,7 +4,6 @@ SETLOCAL EnableDelayedExpansion
 CD /D "%~dp0"
 
 SET "tgt=RethinkRAW"
-SET "exe=%tgt%\RethinkRAW.exe"
 
 IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
     ECHO Download ExifTool...
@@ -40,12 +39,12 @@ IF [%1]==[test] (
     go test .\...
 ) ELSE IF [%1]==[run] (
     ECHO Run app...
-    go build -race -o %exe% && %exe%
+    go build -race -o %tgt%\RethinkRAW.exe && %tgt%\RethinkRAW.exe
 ) ELSE IF [%1]==[install] (
     ECHO Build installer...
     IF EXIST %tgt%\data RD /S /Q %tgt%\data
     IF EXIST %tgt%\debug.log DEL /Q %tgt%\debug.log
-    7za a -sfx7z.sfx RethinkRAW.exe %tgt%
+    7za a -mx=9 -myx=9 -sfx7z.sfx RethinkRAW.exe %tgt%
     REM
     REM
 ) ELSE (
@@ -54,6 +53,7 @@ IF [%1]==[test] (
     SET CGO_ENABLED=0
     go clean
     go generate
-    go build -tags memfs -ldflags "-s -w -H windowsgui" -o %exe%
+    go build -tags memfs -ldflags "-s -w" -o %tgt%\RethinkRAW.com
+    go build -tags memfs -ldflags "-s -w -H windowsgui" -o %tgt%\RethinkRAW.exe
     go mod tidy
 )

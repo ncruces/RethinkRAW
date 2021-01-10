@@ -12,6 +12,7 @@ Thumbs.db
 ## Go
 
 # Binaries for programs and plugins
+*.com
 *.exe
 *.exe~
 *.syso

@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ServerMode                bool
 	BaseDir, DataDir, TempDir string
 	Dcraw, DngConverter       string
 )
@@ -21,7 +22,11 @@ func init() {
 }
 
 func SetupPaths() (err error) {
-	if exe, err := os.Executable(); err != nil {
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	if exe, err := filepath.EvalSymlinks(exe); err != nil {
 		return err
 	} else {
 		BaseDir = filepath.Dir(exe)
@@ -37,12 +42,14 @@ func SetupPaths() (err error) {
 
 	switch runtime.GOOS {
 	case "windows":
+		ServerMode = filepath.Base(exe) == "rethinkraw-server"
 		Dcraw = BaseDir + `\utils\dcraw.exe`
 		exiftool.Exec = BaseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
 		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
 		DngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 	case "darwin":
+		ServerMode = filepath.Base(exe) == "RethinkRAW.com"
 		Dcraw = BaseDir + "/utils/dcraw"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"

@@ -4,7 +4,6 @@ set -eo pipefail
 cd -P -- "$(dirname -- "$0")"
 
 tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
-exe="$tgt/rethinkraw"
 
 if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
@@ -40,7 +39,7 @@ if [[ "$1" == test ]]; then
     go test ./...
 elif [[ "$1" == run ]]; then
     echo Run app...
-    go build -race -o "$exe" && shift && exec "$exe" "$@"
+    go build -race -o "$tgt/rethinkraw" && shift && exec "$tgt/rethinkraw" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
     rm -rf "$tgt/data"
@@ -54,6 +53,7 @@ else
     CGO_ENABLED=0
     go clean
     go generate
-    go build -tags memfs -ldflags "-s -w" -o "$exe"
+    #
+    go build -tags memfs -ldflags "-s -w" -o "$tgt/rethinkraw"
     go mod tidy
 fi
