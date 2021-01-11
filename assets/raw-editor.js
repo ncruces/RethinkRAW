@@ -70,7 +70,7 @@ async function loadSettings() {
 
     await sleep();
     try {
-        let wb = await restRequest('GET', '?whiteBalance');
+        let wb = await restRequest('GET', '?wb');
         if (wb.temperature) {
             let restore = save.disabled;
             whiteBalancePresets['As Shot'] = wb;
@@ -270,14 +270,22 @@ window.printFile = () => {
     dialog.firstChild.textContent = 'Printing…';
     dialog.showModal();
 
-    query = formQuery().toString();
-    photo.addEventListener('load', loaded, { passive: true, once: true });
-    photo.addEventListener('error', loaded, { passive: true, once: true });
-    photo.src = '?preview&' + query;
+    let frame = document.createElement("iframe");
+    frame.style.display = "none";
+    frame.onload = load;
+    frame.src = '?print&' + formQuery().toString();
+    document.body.appendChild(frame);
 
-    function loaded() {
+    function load() {
+        let win = this.contentWindow;
+        win.onbeforeunload = done;
+        win.onafterprint = done;
+        win.print();
+    }
+
+    function done() {
+        document.body.removeChild(frame);
         dialog.close();
-        print();
     }
 };
 
@@ -788,7 +796,7 @@ if (photo) {
                 let wb;
                 try {
                     spinner.hidden = false;
-                    wb = await restRequest('GET', `?whiteBalance=${posx},${posy}`);
+                    wb = await restRequest('GET', `?wb=${posx},${posy}`);
                 } catch (e) {
                     alertError('White balance failed', e);
                 } finally {

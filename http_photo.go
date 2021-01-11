@@ -23,7 +23,8 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	_, export := r.Form["export"]
 	_, preview := r.Form["preview"]
 	_, settings := r.Form["settings"]
-	_, whiteBalance := r.Form["whiteBalance"]
+	_, whiteBalance := r.Form["wb"]
+	_, print := r.Form["print"]
 
 	switch {
 	case meta:
@@ -133,6 +134,20 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			}
 		}
 		return HTTPResult{}
+
+	case print:
+		if _, err := os.Stat(path); err != nil {
+			return HTTPResult{Error: err}
+		}
+
+		r.Form.Del("print")
+		r.Form.Set("preview", "")
+
+		w.Header().Set("Cache-Control", "max-age=300")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		return HTTPResult{
+			Error: templates.ExecuteTemplate(w, "print.gohtml", r.Form.Encode()),
+		}
 
 	default:
 		if _, err := os.Stat(path); err != nil {
