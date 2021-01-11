@@ -261,6 +261,26 @@ window.exportFile = async (state) => {
     dialog.close();
 };
 
+window.printFile = () => {
+    if (!photo) return;
+
+    let dialog = document.getElementById('progress-dialog');
+    let progress = dialog.querySelector('progress');
+    progress.removeAttribute('value');
+    dialog.firstChild.textContent = 'Printing…';
+    dialog.showModal();
+
+    query = formQuery().toString();
+    photo.addEventListener('load', loaded, { passive: true, once: true });
+    photo.addEventListener('error', loaded, { passive: true, once: true });
+    photo.src = '?preview&' + query;
+
+    function loaded() {
+        dialog.close();
+        print();
+    }
+};
+
 window.toggleZoom = evt => {
     if (photo.style.cursor === 'crosshair') toggleWhite();
     let zoomed = photo.style.cursor === 'zoom-out';

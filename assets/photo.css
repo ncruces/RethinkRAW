@@ -47,6 +47,12 @@ img#photo:after {
     content: 'Preview failed to load.';
 }
 
+@media print {
+    img#photo {
+        visibility: visible;
+    }
+}
+
 dialog#meta-dialog {
     overflow-y: auto;
     font-size: small;

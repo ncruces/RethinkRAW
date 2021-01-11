@@ -9,7 +9,7 @@ if (typeof String.prototype.replaceAll !== 'function') {
 window.addEventListener('pageshow', function createSocket() {
     var ws = new WebSocket('ws://' + location.host + '/ws');
     ws.onmessage = function (event) {
-      console.error(event.data);
+        console.error(event.data);
     };
     ws.onclose = createSocket;
 });
@@ -44,6 +44,14 @@ document.documentElement.addEventListener('keydown', function (evt) {
                     window.saveFileAs();
                 } else if (window.saveFile) {
                     window.saveFile();
+                }
+                break;
+
+            case 'p':
+                evt.preventDefault();
+                if (evt.repeat) return;
+                if (window.printFile) {
+                    window.printFile();
                 }
                 break;
         }
