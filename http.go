@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"html/template"
@@ -14,10 +13,13 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/websocket"
+	"github.com/ncruces/rethinkraw/pkg/httpwatcher"
 )
 
-var templates *template.Template
+var (
+	watchdog  *httpwatcher.Watcher
+	templates *template.Template
+)
 
 func setupHTTP() *http.Server {
 	http.Handle("/gallery/", http.StripPrefix("/gallery", HTTPHandler(galleryHandler)))
@@ -25,15 +27,17 @@ func setupHTTP() *http.Server {
 	http.Handle("/batch/", http.StripPrefix("/batch", HTTPHandler(batchHandler)))
 	http.Handle("/thumb/", http.StripPrefix("/thumb", HTTPHandler(thumbHandler)))
 	http.Handle("/dialog", HTTPHandler(dialogHandler))
-	http.Handle("/ws", websocket.Handler(websocketWatcher))
 	http.Handle("/", assetHandler)
 	templates = assetTemplates()
-	return &http.Server{
+
+	server := &http.Server{
 		ReadHeaderTimeout: time.Second,
 		IdleTimeout:       time.Minute,
-		ConnState:         connectionWatcher,
-		Handler:           middlewareWatcher(http.DefaultServeMux),
 	}
+	watchdog = httpwatcher.NewWatcher(server, "/ws", time.Minute, func() {
+		shutdown <- os.Interrupt
+	})
+	return server
 }
 
 // HTTPResult helps HTTPHandlers short circuit a result
@@ -50,10 +54,7 @@ func (r *HTTPResult) Done() bool { return r.Location != "" || r.Status != 0 || r
 type HTTPHandler func(w http.ResponseWriter, r *http.Request) HTTPResult
 
 func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
-	defer cancel()
-
-	switch res := h(w, r.WithContext(ctx)); {
+	switch res := h(w, r); {
 
 	case res.Location != "":
 		if res.Status == 0 {
@@ -118,7 +119,7 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 		w.WriteHeader(status)
 		json.NewEncoder(w).Encode(message)
 	}
-	websockets.Broadcast(message)
+	watchdog.Broadcast(message)
 }
 
 func cacheHeaders(path string, req, res http.Header) HTTPResult {
@@ -128,7 +129,7 @@ func cacheHeaders(path string, req, res http.Header) HTTPResult {
 		res.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
 		if ims := req.Get("If-Modified-Since"); ims != "" {
 			if t, err := http.ParseTime(ims); err == nil {
-				if fi.ModTime().Before(t.Add(1 * time.Second)) {
+				if fi.ModTime().Before(t.Add(time.Second)) {
 					for k := range res {
 						switch k {
 						case "Cache-Control", "Last-Modified":

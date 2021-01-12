@@ -6,11 +6,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"log"
+	"time"
 )
 
 const MaxUint = ^uint(0)
 const MaxInt = int(MaxUint >> 1)
 const MinInt = -MaxInt - 1
+
+var MinTime = time.Unix(-2208988800, 0) // Jan 1, 1900
+var MaxTime = MinTime.Add(1<<63 - 1)
 
 func Check(err error) {
 	if err != nil {
