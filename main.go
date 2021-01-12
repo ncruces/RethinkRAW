@@ -21,6 +21,7 @@ func init() {
 	signal.Notify(shutdown, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	osutil.CreateConsole()
 	osutil.CleanupArgs()
+	log.SetOutput(os.Stderr)
 }
 
 func main() {

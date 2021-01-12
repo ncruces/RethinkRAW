@@ -1,6 +1,7 @@
 package osutil
 
 import (
+	"os"
 	"os/exec"
 	"syscall"
 )
@@ -41,6 +42,22 @@ func createConsole() error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if os.Stdin.Fd() == 0 {
+		h, _ := syscall.GetStdHandle(syscall.STD_INPUT_HANDLE)
+		os.Stdin = os.NewFile(uintptr(h), "/dev/stdin")
+		syscall.CloseOnExec(h)
+	}
+	if os.Stdout.Fd() == 0 {
+		h, _ := syscall.GetStdHandle(syscall.STD_OUTPUT_HANDLE)
+		os.Stdin = os.NewFile(uintptr(h), "/dev/stdout")
+		syscall.CloseOnExec(h)
+	}
+	if os.Stderr.Fd() == 0 {
+		h, _ := syscall.GetStdHandle(syscall.STD_ERROR_HANDLE)
+		os.Stderr = os.NewFile(uintptr(h), "/dev/stderr")
+		syscall.CloseOnExec(h)
 	}
 
 	if hwnd, _, _ := getConsoleWindow.Call(); hwnd != 0 {
