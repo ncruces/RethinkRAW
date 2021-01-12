@@ -118,13 +118,13 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{}
 
 	case whiteBalance:
-		var coords struct{ WhiteBalance []float64 }
+		var coords struct{ WB []float64 }
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&coords, r.Form); err != nil {
 			return HTTPResult{Error: err}
 		}
-		if wb, err := loadWhiteBalance(path, coords.WhiteBalance); err != nil {
+		if wb, err := loadWhiteBalance(path, coords.WB); err != nil {
 			return HTTPResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "application/json")
@@ -146,7 +146,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Cache-Control", "max-age=300")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return HTTPResult{
-			Error: templates.ExecuteTemplate(w, "print.gohtml", r.Form.Encode()),
+			Error: templates.ExecuteTemplate(w, "print.gohtml", "?"+r.Form.Encode()),
 		}
 
 	default:

@@ -53,7 +53,7 @@ else
     CGO_ENABLED=0
     go clean
     go generate
-    #
     go build -tags memfs -ldflags "-s -w" -o "$tgt/rethinkraw"
     go mod tidy
+    #
 fi
