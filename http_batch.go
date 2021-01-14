@@ -138,7 +138,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{}
 
 	default:
-		w.Header().Set("Cache-Control", "max-age=300")
+		w.Header().Set("Cache-Control", "max-age=10")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 		data := struct {

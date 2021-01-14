@@ -15,7 +15,7 @@ type Watcher struct {
 	wsServer  websocket.Server
 	wsPath    string
 
-	Done     chan struct{}
+	closed   chan struct{}
 	active   chan struct{}
 	numAlive int32
 
@@ -25,13 +25,14 @@ type Watcher struct {
 
 func NewWatcher(server *http.Server, websocketPath string, timeout time.Duration, onTimeout func()) *Watcher {
 	var wd Watcher
-	wd.Done = make(chan struct{})
+	wd.closed = make(chan struct{})
 	wd.active = make(chan struct{})
 	wd.wsManager.conns = make(map[*websocket.Conn]struct{})
 
 	wd.handler = server.Handler
 	wd.connState = server.ConnState
 	wd.wsServer.Handler = wd.websocketWatcher
+	wd.wsPath = websocketPath
 
 	server.ConnState = wd.connectionWatcher
 	server.Handler = http.HandlerFunc(wd.middlewareWatcher)
@@ -41,22 +42,25 @@ func NewWatcher(server *http.Server, websocketPath string, timeout time.Duration
 
 	go func() {
 		for {
+			timer := time.NewTimer(timeout)
 			select {
 			case <-wd.active:
+				timer.Stop()
 				continue
-			case <-wd.Done:
+			case <-wd.closed:
+				timer.Stop()
 				return
-			case <-time.After(timeout):
+			case <-timer.C:
 				break
 			}
 
-			if atomic.LoadInt32(&wd.numAlive) <= 0 {
-				if onTimeout != nil {
-					onTimeout()
-				}
-				close(wd.Done)
-				return
+			if atomic.LoadInt32(&wd.numAlive) > 0 {
+				continue
 			}
+			if onTimeout != nil {
+				onTimeout()
+			}
+			return
 		}
 	}()
 
@@ -107,4 +111,8 @@ func (wd *Watcher) websocketWatcher(conn *websocket.Conn) {
 
 func (wd *Watcher) Broadcast(msg string) {
 	wd.wsManager.broadcast(msg)
+}
+
+func (wd *Watcher) Close() {
+	wd.closed <- struct{}{}
 }
