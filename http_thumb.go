@@ -5,14 +5,17 @@ import (
 )
 
 func thumbHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+	if r := sendAllowed(w, r, "GET", "HEAD"); r.Done() {
+		return r
+	}
 	path := fromURLPath(r.URL.Path)
 
-	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Cache-Control", "max-age=60")
-	if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
+	if r := sendCached(w, r, path); r.Done() {
 		return r
 	}
 
+	w.Header().Set("Content-Type", "image/jpeg")
 	if r.Method == "HEAD" {
 		return HTTPResult{}
 	}

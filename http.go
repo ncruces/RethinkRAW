@@ -122,20 +122,21 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 	watchdog.Broadcast(message)
 }
 
-func cacheHeaders(path string, req, res http.Header) HTTPResult {
+func sendCached(w http.ResponseWriter, r *http.Request, path string) HTTPResult {
 	if fi, err := os.Stat(path); err != nil {
 		return HTTPResult{Error: err}
 	} else {
-		res.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
-		if ims := req.Get("If-Modified-Since"); ims != "" {
+		headers := w.Header()
+		headers.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
+		if ims := r.Header.Get("If-Modified-Since"); ims != "" {
 			if t, err := http.ParseTime(ims); err == nil {
 				if fi.ModTime().Before(t.Add(time.Second)) {
-					for k := range res {
+					for k := range headers {
 						switch k {
 						case "Cache-Control", "Last-Modified":
 							// keep
 						default:
-							delete(res, k)
+							delete(headers, k)
 						}
 					}
 					return HTTPResult{Status: http.StatusNotModified}
@@ -144,6 +145,17 @@ func cacheHeaders(path string, req, res http.Header) HTTPResult {
 		}
 	}
 	return HTTPResult{}
+}
+
+func sendAllowed(w http.ResponseWriter, r *http.Request, allowed ...string) HTTPResult {
+	for _, method := range allowed {
+		if method == r.Method {
+			return HTTPResult{}
+		}
+	}
+
+	w.Header().Set("Allow", strings.Join(allowed, ", "))
+	return HTTPResult{Status: http.StatusMethodNotAllowed}
 }
 
 func toURLPath(path string) string {

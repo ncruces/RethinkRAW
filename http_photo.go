@@ -28,14 +28,14 @@ func photoHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	switch {
 	case meta:
-		if r := cacheHeaders(path, r.Header, w.Header()); r.Done() {
+		w.Header().Set("Cache-Control", "max-age=60")
+		if r := sendCached(w, r, path); r.Done() {
 			return r
 		}
 
 		if out, err := getMetaHTML(path); err != nil {
 			return HTTPResult{Error: err}
 		} else {
-			w.Header().Set("Cache-Control", "max-age=60")
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.Write(out)
 			return HTTPResult{}

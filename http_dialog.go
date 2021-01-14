@@ -25,6 +25,9 @@ func init() {
 }
 
 func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+	if r := sendAllowed(w, r, "POST"); r.Done() {
+		return r
+	}
 	if r.ParseForm() != nil {
 		return HTTPResult{Status: http.StatusBadRequest}
 	}
