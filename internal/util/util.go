@@ -16,7 +16,7 @@ const MinInt = -MaxInt - 1
 var MinTime = time.Unix(-2208988800, 0) // Jan 1, 1900
 var MaxTime = MinTime.Add(1<<63 - 1)
 
-func Check(err error) {
+func Try(err error) {
 	if err != nil {
 		panic(err)
 	}

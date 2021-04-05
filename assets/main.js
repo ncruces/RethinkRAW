@@ -7,7 +7,7 @@ if (typeof String.prototype.replaceAll !== 'function') {
 }
 
 window.addEventListener('pageshow', function createSocket() {
-    var ws = new WebSocket('ws://' + location.host + '/ws');
+    var ws = new WebSocket(location.origin.replace(/^http/, 'ws') + '/ws');
     ws.onmessage = function (event) {
         console.error(event.data);
     };

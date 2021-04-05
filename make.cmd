@@ -55,5 +55,4 @@ IF [%1]==[test] (
     go generate ^
  && go build -tags memfs -ldflags "-s -w" -o %tgt%\RethinkRAW.com ^
  && go build -tags memfs -ldflags "-s -w -H windowsgui" -o %tgt%\RethinkRAW.exe
-    go mod tidy
 )

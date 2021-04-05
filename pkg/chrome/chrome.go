@@ -46,17 +46,21 @@ func Command(url string, dataDir, cacheDir string) *Cmd {
 			ioutil.WriteFile(local, []byte(`{
 				"profiles": {
 					"edge_implicitly_signed_in": [{
-						"edge_account_type": 1
+						"edge_account_type": 1,
+						"id": "0000000000000000"
 					}]
 				}
 			}`), 0600)
 		}
 	}
 
+	// https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md
 	// https://source.chromium.org/chromium/chromium/src/+/master:chrome/test/chromedriver/chrome_launcher.cc
 	cmd := exec.Command(chrome, "--app="+url, "--homepage="+url, "--user-data-dir="+dataDir, "--disk-cache-dir="+cacheDir,
-		"--no-first-run", "--no-service-autorun", "--disable-sync", "--disable-extensions", "--disable-default-apps",
-		"--disable-background-networking", "--disable-client-side-phishing-detection")
+		"--bwsi", "--no-first-run", "--no-default-browser-check", "--no-service-autorun",
+		"--disable-sync", "--disable-extensions", "--disable-default-apps", "--disable-component-extensions-with-background-pages",
+		"--disable-breakpad", "--disable-background-networking", "--disable-domain-reliability", "--disable-client-side-phishing-detection",
+		"--disable-windows10-custom-titlebar")
 	return (*Cmd)(cmd)
 }
 

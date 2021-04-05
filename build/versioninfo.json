@@ -38,6 +38,5 @@
 			"CharsetID": "04B0"
 		}
 	},
-	"IconPath": "assets/favicon.ico",
-	"ManifestPath": "build/app.manifest"
+	"IconPath": "assets/favicon.ico"
 }
