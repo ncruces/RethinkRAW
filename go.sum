@@ -45,6 +45,8 @@ github.com/ncruces/go-image v0.1.0 h1:PCbPeiqA2Pbc7m3jWBjhJodwkGew8HEB7fC8SVM+8E
 github.com/ncruces/go-image v0.1.0/go.mod h1:DUnNl2l0T6tEuK266gUGy3Xq8C+A/71XuoWsAHh8bzg=
 github.com/ncruces/zenity v0.6.4 h1:kgogABh3ZztcVeL7rTgdMPWoUFx4GfJMoEJbO5sf/Gw=
 github.com/ncruces/zenity v0.6.4/go.mod h1:xNwIT3IZhTsUW8A7j6eafbO5Q2tzUxcqlyFYzpwdE8o=
+github.com/ncruces/zenity v0.7.4 h1:LAKPDqR71ODNZhWPPqIuRx6AzF0FM3sChu6aB1lLNWI=
+github.com/ncruces/zenity v0.7.4/go.mod h1:hLx0V51wYZLka1atR6V1N9azD3/MyYseCUhQ3wnzflk=
 github.com/phpdave11/gofpdf v1.4.2/go.mod h1:zpO6xFn9yxo3YLyMvW8HcKWVdbNqgIfOOp2dXMnm1mY=
 github.com/phpdave11/gofpdi v1.0.12/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -103,6 +105,8 @@ golang.org/x/net v0.0.0-20201021035429-f5854403a974/go.mod h1:sp8m0HH+o8qH0wwXwY
 golang.org/x/net v0.0.0-20210119194325-5f4716e94777/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
 golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6 h1:0PC75Fz/kyMGhL0e1QnypqK2kQMqKt9csD1GnMJR+Zk=
 golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6/go.mod h1:OJAsFXCWl8Ukc7SiCT/9KSuxbyM7479/AVlXFRxuMCk=
+golang.org/x/net v0.0.0-20210525063256-abc453219eb5 h1:wjuX4b5yYQnEQHzd+CBcrcC6OVR2J1CN6mUy0oSxIPo=
+golang.org/x/net v0.0.0-20210525063256-abc453219eb5/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

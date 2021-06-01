@@ -22,14 +22,14 @@
 		"Comments": "",
 		"CompanyName": "Nuno Cruces",
 		"FileDescription": "",
-		"FileVersion": "0.5.5.0",
+		"FileVersion": "0.6.0.0",
 		"InternalName": "rethinkraw",
 		"LegalCopyright": "© 2019-2020 Nuno Cruces",
 		"LegalTrademarks": "",
 		"OriginalFilename": "RethinkRAW.exe",
 		"PrivateBuild": "",
 		"ProductName": "RethinkRAW",
-		"ProductVersion": "0.5.5",
+		"ProductVersion": "0.6.0",
 		"SpecialBuild": ""
 	},
 	"VarFileInfo": {
