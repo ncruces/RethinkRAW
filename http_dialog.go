@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,6 +30,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		return HTTPResult{Status: http.StatusBadRequest}
 	}
 
+	var err error
 	var path string
 	var paths []string
 
@@ -38,26 +40,11 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	switch {
 	case batch:
-		if res, err := zenity.SelectFileMutiple(zenity.Context(r.Context()), filters); err != nil {
-			return HTTPResult{Error: err}
-		} else {
-			paths = res
-		}
-
+		paths, err = zenity.SelectFileMutiple(zenity.Context(r.Context()), filters)
 	case photo:
-		if res, err := zenity.SelectFile(zenity.Context(r.Context()), filters); err != nil {
-			return HTTPResult{Error: err}
-		} else {
-			path = res
-		}
-
+		path, err = zenity.SelectFile(zenity.Context(r.Context()), filters)
 	case gallery:
-		if res, err := zenity.SelectFile(zenity.Context(r.Context()), zenity.Directory()); err != nil {
-			return HTTPResult{Error: err}
-		} else {
-			path = res
-		}
-
+		path, err = zenity.SelectFile(zenity.Context(r.Context()), zenity.Directory())
 	default:
 		return HTTPResult{Status: http.StatusNotFound}
 	}
@@ -70,9 +57,12 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 	} else if len(paths) != 0 {
 		path = batches.New(paths)
-	} else {
-		w.Header().Add("Refresh", "0; url=/")
+	} else if errors.Is(err, zenity.ErrCanceled) {
 		return HTTPResult{Status: http.StatusResetContent}
+	} else if err == nil {
+		return HTTPResult{Status: http.StatusInternalServerError}
+	} else {
+		return HTTPResult{Error: err}
 	}
 
 	var url url.URL
