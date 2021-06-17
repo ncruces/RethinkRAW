@@ -50,9 +50,11 @@ elif [[ "$1" == install ]]; then
 else
     echo Build release...
     osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
+    tmp="$(mktemp -d)"
     CGO_ENABLED=0
     go clean
     go generate
-    go build -tags memfs -ldflags "-s -w" -o "$tgt/rethinkraw"
-    #
+    GOARCH=amd64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_x64"
+    GOARCH=arm64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_arm"
+    go run github.com/randall77/makefat "$tgt/rethinkraw" "$tmp/rethinkraw_x64" "$tmp/rethinkraw_arm"
 fi

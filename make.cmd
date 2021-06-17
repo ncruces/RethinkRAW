@@ -50,9 +50,11 @@ IF [%1]==[test] (
 ) ELSE (
     ECHO Release build...
     go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 build/versioninfo.json
+    REM
     SET CGO_ENABLED=0
     go clean
     go generate ^
- && go build -tags memfs -ldflags "-s -w" -o %tgt%\RethinkRAW.com ^
- && go build -tags memfs -ldflags "-s -w -H windowsgui" -o %tgt%\RethinkRAW.exe
+ && go build -tags memfs -ldflags "-s -w" -trimpath -o %tgt%\RethinkRAW.com ^
+ && go build -tags memfs -ldflags "-s -w -H windowsgui" -trimpath -o %tgt%\RethinkRAW.exe
+    REM
 )
