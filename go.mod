@@ -14,5 +14,5 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
 	golang.org/x/image v0.0.0-20210607152325-775e3b0c77b9 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	gonum.org/v1/gonum v0.9.1
+	gonum.org/v1/gonum v0.9.3
 )
