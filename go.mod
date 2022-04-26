@@ -11,6 +11,6 @@ require (
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/zenity v0.7.12
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
-	golang.org/x/net v0.0.0-20210908191846-a5e095526f91
-	gonum.org/v1/gonum v0.9.3
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f
+	gonum.org/v1/gonum v0.11.0
 )
