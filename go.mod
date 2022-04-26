@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/gorilla/schema v1.2.0
-	github.com/josephspurrier/goversioninfo v1.3.0
+	github.com/josephspurrier/goversioninfo v1.4.0
 	github.com/ncruces/go-exiftool v0.2.1
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
 	github.com/ncruces/go-fs v0.2.1
