@@ -1,4 +1,4 @@
-// +build memfs
+//go:build memfs
 
 package main
 

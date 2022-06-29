@@ -29,6 +29,9 @@ func splitPacket(data []byte, atEOF bool) (advance int, token []byte, err error)
 	if atEOF {
 		return 0, nil, io.EOF
 	}
+	if advance < 0 {
+		return 0, nil, nil
+	}
 	return advance, nil, nil
 }
 

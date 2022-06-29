@@ -1,5 +1,4 @@
-// +build !windows
-// +build !darwin
+//go:build !windows && !darwin
 
 package chrome
 
