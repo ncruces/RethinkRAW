@@ -6,14 +6,6 @@ if (typeof String.prototype.replaceAll !== 'function') {
     location.replace('/browser.html');
 }
 
-window.addEventListener('pageshow', function createSocket() {
-    var ws = new WebSocket(location.origin.replace(/^http/, 'ws') + '/ws');
-    ws.onmessage = function (event) {
-        console.error(event.data);
-    };
-    ws.onclose = createSocket;
-});
-
 document.documentElement.addEventListener('keydown', function (evt) {
     if (navigator.platform.includes('Mac') && evt.metaKey && !(evt.altKey || evt.ctrlKey) ||
        !navigator.platform.includes('Mac') && evt.ctrlKey && !(evt.altKey || evt.metaKey)) {

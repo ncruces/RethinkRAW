@@ -12,14 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/ncruces/rethinkraw/pkg/httpwatcher"
 )
 
-var (
-	watchdog  *httpwatcher.Watcher
-	templates *template.Template
-)
+var templates *template.Template
 
 func setupHTTP() *http.Server {
 	http.Handle("/gallery/", http.StripPrefix("/gallery", HTTPHandler(galleryHandler)))
@@ -34,9 +29,6 @@ func setupHTTP() *http.Server {
 		ReadHeaderTimeout: time.Second,
 		IdleTimeout:       time.Minute,
 	}
-	watchdog = httpwatcher.NewWatcher(server, "/ws", time.Minute, func() {
-		shutdown <- os.Interrupt
-	})
 	return server
 }
 
@@ -119,7 +111,6 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 		w.WriteHeader(status)
 		json.NewEncoder(w).Encode(message)
 	}
-	watchdog.Broadcast(message)
 }
 
 func sendCached(w http.ResponseWriter, r *http.Request, path string) HTTPResult {
