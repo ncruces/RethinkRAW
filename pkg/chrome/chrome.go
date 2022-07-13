@@ -158,7 +158,7 @@ func (c *Cmd) send(method, session string, params any) error {
 type cdpMessage struct {
 	ID     uint32          `json:"id,omitempty"`
 	Method string          `json:"method,omitempty"`
-	Result jason.Raw       `json:"result,omitempty"`
+	Result jason.RawValue  `json:"result,omitempty"`
 	Params jason.RawObject `json:"params,omitempty"`
 }
 
