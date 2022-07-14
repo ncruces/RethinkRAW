@@ -47,7 +47,7 @@ func run() error {
 		} else if abs, err := filepath.Abs(os.Args[1]); err != nil {
 			return err
 		} else if len(os.Args) > 2 {
-			url.Path = "/batch/" + batches.New(os.Args[1:])
+			url.Path = "/batch/" + EncodeBatch(os.Args[1:])
 		} else if fi.IsDir() {
 			url.Path = "/gallery/" + toURLPath(abs)
 		} else {

@@ -56,7 +56,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			return HTTPResult{Error: err}
 		}
 	} else if len(paths) != 0 {
-		path = batches.New(paths)
+		path = EncodeBatch(paths)
 	} else if errors.Is(err, zenity.ErrCanceled) {
 		return HTTPResult{Status: http.StatusResetContent}
 	} else if err == nil {

@@ -6,12 +6,17 @@ function run() {
 }
 
 function openDocuments(docs) {
-    let args = docs.map(doc => `"${doc}"`).join(' ');
-    let path = app.pathToResource('RethinkRAW.app').toString();
-    let running = app.doShellScript('ps do args').includes('--app=http://localhost:39639');
+    function escape(arg) {
+        return "'" + String(arg).replace(/\'+/g, `'"$&"'`) + "'";
+    }
+
+    let args = docs.map(escape).join(' ');
+    let path = String(app.pathToResource('RethinkRAW.app'));
+    let output = app.doShellScript('ps -xo command=').split('\r');
+    let running = output.some(line => line.startsWith(path));
     if (running) {
-        app.doShellScript(`"${path}/Contents/MacOS/rethinkraw" ` + args);
+        app.doShellScript(`${escape(path)}/Contents/MacOS/rethinkraw ` + args);
     } else {
-        app.doShellScript(`open -a "${path}" --args ` + args);
+        app.doShellScript(`open -a ${escape(path)} --args ` + args);
     }
 }

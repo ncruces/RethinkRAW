@@ -28,11 +28,11 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	// get batch
 	id := strings.TrimPrefix(r.URL.Path, "/")
-	batch := batches.Get(id)
+	batch := DecodeBatch(id)
 	if len(batch) == 0 {
 		path := fromURLPath(r.URL.Path)
 		if fi, _ := os.Stat(path); fi != nil && fi.IsDir() {
-			return HTTPResult{Location: "/batch/" + batches.New([]string{path})}
+			return HTTPResult{Location: "/batch/" + EncodeBatch([]string{path})}
 		}
 		return HTTPResult{Status: http.StatusGone}
 	}

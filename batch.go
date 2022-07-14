@@ -1,54 +1,43 @@
 package main
 
 import (
+	"compress/flate"
+	"encoding/base64"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
-var batches Batches
-
-type Batches struct {
-	lock  sync.Mutex
-	queue [16]struct {
-		id    string
-		paths []string
+func EncodeBatch(paths []string) string {
+	var buf strings.Builder
+	b64 := base64.NewEncoder(base64.RawURLEncoding, &buf)
+	flt, err := flate.NewWriter(b64, flate.BestCompression)
+	if err != nil {
+		panic(err)
 	}
+	for _, path := range paths {
+		flt.Write([]byte(path))
+		flt.Write([]byte{0})
+	}
+	flt.Close()
+	b64.Close()
+	return buf.String()
 }
 
-func (p *Batches) New(paths []string) string {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	for i := len(p.queue) - 1; i > 0; i-- {
-		p.queue[i] = p.queue[i-1]
+func DecodeBatch(batch string) []string {
+	b64 := base64.NewDecoder(base64.RawURLEncoding, strings.NewReader(batch))
+	flt := flate.NewReader(b64)
+	var buf strings.Builder
+	_, err := io.Copy(&buf, flt)
+	if err != nil {
+		return nil
 	}
-
-	id := util.RandomID()
-	p.queue[0].id = id
-	p.queue[0].paths = paths
-	return id
-}
-
-func (p *Batches) Get(id string) []string {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	for j, t := range p.queue {
-		if t.id == id {
-			for i := j; i > 0; i-- {
-				p.queue[i] = p.queue[i-1]
-			}
-			p.queue[0] = t
-			return t.paths
-		}
-	}
-
-	return nil
+	str := buf.String()
+	return strings.Split(strings.TrimRight(str, "\x00"), "\x00")
 }
 
 type BatchPhoto struct {
