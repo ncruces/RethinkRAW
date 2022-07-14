@@ -30,6 +30,7 @@ func IsInstalled() bool {
 type Cmd struct {
 	cmd *exec.Cmd
 	ws  *websocket.Conn
+	url string
 	msg uint32
 }
 
@@ -55,12 +56,13 @@ func Command(url string, dataDir, cacheDir string) *Cmd {
 
 	// https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md
 	// https://source.chromium.org/chromium/chromium/src/+/master:chrome/test/chromedriver/chrome_launcher.cc
-	cmd := exec.Command(chrome, "--app="+url, "--homepage="+url, "--user-data-dir="+dataDir, "--disk-cache-dir="+cacheDir,
-		"--bwsi", "--no-first-run", "--no-default-browser-check", "--no-service-autorun",
+	cmd := exec.Command(chrome, "--app="+url, "--user-data-dir="+dataDir, "--disk-cache-dir="+cacheDir,
+		"--incognito", "--inprivate", "--bwsi", "--remote-debugging-port=0",
+		"--no-first-run", "--no-default-browser-check", "--no-service-autorun",
 		"--disable-sync", "--disable-breakpad", "--disable-extensions", "--disable-default-apps",
 		"--disable-component-extensions-with-background-pages", "--disable-background-networking",
 		"--disable-domain-reliability", "--disable-client-side-phishing-detection", "--disable-component-update")
-	return &Cmd{cmd: cmd}
+	return &Cmd{cmd: cmd, url: origin(url)}
 }
 
 // Run starts Chrome and waits for it to complete.
@@ -73,7 +75,6 @@ func (c *Cmd) Run() error {
 
 // Start starts Chrome but does not wait for it to complete.
 func (c *Cmd) Start() error {
-	c.cmd.Args = append(c.cmd.Args, "--remote-debugging-port=0")
 	pipe, err := c.cmd.StderrPipe()
 	if err != nil {
 		return err
@@ -85,6 +86,7 @@ func (c *Cmd) Start() error {
 		return err
 	}
 
+	var started bool
 	var targets = set[string]{}
 	scan := bufio.NewScanner(pipe)
 	for scan.Scan() {
@@ -92,7 +94,7 @@ func (c *Cmd) Start() error {
 		line := scan.Bytes()
 		if bytes.HasPrefix(line, []byte(prefix)) {
 			url := line[len(prefix):]
-			c.ws, err = websocket.Dial(string(url), "", "http://localhost")
+			c.ws, err = websocket.Dial(string(url), "", c.url)
 			if err != nil {
 				return err
 			}
@@ -105,23 +107,24 @@ func (c *Cmd) Start() error {
 						break
 					}
 					if err != nil {
-						log.Print(err)
+						log.Print("chrome:", err)
 					}
 					switch msg.Method {
 					case "Target.targetDestroyed", "Target.targetCrashed":
 						targets.Del(jason.To[string](msg.Params["targetId"]))
-						if len(targets) <= 1 {
-							c.send("Browser.close", "", nil)
-						}
-					case "Target.targetCreated":
+					case "Target.targetCreated", "Target.targetInfoChanged":
 						info := jason.To[cdpTargetInfo](msg.Params["targetInfo"])
-						targets.Add(info.TargetID)
-						switch info.URL {
-						case "about:blank", "about://newtab/", "chrome://newtab/", "edge://newtab/":
-							c.send("Target.closeTarget", "", jason.Object{
-								"targetId": info.TargetID,
-							})
+						if origin(info.URL) == c.url {
+							targets.Add(info.TargetID)
+						} else {
+							targets.Del(info.TargetID)
 						}
+						if info.Type == "page" {
+							started = true
+						}
+					}
+					if started && len(targets) == 0 {
+						c.send("Browser.close", "", nil)
 					}
 				}
 			}()
