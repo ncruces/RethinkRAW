@@ -10,7 +10,7 @@ import (
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
-func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r := sendAllowed(w, r, "GET", "HEAD"); r.Done() {
 		return r
 	}
@@ -22,7 +22,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	}
 
 	if files, err := ioutil.ReadDir(path); err != nil {
-		return HTTPResult{Error: err}
+		return httpResult{Error: err}
 	} else {
 		data := struct {
 			Title, Path  string
@@ -61,7 +61,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		return HTTPResult{
+		return httpResult{
 			Error: templates.ExecuteTemplate(w, "gallery.gohtml", data),
 		}
 	}

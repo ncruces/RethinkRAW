@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/ncruces/rethinkraw/internal/config"
-	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/rethinkraw/pkg/craw"
+	"golang.org/x/exp/slices"
 )
 
 var defaultProfiles = []string{
@@ -111,7 +111,7 @@ func loadProfiles(make, model string, process float32, grayscale bool, profile, 
 
 		res.adobe = "Adobe Standard"
 		for _, name := range profiles {
-			if util.Contains(profiles, name+" v2") {
+			if slices.Contains(profiles, name+" v2") {
 				// skip legacy
 				continue
 			}
@@ -132,9 +132,9 @@ func loadProfiles(make, model string, process float32, grayscale bool, profile, 
 		switch {
 		case look == "" && (profile == "" || profile == adobe):
 			profile = "Adobe Standard"
-		case util.Contains(defaultProfiles, look) && (profile == "" || profile == adobe):
+		case slices.Contains(defaultProfiles, look) && (profile == "" || profile == adobe):
 			profile = look
-		case util.Contains(other, profile) && look == "" && !grayscale:
+		case slices.Contains(other, profile) && look == "" && !grayscale:
 			//
 		default:
 			profile = "Custom"

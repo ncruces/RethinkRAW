@@ -25,9 +25,9 @@ func init() {
 	}
 }
 
-func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+func dialogHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r.ParseForm() != nil {
-		return HTTPResult{Status: http.StatusBadRequest}
+		return httpResult{Status: http.StatusBadRequest}
 	}
 
 	var err error
@@ -46,23 +46,23 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	case gallery:
 		path, err = zenity.SelectFile(zenity.Context(r.Context()), zenity.Directory())
 	default:
-		return HTTPResult{Status: http.StatusNotFound}
+		return httpResult{Status: http.StatusNotFound}
 	}
 
 	if path != "" {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			return HTTPResult{Status: http.StatusUnprocessableEntity, Message: err.Error()}
+			return httpResult{Status: http.StatusUnprocessableEntity, Message: err.Error()}
 		} else if err != nil {
-			return HTTPResult{Error: err}
+			return httpResult{Error: err}
 		}
 	} else if len(paths) != 0 {
-		path = EncodeBatch(paths)
+		path = toBatchPath(paths)
 	} else if errors.Is(err, zenity.ErrCanceled) {
-		return HTTPResult{Status: http.StatusResetContent}
+		return httpResult{Status: http.StatusResetContent}
 	} else if err == nil {
-		return HTTPResult{Status: http.StatusInternalServerError}
+		return httpResult{Status: http.StatusInternalServerError}
 	} else {
-		return HTTPResult{Error: err}
+		return httpResult{Error: err}
 	}
 
 	var url url.URL
@@ -74,7 +74,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 	case gallery:
 		url.Path = "/gallery/" + toURLPath(path)
 	}
-	return HTTPResult{
+	return httpResult{
 		Status:   http.StatusSeeOther,
 		Location: url.String(),
 	}

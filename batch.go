@@ -12,7 +12,7 @@ import (
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
-func EncodeBatch(paths []string) string {
+func toBatchPath(paths []string) string {
 	var buf strings.Builder
 	b64 := base64.NewEncoder(base64.RawURLEncoding, &buf)
 	flt, err := flate.NewWriter(b64, flate.BestCompression)
@@ -28,8 +28,8 @@ func EncodeBatch(paths []string) string {
 	return buf.String()
 }
 
-func DecodeBatch(batch string) []string {
-	b64 := base64.NewDecoder(base64.RawURLEncoding, strings.NewReader(batch))
+func fromBatchPath(path string) []string {
+	b64 := base64.NewDecoder(base64.RawURLEncoding, strings.NewReader(strings.TrimPrefix(path, "/")))
 	flt := flate.NewReader(b64)
 	var buf strings.Builder
 	_, err := io.Copy(&buf, flt)
@@ -37,16 +37,16 @@ func DecodeBatch(batch string) []string {
 		return nil
 	}
 	str := buf.String()
-	return strings.Split(strings.TrimRight(str, "\x00"), "\x00")
+	return strings.Split(strings.TrimSuffix(str, "\x00"), "\x00")
 }
 
-type BatchPhoto struct {
+type batchPhoto struct {
 	Path string
 	Name string
 }
 
-func FindPhotos(batch []string) ([]BatchPhoto, error) {
-	var photos []BatchPhoto
+func findPhotos(batch []string) ([]batchPhoto, error) {
+	var photos []batchPhoto
 	for _, path := range batch {
 		var prefix string
 		if len(batch) > 1 {
@@ -72,7 +72,7 @@ func FindPhotos(batch []string) ([]BatchPhoto, error) {
 					} else {
 						_, name = filepath.Split(path)
 					}
-					photos = append(photos, BatchPhoto{path, name})
+					photos = append(photos, batchPhoto{path, name})
 				}
 			}
 			return nil
@@ -84,11 +84,11 @@ func FindPhotos(batch []string) ([]BatchPhoto, error) {
 	return photos, nil
 }
 
-func BatchProcess(photos []BatchPhoto, proc func(photo BatchPhoto) error) <-chan error {
+func batchProcess(photos []batchPhoto, proc func(photo batchPhoto) error) <-chan error {
 	const parallelism = 2
 
 	output := make(chan error, parallelism)
-	input := make(chan BatchPhoto)
+	input := make(chan batchPhoto)
 	wait := sync.WaitGroup{}
 	wait.Add(parallelism)
 

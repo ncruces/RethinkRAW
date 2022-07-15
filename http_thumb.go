@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func thumbHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+func thumbHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r := sendAllowed(w, r, "GET", "HEAD"); r.Done() {
 		return r
 	}
@@ -17,13 +17,13 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 
 	w.Header().Set("Content-Type", "image/jpeg")
 	if r.Method == "HEAD" {
-		return HTTPResult{}
+		return httpResult{}
 	}
 
 	if out, err := previewJPEG(path); err != nil {
-		return HTTPResult{Error: err}
+		return httpResult{Error: err}
 	} else {
 		w.Write(out)
-		return HTTPResult{}
+		return httpResult{}
 	}
 }

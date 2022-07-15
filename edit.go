@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 	"github.com/ncruces/rethinkraw/pkg/xmp"
 )
@@ -235,11 +234,11 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 	if ex.Fit == "mpix" {
 		mul := math.Sqrt(1e6 * ex.MPixels / float64(size.X*size.Y))
 		if size.X > size.Y {
-			fit.X = util.MaxInt
+			fit.X = math.MaxInt
 			fit.Y = int(mul * float64(size.Y))
 		} else {
 			fit.X = int(mul * float64(size.X))
-			fit.Y = util.MaxInt
+			fit.Y = math.MaxInt
 		}
 	} else {
 		mul := 1.0
@@ -263,7 +262,7 @@ func (ex *exportSettings) FitImage(size image.Point) (fit image.Point) {
 
 		round := func(x float64) int {
 			if x == 0.0 {
-				return util.MaxInt
+				return math.MaxInt
 			}
 			i := int(x + 0.5)
 			if i < 16 {

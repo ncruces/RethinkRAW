@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gorilla/schema"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
@@ -14,31 +13,30 @@ import (
 )
 
 type multiStatus struct {
-	Code  int         `json:"code"`
-	Text  string      `json:"text"`
-	Body  interface{} `json:"response,omitempty"`
-	Done  int         `json:"done,omitempty"`
-	Total int         `json:"total,omitempty"`
+	Code  int    `json:"code"`
+	Text  string `json:"text"`
+	Body  any    `json:"response,omitempty"`
+	Done  int    `json:"done,omitempty"`
+	Total int    `json:"total,omitempty"`
 }
 
-func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
+func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r.ParseForm() != nil {
-		return HTTPResult{Status: http.StatusBadRequest}
+		return httpResult{Status: http.StatusBadRequest}
 	}
 
 	// get batch
-	id := strings.TrimPrefix(r.URL.Path, "/")
-	batch := DecodeBatch(id)
+	batch := fromBatchPath(r.URL.Path)
 	if len(batch) == 0 {
 		path := fromURLPath(r.URL.Path)
 		if fi, _ := os.Stat(path); fi != nil && fi.IsDir() {
-			return HTTPResult{Location: "/batch/" + EncodeBatch([]string{path})}
+			return httpResult{Location: "/batch/" + toBatchPath([]string{path})}
 		}
-		return HTTPResult{Status: http.StatusGone}
+		return httpResult{Status: http.StatusGone}
 	}
-	photos, err := FindPhotos(batch)
+	photos, err := findPhotos(batch)
 	if err != nil {
-		return HTTPResult{Error: err}
+		return httpResult{Error: err}
 	}
 
 	_, save := r.Form["save"]
@@ -51,11 +49,11 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
-			return HTTPResult{Error: err}
+			return httpResult{Error: err}
 		}
 		xmp.Orientation = 0
 
-		results := BatchProcess(photos, func(photo BatchPhoto) error {
+		results := batchProcess(photos, func(photo batchPhoto) error {
 			xmp := xmp
 			xmp.Filename = photo.Path
 			return saveEdit(photo.Path, xmp)
@@ -64,7 +62,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		w.WriteHeader(http.StatusMultiStatus)
 		batchResultWriter(w, results, len(photos))
-		return HTTPResult{}
+		return httpResult{}
 
 	case export:
 		var xmp xmpSettings
@@ -72,10 +70,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		dec := schema.NewDecoder()
 		dec.IgnoreUnknownKeys(true)
 		if err := dec.Decode(&xmp, r.Form); err != nil {
-			return HTTPResult{Error: err}
+			return httpResult{Error: err}
 		}
 		if err := dec.Decode(&exp, r.Form); err != nil {
-			return HTTPResult{Error: err}
+			return httpResult{Error: err}
 		}
 		xmp.Orientation = 0
 
@@ -85,15 +83,15 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			if res, err := zenity.SelectFile(zenity.Context(r.Context()), zenity.Directory(), zenity.Filename(exppath)); res != "" {
 				exppath = res
 			} else if errors.Is(err, zenity.ErrCanceled) {
-				return HTTPResult{Status: http.StatusNoContent}
+				return httpResult{Status: http.StatusNoContent}
 			} else if err == nil {
-				return HTTPResult{Status: http.StatusInternalServerError}
+				return httpResult{Status: http.StatusInternalServerError}
 			} else {
-				return HTTPResult{Error: err}
+				return httpResult{Error: err}
 			}
 		}
 
-		results := BatchProcess(photos, func(photo BatchPhoto) (err error) {
+		results := batchProcess(photos, func(photo batchPhoto) (err error) {
 			xmp := xmp
 			xmp.Filename = photo.Path
 			out, err := exportEdit(photo.Path, xmp, exp)
@@ -123,22 +121,22 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		w.WriteHeader(http.StatusMultiStatus)
 		batchResultWriter(w, results, len(photos))
-		return HTTPResult{}
+		return httpResult{}
 
 	case settings:
 		if len(photos) == 0 {
-			return HTTPResult{Status: http.StatusNoContent}
+			return httpResult{Status: http.StatusNoContent}
 		}
 		if xmp, err := loadEdit(photos[0].Path); err != nil {
-			return HTTPResult{Error: err}
+			return httpResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			enc := json.NewEncoder(w)
 			if err := enc.Encode(xmp); err != nil {
-				return HTTPResult{Error: err}
+				return httpResult{Error: err}
 			}
 		}
-		return HTTPResult{}
+		return httpResult{}
 
 	default:
 		w.Header().Set("Cache-Control", "max-age=10")
@@ -153,7 +151,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) HTTPResult {
 			data.Photos = append(data.Photos, item)
 		}
 
-		return HTTPResult{
+		return httpResult{
 			Error: templates.ExecuteTemplate(w, "batch.gohtml", data),
 		}
 	}

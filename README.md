@@ -1,6 +1,6 @@
 # RethinkRAW
 
-RethinkRAW is a RAW photo editor for those who would otherwise shoot JPEG.
+RethinkRAW is an unpretentious, free RAW photo editor.
 
 ## Download
 

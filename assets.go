@@ -2,9 +2,7 @@
 
 package main
 
-import (
-	"html/template"
-)
+import "html/template"
 
 var assetHandler = assets
 

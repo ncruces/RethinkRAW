@@ -1,5 +1,4 @@
 ## Visual Studio Code
-
 .vscode/*
 
 ## Windows
@@ -14,6 +13,7 @@ Thumbs.db
 # Binaries for programs and plugins
 *.com
 *.exe
+*.com~
 *.exe~
 *.syso
 *.dll
@@ -29,7 +29,7 @@ Thumbs.db
 
 ## Project
 /stuff
-/assets_gen.go
+/*_gen.go
 /assets/normalize.css
 /assets/dialog-polyfill.*
 /assets/fa-solid-900.woff2

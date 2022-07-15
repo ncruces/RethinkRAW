@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
-	"net"
 	"net/url"
 	"os"
 	"os/signal"
@@ -11,10 +11,12 @@ import (
 	"syscall"
 
 	"github.com/ncruces/rethinkraw/internal/config"
+	"github.com/ncruces/rethinkraw/internal/optls"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
+var tlscfg tls.Config
 var shutdown = make(chan os.Signal, 1)
 
 func init() {
@@ -47,7 +49,7 @@ func run() error {
 		} else if abs, err := filepath.Abs(os.Args[1]); err != nil {
 			return err
 		} else if len(os.Args) > 2 {
-			url.Path = "/batch/" + EncodeBatch(os.Args[1:])
+			url.Path = "/batch/" + toBatchPath(os.Args[1:])
 		} else if fi.IsDir() {
 			url.Path = "/gallery/" + toURLPath(abs)
 		} else {
@@ -60,7 +62,7 @@ func run() error {
 	}
 
 	var server bool
-	if ln, err := net.Listen("tcp", url.Host); err == nil {
+	if ln, err := optls.Listen("tcp", url.Host, &tlscfg); err == nil {
 		server = true
 		http := setupHTTP()
 		exif, err := setupExifTool()

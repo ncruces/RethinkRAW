@@ -17,11 +17,11 @@ import (
 var templates *template.Template
 
 func setupHTTP() *http.Server {
-	http.Handle("/gallery/", http.StripPrefix("/gallery", HTTPHandler(galleryHandler)))
-	http.Handle("/photo/", http.StripPrefix("/photo", HTTPHandler(photoHandler)))
-	http.Handle("/batch/", http.StripPrefix("/batch", HTTPHandler(batchHandler)))
-	http.Handle("/thumb/", http.StripPrefix("/thumb", HTTPHandler(thumbHandler)))
-	http.Handle("/dialog", HTTPHandler(dialogHandler))
+	http.Handle("/gallery/", http.StripPrefix("/gallery", httpHandler(galleryHandler)))
+	http.Handle("/photo/", http.StripPrefix("/photo", httpHandler(photoHandler)))
+	http.Handle("/batch/", http.StripPrefix("/batch", httpHandler(batchHandler)))
+	http.Handle("/thumb/", http.StripPrefix("/thumb", httpHandler(thumbHandler)))
+	http.Handle("/dialog", httpHandler(dialogHandler))
 	http.Handle("/", assetHandler)
 	templates = assetTemplates()
 
@@ -32,20 +32,20 @@ func setupHTTP() *http.Server {
 	return server
 }
 
-// HTTPResult helps HTTPHandlers short circuit a result
-type HTTPResult struct {
+// httpResult helps httpHandler short circuit a result
+type httpResult struct {
 	Status   int
 	Message  string
 	Location string
 	Error    error
 }
 
-func (r *HTTPResult) Done() bool { return r.Location != "" || r.Status != 0 || r.Error != nil }
+func (r *httpResult) Done() bool { return r.Location != "" || r.Status != 0 || r.Error != nil }
 
-// HTTPHandler is an http.Handler that returns an HTTPResult
-type HTTPHandler func(w http.ResponseWriter, r *http.Request) HTTPResult
+// httpHandler is an http.Handler that returns an httpResult
+type httpHandler func(w http.ResponseWriter, r *http.Request) httpResult
 
-func (h HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch res := h(w, r); {
 
 	case res.Location != "":
@@ -113,9 +113,9 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 	}
 }
 
-func sendCached(w http.ResponseWriter, r *http.Request, path string) HTTPResult {
+func sendCached(w http.ResponseWriter, r *http.Request, path string) httpResult {
 	if fi, err := os.Stat(path); err != nil {
-		return HTTPResult{Error: err}
+		return httpResult{Error: err}
 	} else {
 		headers := w.Header()
 		headers.Set("Last-Modified", fi.ModTime().UTC().Format(http.TimeFormat))
@@ -130,23 +130,23 @@ func sendCached(w http.ResponseWriter, r *http.Request, path string) HTTPResult 
 							delete(headers, k)
 						}
 					}
-					return HTTPResult{Status: http.StatusNotModified}
+					return httpResult{Status: http.StatusNotModified}
 				}
 			}
 		}
 	}
-	return HTTPResult{}
+	return httpResult{}
 }
 
-func sendAllowed(w http.ResponseWriter, r *http.Request, allowed ...string) HTTPResult {
+func sendAllowed(w http.ResponseWriter, r *http.Request, allowed ...string) httpResult {
 	for _, method := range allowed {
 		if method == r.Method {
-			return HTTPResult{}
+			return httpResult{}
 		}
 	}
 
 	w.Header().Set("Allow", strings.Join(allowed, ", "))
-	return HTTPResult{Status: http.StatusMethodNotAllowed}
+	return httpResult{Status: http.StatusMethodNotAllowed}
 }
 
 func toURLPath(path string) string {
