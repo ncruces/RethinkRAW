@@ -8,7 +8,8 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r := sendAllowed(w, r, "GET", "HEAD"); r.Done() {
 		return r
 	}
-	path := fromURLPath(r.URL.Path)
+	prefix := getPathPrefix(r)
+	path := fromURLPath(r.URL.Path, prefix)
 
 	w.Header().Set("Cache-Control", "max-age=60")
 	if r := sendCached(w, r, path); r.Done() {

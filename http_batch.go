@@ -21,16 +21,15 @@ type multiStatus struct {
 }
 
 func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
-	if r.ParseForm() != nil {
-		return httpResult{Status: http.StatusBadRequest}
+	if err := r.ParseForm(); err != nil {
+		return httpResult{Status: http.StatusBadRequest, Error: err}
 	}
-
-	// get batch
+	prefix := getPathPrefix(r)
 	batch := fromBatchPath(r.URL.Path)
 	if len(batch) == 0 {
-		path := fromURLPath(r.URL.Path)
+		path := fromURLPath(r.URL.Path, prefix)
 		if fi, _ := os.Stat(path); fi != nil && fi.IsDir() {
-			return httpResult{Location: "/batch/" + toBatchPath([]string{path})}
+			return httpResult{Location: "/batch/" + toBatchPath(path)}
 		}
 		return httpResult{Status: http.StatusGone}
 	}
@@ -147,7 +146,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		}{}
 
 		for _, photo := range photos {
-			item := struct{ Name, Path string }{photo.Name, toURLPath(photo.Path)}
+			item := struct{ Name, Path string }{photo.Name, toURLPath(photo.Path, prefix)}
 			data.Photos = append(data.Photos, item)
 		}
 

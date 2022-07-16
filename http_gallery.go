@@ -14,7 +14,8 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r := sendAllowed(w, r, "GET", "HEAD"); r.Done() {
 		return r
 	}
-	path := fromURLPath(r.URL.Path)
+	prefix := getPathPrefix(r)
+	path := fromURLPath(r.URL.Path, prefix)
 
 	w.Header().Set("Cache-Control", "max-age=10")
 	if r := sendCached(w, r, path); r.Done() {
@@ -29,7 +30,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			Dirs, Photos []struct{ Name, Path string }
 		}{
 			filepath.Clean(path),
-			toURLPath(filepath.Clean(path)),
+			toURLPath(path, prefix),
 			nil, nil,
 		}
 
@@ -40,7 +41,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 
 			name := info.Name()
 			path := filepath.Join(path, name)
-			item := struct{ Name, Path string }{name, toURLPath(path)}
+			item := struct{ Name, Path string }{name, toURLPath(path, prefix)}
 
 			if info.Mode()&os.ModeSymlink != 0 {
 				info, err = os.Stat(path)

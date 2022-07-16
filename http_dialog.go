@@ -26,7 +26,10 @@ func init() {
 }
 
 func dialogHandler(w http.ResponseWriter, r *http.Request) httpResult {
-	if r.ParseForm() != nil {
+	if err := r.ParseForm(); err != nil {
+		return httpResult{Status: http.StatusBadRequest, Error: err}
+	}
+	if isLocal(r) {
 		return httpResult{Status: http.StatusBadRequest}
 	}
 
@@ -56,7 +59,7 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			return httpResult{Error: err}
 		}
 	} else if len(paths) != 0 {
-		path = toBatchPath(paths)
+		path = toBatchPath(paths...)
 	} else if errors.Is(err, zenity.ErrCanceled) {
 		return httpResult{Status: http.StatusResetContent}
 	} else if err == nil {
@@ -70,9 +73,9 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	case batch:
 		url.Path = "/batch/" + path
 	case photo:
-		url.Path = "/photo/" + toURLPath(path)
+		url.Path = "/photo/" + toURLPath(path, "")
 	case gallery:
-		url.Path = "/gallery/" + toURLPath(path)
+		url.Path = "/gallery/" + toURLPath(path, "")
 	}
 	return httpResult{
 		Status:   http.StatusSeeOther,

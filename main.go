@@ -3,21 +3,31 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"flag"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/ncruces/rethinkraw/internal/config"
 	"github.com/ncruces/rethinkraw/internal/optls"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
+	"github.com/ncruces/zenity"
 )
 
-var tlscfg tls.Config
 var shutdown = make(chan os.Signal, 1)
+
+var (
+	serverHost   string
+	serverPort   string
+	serverPrefix string
+	serverConfig tls.Config
+)
 
 func init() {
 	signal.Notify(shutdown, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
@@ -38,32 +48,61 @@ func run() error {
 		return err
 	}
 
-	url := url.URL{
-		Scheme: "http",
-		Host:   "localhost:39639",
+	port := flag.Int("port", 39639, "the port on which the server listens for connections")
+	flag.Usage = func() {
+		w := flag.CommandLine.Output()
+		fmt.Fprintf(w, "usage: %s [OPTION]... DIRECTORY\n", filepath.Base(os.Args[0]))
+		flag.PrintDefaults()
 	}
+	flag.Parse()
 
-	if len(os.Args) > 1 {
-		if fi, err := os.Stat(os.Args[1]); err != nil {
+	serverPort = ":" + strconv.Itoa(*port)
+	var url url.URL
+
+	if config.ServerMode {
+		if flag.NArg() != 1 {
+			flag.Usage()
+			os.Exit(2)
+		}
+		if fi, err := os.Stat(flag.Arg(0)); err != nil {
 			return err
-		} else if abs, err := filepath.Abs(os.Args[1]); err != nil {
+		} else if abs, err := filepath.Abs(flag.Arg(0)); err != nil {
 			return err
-		} else if len(os.Args) > 2 {
-			url.Path = "/batch/" + toBatchPath(os.Args[1:])
 		} else if fi.IsDir() {
-			url.Path = "/gallery/" + toURLPath(abs)
+			serverPrefix = abs
 		} else {
-			url.Path = "/photo/" + toURLPath(abs)
+			flag.Usage()
+			os.Exit(2)
+		}
+
+		if err := testDNGConverter(); err != nil {
+			return err
+		}
+	} else {
+		serverHost = "localhost"
+		url.Scheme = "http"
+		url.Host = serverHost + serverPort
+
+		if flag.NArg() > 0 {
+			if fi, err := os.Stat(flag.Arg(0)); err != nil {
+				return err
+			} else if abs, err := filepath.Abs(flag.Arg(0)); err != nil {
+				return err
+			} else if flag.NArg() > 1 {
+				url.Path = "/batch/" + toBatchPath(flag.Args()...)
+			} else if fi.IsDir() {
+				url.Path = "/gallery/" + toURLPath(abs, "")
+			} else {
+				url.Path = "/photo/" + toURLPath(abs, "")
+			}
+		}
+
+		if err := testDNGConverter(); err != nil {
+			url.Path = "/dngconv.html"
 		}
 	}
 
-	if err := testDNGConverter(); err != nil {
-		url.Path = "/dngconv.html"
-	}
-
-	var server bool
-	if ln, err := optls.Listen("tcp", url.Host, &tlscfg); err == nil {
-		server = true
+	if ln, err := optls.Listen("tcp", serverHost+serverPort, &serverConfig); err == nil {
 		http := setupHTTP()
 		exif, err := setupExifTool()
 		if err != nil {
@@ -75,9 +114,13 @@ func run() error {
 			os.RemoveAll(config.TempDir)
 		}()
 		go http.Serve(ln)
+	} else if config.ServerMode {
+		return err
 	}
 
-	if chrome.IsInstalled() {
+	if config.ServerMode {
+		<-shutdown
+	} else if chrome.IsInstalled() {
 		data := filepath.Join(config.DataDir, "chrome")
 		cache := filepath.Join(config.TempDir, "chrome")
 		cmd := chrome.Command(url.String(), data, cache)
@@ -90,17 +133,11 @@ func run() error {
 				cmd.Signal(s)
 			}
 		}()
-		if err := cmd.Wait(); err != nil {
-			return err
-		}
+		return cmd.Wait()
 	} else {
-		if err := osutil.ShellOpen(url.String()); err != nil {
-			return err
-		}
-		if server {
-			<-shutdown
-		}
+		return zenity.Error(
+			"Please download and install either Google Chrome or Microsoft Edge.",
+			zenity.Title("Google Chrome not found"))
 	}
-
 	return nil
 }

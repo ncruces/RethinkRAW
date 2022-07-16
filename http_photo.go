@@ -13,11 +13,11 @@ import (
 )
 
 func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
-	if r.ParseForm() != nil {
-		return httpResult{Status: http.StatusBadRequest}
+	if err := r.ParseForm(); err != nil {
+		return httpResult{Status: http.StatusBadRequest, Error: err}
 	}
-
-	path := fromURLPath(r.URL.Path)
+	prefix := getPathPrefix(r)
+	path := fromURLPath(r.URL.Path, prefix)
 
 	_, meta := r.Form["meta"]
 	_, save := r.Form["save"]
@@ -165,7 +165,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			}{
 				filepath.Base(path),
 				filepath.Clean(path),
-				toURLPath(filepath.Clean(path)),
+				toURLPath(path, prefix),
 			}),
 		}
 	}

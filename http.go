@@ -12,17 +12,27 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/ncruces/rethinkraw/internal/config"
 )
 
 var templates *template.Template
 
 func setupHTTP() *http.Server {
-	http.Handle("/gallery/", http.StripPrefix("/gallery", httpHandler(galleryHandler)))
-	http.Handle("/photo/", http.StripPrefix("/photo", httpHandler(photoHandler)))
-	http.Handle("/batch/", http.StripPrefix("/batch", httpHandler(batchHandler)))
-	http.Handle("/thumb/", http.StripPrefix("/thumb", httpHandler(thumbHandler)))
-	http.Handle("/dialog", httpHandler(dialogHandler))
-	http.Handle("/", assetHandler)
+	http.Handle(serverHost+"/gallery/", http.StripPrefix("/gallery", httpHandler(galleryHandler)))
+	http.Handle(serverHost+"/photo/", http.StripPrefix("/photo", httpHandler(photoHandler)))
+	http.Handle(serverHost+"/batch/", http.StripPrefix("/batch", httpHandler(batchHandler)))
+	http.Handle(serverHost+"/thumb/", http.StripPrefix("/thumb", httpHandler(thumbHandler)))
+	http.Handle(serverHost+"/dialog", httpHandler(dialogHandler))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" || strings.TrimSuffix(r.Host, serverPort) == "localhost" {
+			assetHandler.ServeHTTP(w, r)
+		} else if config.ServerMode {
+			http.Redirect(w, r, "/gallery", http.StatusTemporaryRedirect)
+		} else {
+			http.Redirect(w, r, "/about.html", http.StatusTemporaryRedirect)
+		}
+	})
 	templates = assetTemplates()
 
 	server := &http.Server{
@@ -149,7 +159,24 @@ func sendAllowed(w http.ResponseWriter, r *http.Request, allowed ...string) http
 	return httpResult{Status: http.StatusMethodNotAllowed}
 }
 
-func toURLPath(path string) string {
+func isLocal(r *http.Request) bool {
+	return strings.TrimSuffix(r.Host, serverPort) != "localhost"
+}
+
+func getPathPrefix(r *http.Request) string {
+	if isLocal(r) {
+		return serverPrefix
+	}
+	return ""
+}
+
+func toURLPath(path, prefix string) string {
+	path = filepath.Clean(path)
+	if strings.HasPrefix(path, prefix) {
+		path = path[len(prefix):]
+	} else {
+		return ""
+	}
 	if strings.HasPrefix(path, `/`) {
 		return path[1:]
 	}
@@ -159,7 +186,8 @@ func toURLPath(path string) string {
 	return filepath.ToSlash(path)
 }
 
-func fromURLPath(path string) string {
+func fromURLPath(path, prefix string) string {
+	path = prefix + "/" + path
 	if filepath.Separator != '/' {
 		return filepath.FromSlash(strings.TrimPrefix(path, "/"))
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
-func toBatchPath(paths []string) string {
+func toBatchPath(paths ...string) string {
 	var buf strings.Builder
 	b64 := base64.NewEncoder(base64.RawURLEncoding, &buf)
 	flt, err := flate.NewWriter(b64, flate.BestCompression)
