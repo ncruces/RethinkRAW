@@ -19,20 +19,33 @@ import (
 var templates *template.Template
 
 func setupHTTP() *http.Server {
-	http.Handle(serverHost+"/gallery/", http.StripPrefix("/gallery", httpHandler(galleryHandler)))
-	http.Handle(serverHost+"/photo/", http.StripPrefix("/photo", httpHandler(photoHandler)))
-	http.Handle(serverHost+"/batch/", http.StripPrefix("/batch", httpHandler(batchHandler)))
-	http.Handle(serverHost+"/thumb/", http.StripPrefix("/thumb", httpHandler(thumbHandler)))
-	http.Handle(serverHost+"/dialog", httpHandler(dialogHandler))
+	mux := http.NewServeMux()
+	mux.Handle("/gallery/", http.StripPrefix("/gallery", httpHandler(galleryHandler)))
+	mux.Handle("/photo/", http.StripPrefix("/photo", httpHandler(photoHandler)))
+	mux.Handle("/batch/", http.StripPrefix("/batch", httpHandler(batchHandler)))
+	mux.Handle("/thumb/", http.StripPrefix("/thumb", httpHandler(thumbHandler)))
+	mux.Handle("/dialog", httpHandler(dialogHandler))
+	mux.Handle("/", assetHandler)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" || strings.TrimSuffix(r.Host, serverPort) == "localhost" {
-			assetHandler.ServeHTTP(w, r)
-		} else if config.ServerMode {
-			http.Redirect(w, r, "/gallery", http.StatusTemporaryRedirect)
-		} else {
-			http.Redirect(w, r, "/about.html", http.StatusTemporaryRedirect)
+		if strings.TrimSuffix(r.Host, serverPort) != "localhost" {
+			if !config.ServerMode {
+				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+			if _, pwd, _ := r.BasicAuth(); pwd != serverAuth {
+				w.Header().Set("WWW-Authenticate", `Basic charset="UTF-8"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			if r.URL.Path == "/" {
+				http.Redirect(w, r, "/gallery", http.StatusTemporaryRedirect)
+				return
+			}
 		}
+		mux.ServeHTTP(w, r)
 	})
+
 	templates = assetTemplates()
 
 	server := &http.Server{

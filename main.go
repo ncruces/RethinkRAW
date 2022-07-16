@@ -25,6 +25,7 @@ var shutdown = make(chan os.Signal, 1)
 var (
 	serverHost   string
 	serverPort   string
+	serverAuth   string
 	serverPrefix string
 	serverConfig tls.Config
 )
@@ -49,18 +50,21 @@ func run() error {
 	}
 
 	port := flag.Int("port", 39639, "the port on which the server listens for connections")
+	flag.StringVar(&serverAuth, "password", "", "the password used to authenticate to the server (required)")
 	flag.Usage = func() {
 		w := flag.CommandLine.Output()
 		fmt.Fprintf(w, "usage: %s [OPTION]... DIRECTORY\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
+	const unspecified = "\x00"
+	serverAuth = unspecified
 	flag.Parse()
 
 	serverPort = ":" + strconv.Itoa(*port)
 	var url url.URL
 
 	if config.ServerMode {
-		if flag.NArg() != 1 {
+		if flag.NArg() != 1 || serverAuth == unspecified {
 			flag.Usage()
 			os.Exit(2)
 		}
