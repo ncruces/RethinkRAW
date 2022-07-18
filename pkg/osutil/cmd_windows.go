@@ -29,9 +29,9 @@ func createConsole() error {
 	var buf [32]byte
 	_, err = out.Read(buf[:])
 	if err == nil {
-		s, _, gerr := attachConsole.Call(uintptr(cmd.Process.Pid))
-		if s == 0 {
-			err = gerr
+		r, _, lerr := attachConsole.Call(uintptr(cmd.Process.Pid))
+		if r == 0 {
+			err = lerr
 		}
 	}
 	if cerr := in.Close(); err == nil {

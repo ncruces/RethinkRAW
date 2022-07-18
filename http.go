@@ -28,14 +28,14 @@ func setupHTTP() *http.Server {
 	mux.Handle("/", assetHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.TrimSuffix(r.Host, serverPort) != "localhost" {
+		if !isLocalhost(r) {
 			if !config.ServerMode {
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 				return
 			}
 			if _, pwd, _ := r.BasicAuth(); pwd != serverAuth {
 				w.Header().Set("WWW-Authenticate", `Basic charset="UTF-8"`)
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 			if r.URL.Path == "/" {
@@ -172,12 +172,12 @@ func sendAllowed(w http.ResponseWriter, r *http.Request, allowed ...string) http
 	return httpResult{Status: http.StatusMethodNotAllowed}
 }
 
-func isLocal(r *http.Request) bool {
-	return strings.TrimSuffix(r.Host, serverPort) != "localhost"
+func isLocalhost(r *http.Request) bool {
+	return strings.TrimSuffix(r.Host, serverPort) == "localhost"
 }
 
 func getPathPrefix(r *http.Request) string {
-	if isLocal(r) {
+	if !isLocalhost(r) {
 		return serverPrefix
 	}
 	return ""
@@ -190,19 +190,15 @@ func toURLPath(path, prefix string) string {
 	} else {
 		return ""
 	}
-	if strings.HasPrefix(path, `/`) {
-		return path[1:]
-	}
-	if strings.HasPrefix(path, `\\`) {
+	if filepath.Separator == '\\' && strings.HasPrefix(path, `\\`) {
 		return `\\` + filepath.ToSlash(path[2:])
 	}
-	return filepath.ToSlash(path)
+	return strings.TrimPrefix(filepath.ToSlash(path), "/")
 }
 
 func fromURLPath(path, prefix string) string {
-	path = prefix + "/" + path
 	if filepath.Separator != '/' {
-		return filepath.FromSlash(strings.TrimPrefix(path, "/"))
+		path = filepath.FromSlash(strings.TrimPrefix(path, "/"))
 	}
-	return path
+	return filepath.Join(prefix, path)
 }

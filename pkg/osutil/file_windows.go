@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 func isHidden(fi os.FileInfo) bool {
@@ -52,9 +54,7 @@ func getANSIPath(path string) (string, error) {
 				}
 				if long, err := syscall.UTF16FromString(file); err == nil {
 					short := [264]uint16{}
-					n, _, _ := getShortPathName.Call(
-						uintptr(unsafe.Pointer(&long[0])),
-						uintptr(unsafe.Pointer(&short[0])), 264)
+					n, _ := windows.GetShortPathName(&long[0], &short[0], 264)
 					if 0 < n && n < 264 {
 						file = syscall.UTF16ToString(short[:n])
 						path = strings.TrimPrefix(file, `\\?\`) + path[i:]

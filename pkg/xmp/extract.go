@@ -1,4 +1,3 @@
-// Package xmp provides support for extracting XMP packets from data.
 package xmp
 
 import (

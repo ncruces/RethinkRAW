@@ -1,14 +1,11 @@
 package osutil
 
-import (
-	"syscall"
-)
+import "golang.org/x/sys/windows"
 
 var (
-	kernel32 = syscall.NewLazyDLL("kernel32.dll")
-	user32   = syscall.NewLazyDLL("user32.dll")
+	kernel32 = windows.NewLazySystemDLL("kernel32.dll")
+	user32   = windows.NewLazySystemDLL("user32.dll")
 
-	getShortPathName    = kernel32.NewProc("GetShortPathNameW")
 	wideCharToMultiByte = kernel32.NewProc("WideCharToMultiByte")
 	getConsoleWindow    = kernel32.NewProc("GetConsoleWindow")
 	attachConsole       = kernel32.NewProc("AttachConsole")

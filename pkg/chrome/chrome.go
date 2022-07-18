@@ -1,4 +1,4 @@
-// Package chrome provides support to locate and run Google Chrome.
+// Package chrome provides support to locate and run Google Chrome (or Microsoft Edge).
 package chrome
 
 import (
@@ -124,7 +124,7 @@ func (c *Cmd) Start() error {
 						}
 					}
 					if started && len(targets) == 0 {
-						c.send("Browser.close", "", nil)
+						c.Close()
 					}
 				}
 			}()

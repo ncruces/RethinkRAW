@@ -1,10 +1,13 @@
+// Package optls lets you accept TLS and unencrypted connections on the same port.
 package optls
 
 import (
 	"crypto/tls"
+	"io"
 	"net"
 )
 
+// Listen creates a listener accepting connections on the given network address using [net.Listen].
 func Listen(network, address string, config *tls.Config) (net.Listener, error) {
 	inner, err := net.Listen(network, address)
 	if err != nil {
@@ -13,6 +16,9 @@ func Listen(network, address string, config *tls.Config) (net.Listener, error) {
 	return NewListener(inner, config), nil
 }
 
+// NewListener creates a Listener which accepts connections from an inner Listener.
+// If config is valid, and the client sends a ClientHello message,
+// the connection is wrapped with a [tls.Server].
 func NewListener(inner net.Listener, config *tls.Config) net.Listener {
 	if config == nil || len(config.Certificates) == 0 &&
 		config.GetCertificate == nil && config.GetConfigForClient == nil {
@@ -58,4 +64,16 @@ func (c *conn) Read(b []byte) (int, error) {
 		return c.n, c.err
 	}
 	return c.Conn.Read(b)
+}
+
+func (c *conn) ReadFrom(r io.Reader) (int64, error) {
+	if rf, ok := c.Conn.(io.ReaderFrom); ok {
+		return rf.ReadFrom(r)
+	}
+	return io.Copy(c.Conn, r)
+}
+
+func (c *conn) Close() error {
+	c.done = true
+	return c.Conn.Close()
 }

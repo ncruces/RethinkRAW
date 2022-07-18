@@ -1,3 +1,4 @@
+// Package xmp provides support for dealing with XMP files and packets.
 package xmp
 
 import (

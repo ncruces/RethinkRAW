@@ -29,8 +29,8 @@ func dialogHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if err := r.ParseForm(); err != nil {
 		return httpResult{Status: http.StatusBadRequest, Error: err}
 	}
-	if isLocal(r) {
-		return httpResult{Status: http.StatusBadRequest}
+	if !isLocalhost(r) {
+		return httpResult{Status: http.StatusForbidden}
 	}
 
 	var err error

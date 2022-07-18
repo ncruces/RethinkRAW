@@ -14,8 +14,8 @@ import (
 	"syscall"
 
 	"github.com/ncruces/rethinkraw/internal/config"
-	"github.com/ncruces/rethinkraw/internal/optls"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
+	"github.com/ncruces/rethinkraw/pkg/optls"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 	"github.com/ncruces/zenity"
 )
@@ -26,6 +26,8 @@ var (
 	serverHost   string
 	serverPort   string
 	serverAuth   string
+	serverCert   string
+	serverKey    string
 	serverPrefix string
 	serverConfig tls.Config
 )
@@ -51,6 +53,8 @@ func run() error {
 
 	port := flag.Int("port", 39639, "the port on which the server listens for connections")
 	flag.StringVar(&serverAuth, "password", "", "the password used to authenticate to the server (required)")
+	flag.StringVar(&serverCert, "certfile", "", "the PEM encoded certificate `file`")
+	flag.StringVar(&serverKey, "keyfile", "", "the PEM encoded private key `file`")
 	flag.Usage = func() {
 		w := flag.CommandLine.Output()
 		fmt.Fprintf(w, "usage: %s [OPTION]... DIRECTORY\n", filepath.Base(os.Args[0]))
@@ -78,7 +82,14 @@ func run() error {
 			flag.Usage()
 			os.Exit(2)
 		}
-
+		if serverCert != "" {
+			var err error
+			serverConfig.Certificates = make([]tls.Certificate, 1)
+			serverConfig.Certificates[0], err = tls.LoadX509KeyPair(serverCert, serverKey)
+			if err != nil {
+				return err
+			}
+		}
 		if err := testDNGConverter(); err != nil {
 			return err
 		}
@@ -106,6 +117,7 @@ func run() error {
 		}
 	}
 
+	serverConfig.NextProtos = []string{"h2"}
 	if ln, err := optls.Listen("tcp", serverHost+serverPort, &serverConfig); err == nil {
 		http := setupHTTP()
 		exif, err := setupExifTool()

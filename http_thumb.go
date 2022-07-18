@@ -1,8 +1,6 @@
 package main
 
-import (
-	"net/http"
-)
+import "net/http"
 
 func thumbHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	if r := sendAllowed(w, r, "GET", "HEAD"); r.Done() {
