@@ -26,8 +26,6 @@ var (
 	serverHost   string
 	serverPort   string
 	serverAuth   string
-	serverCert   string
-	serverKey    string
 	serverPrefix string
 	serverConfig tls.Config
 )
@@ -52,9 +50,9 @@ func run() error {
 	}
 
 	port := flag.Int("port", 39639, "the port on which the server listens for connections")
+	cert := flag.String("certfile", "", "the PEM encoded certificate `file`")
+	key := flag.String("keyfile", "", "the PEM encoded private key `file`")
 	flag.StringVar(&serverAuth, "password", "", "the password used to authenticate to the server (required)")
-	flag.StringVar(&serverCert, "certfile", "", "the PEM encoded certificate `file`")
-	flag.StringVar(&serverKey, "keyfile", "", "the PEM encoded private key `file`")
 	flag.Usage = func() {
 		w := flag.CommandLine.Output()
 		fmt.Fprintf(w, "usage: %s [OPTION]... DIRECTORY\n", filepath.Base(os.Args[0]))
@@ -82,14 +80,15 @@ func run() error {
 			flag.Usage()
 			os.Exit(2)
 		}
-		if serverCert != "" {
+		if *cert != "" {
 			var err error
 			serverConfig.Certificates = make([]tls.Certificate, 1)
-			serverConfig.Certificates[0], err = tls.LoadX509KeyPair(serverCert, serverKey)
+			serverConfig.Certificates[0], err = tls.LoadX509KeyPair(*cert, *key)
 			if err != nil {
 				return err
 			}
 		}
+		serverConfig.NextProtos = []string{"h2"}
 		if err := testDNGConverter(); err != nil {
 			return err
 		}
@@ -117,7 +116,6 @@ func run() error {
 		}
 	}
 
-	serverConfig.NextProtos = []string{"h2"}
 	if ln, err := optls.Listen("tcp", serverHost+serverPort, &serverConfig); err == nil {
 		http := setupHTTP()
 		exif, err := setupExifTool()
@@ -135,6 +133,7 @@ func run() error {
 	}
 
 	if config.ServerMode {
+		log.Println("listening on https://local.app.rethinkraw.com" + serverPort)
 		<-shutdown
 	} else if chrome.IsInstalled() {
 		data := filepath.Join(config.DataDir, "chrome")

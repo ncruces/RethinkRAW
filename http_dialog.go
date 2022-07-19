@@ -25,7 +25,7 @@ func init() {
 	}
 }
 
-func dialogHandler(w http.ResponseWriter, r *http.Request) httpResult {
+func dialogHandler(_ http.ResponseWriter, r *http.Request) httpResult {
 	if err := r.ParseForm(); err != nil {
 		return httpResult{Status: http.StatusBadRequest, Error: err}
 	}

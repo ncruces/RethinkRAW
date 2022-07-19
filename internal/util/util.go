@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/base64"
+	"unsafe"
 )
 
 func Btoi(b bool) int {
@@ -24,4 +25,45 @@ func RandomID() string {
 		panic(err)
 	}
 	return base64.RawURLEncoding.EncodeToString(buf[:])
+}
+
+func PercentEncode(s string) string {
+	const upperhex = "0123456789ABCDEF"
+	mustEncode := func(c byte) bool {
+		switch {
+		case c >= 'a':
+			return c <= 'z' || c == '~'
+		case c >= 'A':
+			return c <= 'Z' || c == '_'
+		case c >= '0':
+			return c <= '9'
+		default:
+			return c == '-' || c == '.'
+		}
+	}
+
+	hex := 0
+	for _, c := range []byte(s) {
+		if mustEncode(c) {
+			hex++
+		}
+	}
+	if hex == 0 {
+		return s
+	}
+
+	i := 0
+	buf := make([]byte, len(s)+2*hex)
+	for _, c := range []byte(s) {
+		if mustEncode(c) {
+			buf[i+0] = '%'
+			buf[i+1] = upperhex[c>>4]
+			buf[i+2] = upperhex[c&15]
+			i += 3
+		} else {
+			buf[i] = c
+			i++
+		}
+	}
+	return *(*string)(unsafe.Pointer(&buf))
 }

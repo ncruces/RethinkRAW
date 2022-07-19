@@ -588,8 +588,9 @@ function restRequest(method, url, { body, progress } = {}) {
                         if (match = disposition.match(/\bfilename\*=UTF-8''([^,;]+)/)) a.download = decodeURIComponent(match[1]);
                     }
                     a.href = URL.createObjectURL(xhr.response);
-                    a.dispatchEvent(new MouseEvent('click'));
+                    a.click();
                     resolve();
+                    URL.revokeObjectURL(xhr.response);
                 } else {
                     var reader = new FileReader();
                     reader.onload = () => {

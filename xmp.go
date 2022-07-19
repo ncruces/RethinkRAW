@@ -161,8 +161,7 @@ func editXMP(path string, xmp xmpSettings) error {
 
 	// filename
 	if xmp.Filename != "" {
-		name := filepath.Base(xmp.Filename)
-		opts = append(opts, "-XMP-crs:RawFileName="+name)
+		opts = append(opts, "-XMP-crs:RawFileName="+xmp.Filename)
 		if ext := filepath.Ext(xmp.Filename); ext != "" {
 			opts = append(opts, "-XMP-photoshop:SidecarForExtension="+ext[1:])
 		}

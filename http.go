@@ -63,7 +63,7 @@ type httpResult struct {
 	Error    error
 }
 
-func (r *httpResult) Done() bool { return r.Location != "" || r.Status != 0 || r.Error != nil }
+func (r *httpResult) Done() bool { return r.Status != 0 || r.Location != "" || r.Error != nil }
 
 // httpHandler is an http.Handler that returns an httpResult
 type httpHandler func(w http.ResponseWriter, r *http.Request) httpResult
@@ -123,11 +123,9 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
 		h.Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
-		templates.ExecuteTemplate(w, "error.gohtml", struct {
-			Status, Message string
-		}{
-			http.StatusText(status),
-			message,
+		templates.ExecuteTemplate(w, "error.gohtml", map[string]string{
+			"Status":  http.StatusText(status),
+			"Message": message,
 		})
 	} else {
 		h.Set("Content-Type", "application/json")

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/schema"
+	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/zenity"
 )
 
@@ -49,7 +50,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		if err := dec.Decode(&xmp, r.Form); err != nil {
 			return httpResult{Error: err}
 		}
-		xmp.Filename = path
+		xmp.Filename = filepath.Base(path)
 
 		if err := saveEdit(path, xmp); err != nil {
 			return httpResult{Error: err}
@@ -68,25 +69,39 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		if err := dec.Decode(&exp, r.Form); err != nil {
 			return httpResult{Error: err}
 		}
-		xmp.Filename = path
+		xmp.Filename = filepath.Base(path)
 
 		exppath := exportPath(path, exp)
-		if res, err := zenity.SelectFileSave(zenity.Context(r.Context()), zenity.Filename(exppath), zenity.ConfirmOverwrite()); res != "" {
-			exppath = res
-		} else if errors.Is(err, zenity.ErrCanceled) {
-			return httpResult{Status: http.StatusNoContent}
-		} else if err == nil {
-			return httpResult{Status: http.StatusInternalServerError}
-		} else {
-			return httpResult{Error: err}
+		if isLocalhost(r) {
+			if res, err := zenity.SelectFileSave(zenity.Context(r.Context()), zenity.Filename(exppath), zenity.ConfirmOverwrite()); res != "" {
+				exppath = res
+			} else if errors.Is(err, zenity.ErrCanceled) {
+				return httpResult{Status: http.StatusNoContent}
+			} else if err == nil {
+				return httpResult{Status: http.StatusInternalServerError}
+			} else {
+				return httpResult{Error: err}
+			}
 		}
 
 		if out, err := exportEdit(path, xmp, exp); err != nil {
 			return httpResult{Error: err}
-		} else if err := ioutil.WriteFile(exppath, out, 0666); err != nil {
-			return httpResult{Error: err}
+		} else if isLocalhost(r) {
+			if err := ioutil.WriteFile(exppath, out, 0666); err != nil {
+				return httpResult{Error: err}
+			} else {
+				return httpResult{Status: http.StatusNoContent}
+			}
 		} else {
-			return httpResult{Status: http.StatusNoContent}
+			name := filepath.Base(exppath)
+			w.Header().Set("Content-Disposition", "attachment; filename*=UTF-8''"+util.PercentEncode(name))
+			if exp.DNG {
+				w.Header().Set("Content-Type", "image/x-adobe-dng")
+			} else {
+				w.Header().Set("Content-Type", "image/jpeg")
+			}
+			w.Write(out)
+			return httpResult{}
 		}
 
 	case preview:
@@ -160,12 +175,10 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		w.Header().Set("Cache-Control", "max-age=300")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return httpResult{
-			Error: templates.ExecuteTemplate(w, "photo.gohtml", struct {
-				Name, Title, Path string
-			}{
-				filepath.Base(path),
-				filepath.Clean(path),
-				toURLPath(path, prefix),
+			Error: templates.ExecuteTemplate(w, "photo.gohtml", map[string]string{
+				"Name":  filepath.Base(path),
+				"Title": filepath.Clean(path),
+				"Path":  toURLPath(path, prefix),
 			}),
 		}
 	}

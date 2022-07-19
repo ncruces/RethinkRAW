@@ -29,8 +29,10 @@
                     <button type=button title="Go back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
                     <button type=button title="Reload photos" class="minimal-ui" onclick="location.reload()"><i class="fas fa-sync"></i></button>
                     <button type=button title="S̲ave changes" accesskey="s" onclick="saveFile()" id=save disabled><i class="fas fa-save"></i></button>
+                    {{- if .Export}}
                     <button type=button title="Ex̲port JPEGs (⌥-click for options)" accesskey="x" class="alt-off" onclick="exportFile()"><i class="fas fa-file-image"></i></button>
                     <button type=button title="Export…" class="alt-on" onclick="exportFile('dialog')"><i class="fas fa-file-download"></i></button>
+                    {{- end}}
                     <button type=button title="Edit photos…" onclick="toggleEdit()" id=edit><i class="fas fa-sliders-h"></i></button>
                 </div>
             </div>

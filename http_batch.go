@@ -54,7 +54,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 
 		results := batchProcess(photos, func(photo batchPhoto) error {
 			xmp := xmp
-			xmp.Filename = photo.Path
+			xmp.Filename = filepath.Base(photo.Path)
 			return saveEdit(photo.Path, xmp)
 		})
 
@@ -92,7 +92,7 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 
 		results := batchProcess(photos, func(photo batchPhoto) (err error) {
 			xmp := xmp
-			xmp.Filename = photo.Path
+			xmp.Filename = filepath.Base(photo.Path)
 			out, err := exportEdit(photo.Path, xmp, exp)
 			if err != nil {
 				return err
@@ -143,7 +143,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 
 		data := struct {
 			Photos []struct{ Name, Path string }
-		}{}
+			Export bool
+		}{
+			nil, isLocalhost(r),
+		}
 
 		for _, photo := range photos {
 			item := struct{ Name, Path string }{photo.Name, toURLPath(photo.Path, prefix)}
