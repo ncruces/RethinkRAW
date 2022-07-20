@@ -20,9 +20,9 @@
         <li>Go back to the <a href="javascript:history.back()">previous page</a>.
         <li>Go back to our <a href="javascript:location.replace('/')">welcome screen</a>.
     </ul>
-    {{- if (ne .Message "")}}
+    {{- if .Message}}
     <small style="white-space: pre-line">More information about this error:
-        {{.Message}}
+        {{- .Message}}
     </small>
     {{- end}}
 </body>

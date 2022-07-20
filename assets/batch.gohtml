@@ -17,8 +17,8 @@
     <script src="/main.js" defer></script>
     <script src="/gallery.js" defer></script>
     <script src="/raw-editor.js" defer></script>
-    <script>const template = {{.}}</script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
+    {{- template "const.gohtml" .}}
 </head>
 
 <body>
@@ -50,7 +50,7 @@
         </div>
     </div>
 
-    {{template "raw-editor.gohtml" "hidden"}}
+    {{- template "raw-editor.gohtml" "hidden"}}
 </body>
 
 </html>

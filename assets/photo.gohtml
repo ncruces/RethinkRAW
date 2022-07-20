@@ -16,8 +16,8 @@
     <script src="/dialog-polyfill.js" defer></script>
     <script src="/main.js" defer></script>
     <script src="/raw-editor.js" defer></script>
-    <script>const template = {{.}}</script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
+    {{- template "const.gohtml" .}}
 </head>
 <body>
     <div id=box1>
@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    {{template "raw-editor.gohtml"}}
+    {{- template "raw-editor.gohtml"}}
 
     <dialog id=meta-dialog></dialog>
 </body>
