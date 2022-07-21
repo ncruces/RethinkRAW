@@ -44,7 +44,7 @@ IF [%1]==[test] (
     ECHO Build installer...
     IF EXIST %tgt%\data RD /S /Q %tgt%\data
     IF EXIST %tgt%\debug.log DEL /Q %tgt%\debug.log
-    7za a -mx=9 -myx=9 -sfx7z.sfx RethinkRAW.exe %tgt%
+    7z a -mx9 -myx9 -sfx7z.sfx RethinkRAW.exe %tgt%
     REM
     REM
 ) ELSE (

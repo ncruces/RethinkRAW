@@ -2,13 +2,21 @@
 
 RethinkRAW is an unpretentious, free RAW photo editor.
 
-## Download
+## Install
 
-[Download](https://github.com/ncruces/RethinkRAW/releases/latest) the latest release.
+On macOS using [Homebrew](https://brew.sh/) 🍺:
+
+    brew install ncruces/tap/rethinkraw
+
+On Windows using [Scoop](https://scoop.sh/) 🍨:
+
+    scoop install https://ncruces.github.io/scoop/RethinkRAW.json
+
+Or download the [latest release](https://github.com/ncruces/RethinkRAW/releases/latest).
 
 ## Build
 
-Run [`make.cmd`](make.cmd) (Windows) or [`make.sh`](make.sh) (macOS).
+Run [`make.sh`](make.sh) (macOS) or [`make.cmd`](make.cmd) (Windows).
 
 ## Features
 
@@ -25,6 +33,22 @@ without losing any of your edits.
 
 To achieve this, RethinkRAW leverages the free
 [Adobe DNG Converter](https://helpx.adobe.com/photoshop/using/adobe-dng-converter.html).
+
+## Server mode
+
+RethinkRAW can act like a server that you can access remotely.
+
+On macOS run:
+
+    /Applications/RethinkRAW.app/Contents/Resources/rethinkraw-server --password [SECRET] [DIRECTORY]
+
+On Windows run:
+
+    [PATH_TO]\RethinkRAW.com --password [SECRET] [DIRECTORY]
+
+You can edit photos in `DIRECTORY` by visiting:
+- https://local.app.rethinkraw.com:39639 (on the same computer) or
+- https://127-0-0-1.app.rethinkraw.com:39639 (replacing ***127-0-0-1*** by your IP address).
 
 ## Screenshots
 
