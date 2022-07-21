@@ -1,4 +1,4 @@
-# RethinkRAW
+# RethinkRAW [<img src="https://github.com/ncruces/RethinkRAW/raw/master/assets/favicon-192.png" alt="R" width="96" height="96" align="right">](https://rethinkraw.com)
 
 RethinkRAW is an unpretentious, free RAW photo editor.
 
