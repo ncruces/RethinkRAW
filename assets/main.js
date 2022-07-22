@@ -7,8 +7,8 @@ if (typeof String.prototype.replaceAll !== 'function') {
 }
 
 document.documentElement.addEventListener('keydown', function (evt) {
-    if (navigator.platform.includes('Mac') && evt.metaKey && !(evt.altKey || evt.ctrlKey) ||
-       !navigator.platform.includes('Mac') && evt.ctrlKey && !(evt.altKey || evt.metaKey)) {
+    if (navigator.platform.startsWith('Mac') && evt.metaKey && !(evt.altKey || evt.ctrlKey) ||
+       !navigator.platform.startsWith('Mac') && evt.ctrlKey && !(evt.altKey || evt.metaKey)) {
         var minimalUI = !window.matchMedia('(display-mode: browser)').matches;
 
         switch (evt.key) {

@@ -41,7 +41,7 @@
             <div id=gallery>
                 {{- range .Photos}}
                 <a href="/photo/{{.Path}}" onclick="return popup(this, event)">
-                    <img class="lazy" title="{{.Name}}" alt="{{.Name}}" src="/photo.png" data-src="/thumb/{{.Path}}" onerror="parentNode.hidden=true">
+                    <img loading=lazy title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}" onerror="parentNode.hidden=true">
                 </a>
                 {{- else}}
                 <span>No RAW photos here.</span>

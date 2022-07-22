@@ -1,8 +1,8 @@
 void function () {
 
 let form = document.getElementById('settings');
-let save = document.getElementById('save');
 let edit = document.getElementById('edit') || {};
+let save = document.getElementById('save');
 let zoom = document.getElementById('zoom');
 let white = document.getElementById('white');
 let photo = document.getElementById('photo');
@@ -59,8 +59,8 @@ async function loadSettings() {
     if (settings.autoTone) tone = 'Auto';
     toneChange(form.tone, tone);
 
-    save.disabled = !upgraded;
     edit.disabled = upgraded;
+    save.disabled = !upgraded;
     for (let n of form.querySelectorAll('fieldset')) {
         n.disabled = false;
     }
@@ -76,8 +76,8 @@ async function loadSettings() {
             whiteBalancePresets['As Shot'] = wb;
             whiteBalanceChange(form.whiteBalance);
             temperatureInput(form.temperature);
-            save.disabled = restore;
             edit.disabled = !restore;
+            save.disabled = restore;
         }
     } catch (e) {
     }
@@ -96,12 +96,12 @@ window.toggleEdit = () => {
 };
 
 window.valueChange = () => {
-    save.disabled = false;
     edit.disabled = true;
+    save.disabled = false;
     updatePhoto();
 };
 
-window.orientationChange = (op) => {
+window.orientationChange = op => {
     const table = {
         ccw: [8, 8, 5, 6, 7, 4, 1, 2, 3],
         cw:  [6, 6, 7, 8, 5, 2, 3, 4, 1],
@@ -222,8 +222,8 @@ window.saveFile = async () => {
     dialog.showModal();
     try {
         await restRequest('POST', '?save&' + query, { progress: progress });
-        save.disabled = true;
         edit.disabled = false;
+        save.disabled = true;
     } catch (e) {
         alertError('Save failed', e);
     }
@@ -236,7 +236,7 @@ window.saveFile = async () => {
     }
 };
 
-window.exportFile = async (state) => {
+window.exportFile = async state => {
     if (state === 'dialog') {
         exportChange(document.getElementById('export-form'));
         let dialog = document.getElementById('export-dialog');
@@ -319,7 +319,7 @@ window.showMeta = async () => {
     dialog.showModal();
 };
 
-window.exportChange = (e) => {
+window.exportChange = e => {
     let form = e.tagName === 'FORM' ? e : e.form;
 
     document.getElementById('export-dng').hidden = form.format.value !== 'DNG';
@@ -704,7 +704,7 @@ function formatNumber(val, step) {
 }
 
 {
-    if (!navigator.platform.includes('Mac')) {
+    if (!navigator.platform.startsWith('Mac')) {
         for (let n of document.querySelectorAll('.alt-off')) n.title = n.title.replace('⌥', 'alt');
     }
     function toggleAlt(evt) {
@@ -722,7 +722,6 @@ function formatNumber(val, step) {
                 if (c !== n) c.hidden = !c.hidden;
             }
         });
-        n.title = n.title.replace('⌥', 'alt');
     }
 }
 
@@ -730,7 +729,7 @@ if (photo) {
     let mousePos;
 
     function updateZoom(evt) {
-        if (evt) mousePos = evt.type === 'mouseleave' ? null : {x: evt.offsetX, y: evt.offsetY};
+        if (evt) mousePos = evt.type === 'mouseleave' ? null : { x: evt.offsetX, y: evt.offsetY };
         if (mousePos && photo.style.cursor === 'zoom-out') {
             let width = photo.naturalWidth / photo.width / devicePixelRatio;
             let height = photo.naturalHeight / photo.height / devicePixelRatio;
@@ -766,7 +765,7 @@ if (photo) {
     photo.addEventListener('mouseleave', updateZoom, { passive: true });
     photo.addEventListener('mousemove', updateZoom, { passive: true });
 
-    photo.addEventListener('click', async (evt) => {
+    photo.addEventListener('click', async evt => {
         switch (photo.style.cursor) {
             case 'zoom-in':
             case 'zoom-out':
@@ -803,7 +802,7 @@ if (photo) {
                 } finally {
                     spinner.hidden = true;
                 }
-                if (wb.temperature) { 
+                if (wb.temperature) {
                     rangeInput(form.tint, wb.tint);
                     temperatureInput(form.temperature, wb.temperature);
                     whiteBalanceChange(form.whiteBalance, 'Custom');
@@ -818,14 +817,14 @@ if (photo) {
     loadSettings();
 }
 
-JSON.parseLast = (ndjson) => {
+JSON.parseLast = ndjson => {
     let end = ndjson.lastIndexOf('\n');
     if (end < 0) return void 0;
     let start = ndjson.lastIndexOf('\n', end - 1);
     return JSON.parse(ndjson.substring(start, end));
 };
 
-JSON.parseLines = (ndjson) => {
+JSON.parseLines = ndjson => {
     return ndjson.trimEnd().split('\n').map(JSON.parse);
 };
 

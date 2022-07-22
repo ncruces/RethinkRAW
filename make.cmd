@@ -19,7 +19,7 @@ IF NOT EXIST %tgt%\utils\dcraw.exe (
 
 IF NOT EXIST assets\normalize.css (
     ECHO Download normalize.css...
-    go run github.com/ncruces/go-fetch "https://unpkg.com/normalize.css" assets\normalize.css
+    go run github.com/ncruces/go-fetch "https://unpkg.com/@csstools/normalize.css" assets\normalize.css
 )
 
 IF NOT EXIST assets\dialog-polyfill.js (

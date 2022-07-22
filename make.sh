@@ -19,7 +19,7 @@ fi
 
 if [ ! -f "assets/normalize.css" ]; then
     echo Download normalize.css...
-    curl -sL "https://unpkg.com/normalize.css" > assets/normalize.css
+    curl -sL "https://unpkg.com/@csstools/normalize.css" > assets/normalize.css
 fi
 
 if [ ! -f "assets/dialog-polyfill.js" ]; then
