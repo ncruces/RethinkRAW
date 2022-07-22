@@ -6,6 +6,7 @@ let save = document.getElementById('save');
 let zoom = document.getElementById('zoom');
 let white = document.getElementById('white');
 let photo = document.getElementById('photo');
+let print = document.getElementById('print');
 let spinner = document.getElementById('spinner');
 
 async function loadSettings() {
@@ -88,6 +89,14 @@ window.addEventListener('beforeunload', evt => {
         evt.returnValue = 'Leave this page? Changes that you made may not be saved.';
         evt.preventDefault();
     }
+});
+
+window.addEventListener('beforeprint', () => {
+    if (print) print.src = '?preview&' + formQuery().toString();
+});
+
+window.addEventListener('afterprint', () => {
+    if (print) print.removeAttribute('src');
 });
 
 window.toggleEdit = () => {
@@ -240,7 +249,9 @@ window.exportFile = async state => {
     if (state === 'dialog') {
         exportChange(document.getElementById('export-form'));
         let dialog = document.getElementById('export-dialog');
-        dialog.onclose = () => dialog.returnValue && exportFile(dialog.returnValue);
+        dialog.addEventListener('close', () => {
+            if (dialog.returnValue) exportFile('export');
+        }, { once: true });
         dialog.showModal();
         return;
     }
@@ -262,7 +273,7 @@ window.exportFile = async state => {
 };
 
 window.printFile = () => {
-    if (!photo) return;
+    if (!print) return;
 
     let dialog = document.getElementById('progress-dialog');
     let progress = dialog.querySelector('progress');
@@ -270,23 +281,11 @@ window.printFile = () => {
     dialog.firstChild.textContent = 'Printing…';
     dialog.showModal();
 
-    let frame = document.createElement("iframe");
-    frame.style.display = "none";
-    frame.onload = load;
-    frame.src = '?print&' + formQuery().toString();
-    document.body.appendChild(frame);
-
-    function load() {
-        let win = this.contentWindow;
-        win.onbeforeunload = done;
-        win.onafterprint = done;
-        win.print();
-    }
-
-    function done() {
-        document.body.removeChild(frame);
+    print.src = '?preview&' + formQuery().toString();
+    print.addEventListener('load', () => {
         dialog.close();
-    }
+        window.print();
+    }, { once: true });
 };
 
 window.toggleZoom = evt => {
@@ -314,7 +313,7 @@ window.toggleWhite = evt => {
 window.showMeta = async () => {
     let html = await htmlRequest('GET', '?meta');
     let dialog = document.getElementById('meta-dialog');
-    dialog.onclick = () => dialog.close();
+    dialog.addEventListener('click', () => dialog.close(), { once: true });
     dialog.innerHTML = html;
     dialog.showModal();
 };
@@ -487,8 +486,8 @@ let updatePhoto = function () {
 
         size = newSize;
         query = newQuery;
-        photo.addEventListener('load', loaded, { passive: true, once: true });
-        photo.addEventListener('error', loaded, { passive: true, once: true });
+        photo.addEventListener('load', loaded, { once: true });
+        photo.addEventListener('error', loaded, { once: true });
         photo.src = `?preview${Number.isSafeInteger(size) ? '=' + size : ''}&` + query;
     }
 
