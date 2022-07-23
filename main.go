@@ -50,23 +50,23 @@ func run() error {
 	}
 
 	port := flag.Int("port", 39639, "the port on which the server listens for connections")
+	pass := flag.String("password", "$PASSWORD", "the password used to authenticate to the server (required)")
 	cert := flag.String("certfile", "", "the PEM encoded certificate `file`")
 	key := flag.String("keyfile", "", "the PEM encoded private key `file`")
-	flag.StringVar(&serverAuth, "password", "", "the password used to authenticate to the server (required)")
 	flag.Usage = func() {
 		w := flag.CommandLine.Output()
 		fmt.Fprintf(w, "usage: %s [OPTION]... DIRECTORY\n", filepath.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 	const unspecified = "\x00"
-	serverAuth = unspecified
+	*pass = unspecified
 	flag.Parse()
 
 	serverPort = ":" + strconv.Itoa(*port)
 	var url url.URL
 
 	if config.ServerMode {
-		if flag.NArg() != 1 || serverAuth == unspecified {
+		if flag.NArg() != 1 {
 			flag.Usage()
 			os.Exit(2)
 		}
@@ -79,6 +79,14 @@ func run() error {
 		} else {
 			flag.Usage()
 			os.Exit(2)
+		}
+		if serverAuth = *pass; serverAuth == unspecified {
+			if env := os.Getenv("PASSWORD"); env != "" {
+				serverAuth = env
+			} else {
+				flag.Usage()
+				os.Exit(2)
+			}
 		}
 		if *cert != "" {
 			var err error
