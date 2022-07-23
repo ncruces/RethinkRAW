@@ -15,8 +15,8 @@ async function loadSettings() {
     let settings;
     try {
         settings = await restRequest('GET', '?settings');
-    } catch (e) {
-        alertError('Load failed', e);
+    } catch (err) {
+        alertError('Load failed', err);
         spinner.hidden = true;
         return;
     }
@@ -80,8 +80,7 @@ async function loadSettings() {
             edit.disabled = !restore;
             save.disabled = restore;
         }
-    } catch (e) {
-    }
+    } catch { }
 }
 
 window.addEventListener('beforeunload', evt => {
@@ -233,8 +232,8 @@ window.saveFile = async () => {
         await restRequest('POST', '?save&' + query, { progress: progress });
         edit.disabled = false;
         save.disabled = true;
-    } catch (e) {
-        alertError('Save failed', e);
+    } catch (err) {
+        alertError('Save failed', err);
     }
     dialog.close();
 
@@ -266,8 +265,8 @@ window.exportFile = async state => {
     dialog.showModal();
     try {
         await restRequest('POST', '?export&' + query, { progress: progress });
-    } catch (e) {
-        alertError('Export failed', e);
+    } catch (err) {
+        alertError('Export failed', err);
     }
     dialog.close();
 };
@@ -281,11 +280,22 @@ window.printFile = () => {
     dialog.firstChild.textContent = 'Printing…';
     dialog.showModal();
 
+    print.addEventListener('load', done, { once: true });
+    print.addEventListener('error', done, { once: true });
     print.src = '?preview&' + formQuery().toString();
-    print.addEventListener('load', () => {
-        dialog.close();
-        window.print();
-    }, { once: true });
+
+    function done(evt) {
+        print.removeEventListener('load', done);
+        print.removeEventListener('error', done);
+
+        if (evt.type === 'error') {
+            alertError('Print failed');
+            dialog.close();
+        } else {
+            dialog.close();
+            window.print();
+        }
+    }
 };
 
 window.toggleZoom = evt => {
@@ -467,14 +477,14 @@ let updatePhoto = function () {
     if (!photo) return () => {};
     let loading, query, size;
 
-    function calcSize() {
+    function getSize() {
         if (photo.style.cursor === 'zoom-out') return Infinity;
         return Math.ceil(Math.max(photo.width, photo.height) * devicePixelRatio);
     }
 
     function load() {
         if (loading) return;
-        let newSize = calcSize();
+        let newSize = getSize();
         let newQuery = formQuery().toString();
         if (size >= newSize && query === newQuery) {
             spinner.hidden = true;
@@ -486,14 +496,14 @@ let updatePhoto = function () {
 
         size = newSize;
         query = newQuery;
-        photo.addEventListener('load', loaded, { once: true });
-        photo.addEventListener('error', loaded, { once: true });
+        photo.addEventListener('load', done, { once: true });
+        photo.addEventListener('error', done, { once: true });
         photo.src = `?preview${Number.isSafeInteger(size) ? '=' + size : ''}&` + query;
     }
 
-    function loaded() {
-        photo.removeEventListener('load', loaded);
-        photo.removeEventListener('error', loaded);
+    function done() {
+        photo.removeEventListener('load', done);
+        photo.removeEventListener('error', done);
         spinner.hidden = true;
         loading = false;
         updateZoom();
@@ -796,8 +806,8 @@ if (photo) {
                 try {
                     spinner.hidden = false;
                     wb = await restRequest('GET', `?wb=${posx},${posy}`);
-                } catch (e) {
-                    alertError('White balance failed', e);
+                } catch (err) {
+                    alertError('White balance failed', err);
                 } finally {
                     spinner.hidden = true;
                 }
