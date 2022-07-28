@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"io"
 	"net"
+	"sync/atomic"
 )
 
 // Listen creates a listener accepting connections on the given network address using [net.Listen].
@@ -54,12 +55,11 @@ type conn struct {
 	p    [1]byte
 	n    int
 	err  error
-	done bool
+	done int32
 }
 
 func (c *conn) Read(b []byte) (int, error) {
-	if !c.done && len(b) > 0 {
-		c.done = true
+	if len(b) > 0 && atomic.SwapInt32(&c.done, 1) != 1 {
 		b[0] = c.p[0]
 		return c.n, c.err
 	}
@@ -74,6 +74,6 @@ func (c *conn) ReadFrom(r io.Reader) (int64, error) {
 }
 
 func (c *conn) Close() error {
-	c.done = true
+	defer atomic.StoreInt32(&c.done, 1)
 	return c.Conn.Close()
 }
