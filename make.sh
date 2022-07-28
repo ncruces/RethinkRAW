@@ -4,6 +4,7 @@ set -eo pipefail
 cd -P -- "$(dirname -- "$0")"
 
 tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
+srv="RethinkRAW.app/Contents/Resources/rethinkraw-server"
 
 if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
@@ -40,6 +41,9 @@ if [[ "$1" == test ]]; then
 elif [[ "$1" == run ]]; then
     echo Run app...
     go build -race -o "$tgt/rethinkraw" && shift && exec "$tgt/rethinkraw" "$@"
+elif [[ "$1" == serve ]]; then
+    echo Run server...
+    go build -race -o "$tgt/rethinkraw" && shift && exec "$srv" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
     rm -rf "$tgt/data"

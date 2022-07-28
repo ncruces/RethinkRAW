@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -27,10 +29,14 @@ func setupHTTP() *http.Server {
 	mux.Handle("/dialog", httpHandler(dialogHandler))
 	mux.Handle("/", assetHandler)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !isLocalhost(r) {
 			if !config.ServerMode {
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+				return
+			}
+			if url := canUseTLS(r); url != "" {
+				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 				return
 			}
 			if _, pwd, _ := r.BasicAuth(); pwd != serverAuth {
@@ -51,6 +57,7 @@ func setupHTTP() *http.Server {
 	server := &http.Server{
 		ReadHeaderTimeout: time.Second,
 		IdleTimeout:       time.Minute,
+		Handler:           handler,
 	}
 	return server
 }
@@ -199,4 +206,90 @@ func fromURLPath(path, prefix string) string {
 		path = filepath.FromSlash(strings.TrimPrefix(path, "/"))
 	}
 	return filepath.Join(prefix, path)
+}
+
+func canUseTLS(r *http.Request) (url string) {
+	if r.TLS != nil {
+		return ""
+	}
+
+	host := r.Host
+	name, port, err := net.SplitHostPort(host)
+	if err != nil {
+		return ""
+	}
+	if app := getAppDomain(name); app != "" {
+		host = net.JoinHostPort(app, port)
+		name = app
+	}
+
+	chi := tls.ClientHelloInfo{ServerName: name, SupportedVersions: []uint16{
+		tls.VersionTLS13,
+		tls.VersionTLS12,
+	}}
+
+	config := &serverConfig
+	if config.GetConfigForClient != nil {
+		cfg, err := config.GetConfigForClient(&chi)
+		if err != nil {
+			return ""
+		}
+		if cfg != nil {
+			config = cfg
+		}
+	}
+
+	if config.GetCertificate != nil {
+		cert, err := config.GetCertificate(&chi)
+		if err != nil {
+			return ""
+		}
+		if cert != nil {
+			u := r.URL
+			u.Host = host
+			u.Scheme = "https"
+			return u.String()
+		}
+	}
+
+	for _, cert := range config.Certificates {
+		if chi.SupportsCertificate(&cert) == nil {
+			u := r.URL
+			u.Host = host
+			u.Scheme = "https"
+			return u.String()
+		}
+	}
+	return ""
+}
+
+func getAppDomain(name string) string {
+	if ip := net.ParseIP(name); ip != nil {
+		name = ip.String()
+		if ip4 := ip.To4(); len(ip4) == net.IPv4len {
+			name = strings.ReplaceAll(name, ".", "-")
+			return name + ".app.rethinkraw.com"
+
+		} else if len(ip) == net.IPv6len {
+			count := strings.Count(name, ":")
+			switch {
+			case strings.HasPrefix(name, "::"):
+				if count < 7 {
+					name = "0" + name
+				} else {
+					name = "0:0" + name[1:]
+				}
+			case strings.HasSuffix(name, "::"):
+				if count < 7 {
+					name = name + "0"
+				} else {
+					name = name[:len(name)-1] + "0:0"
+				}
+			}
+
+			name = strings.ReplaceAll(name, ":", "-")
+			return name + ".app.rethinkraw.com"
+		}
+	}
+	return ""
 }

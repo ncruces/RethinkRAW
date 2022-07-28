@@ -47,8 +47,8 @@ On Windows run:
     [PATH_TO]\RethinkRAW.com --password [SECRET] [DIRECTORY]
 
 You can edit photos in `DIRECTORY` by visiting:
-- https://local.app.rethinkraw.com:39639 (on the same computer) or
-- https://127-0-0-1.app.rethinkraw.com:39639 (replacing ***127-0-0-1*** by your IP address).
+- http://local.app.rethinkraw.com:39639 (on the same computer) or
+- http://127.0.0.1:39639 (replacing ***127.0.0.1*** by your IP address).
 
 ## Screenshots
 

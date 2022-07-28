@@ -141,7 +141,7 @@ func run() error {
 	}
 
 	if config.ServerMode {
-		log.Println("listening on https://local.app.rethinkraw.com" + serverPort)
+		log.Println("listening on http://local.app.rethinkraw.com" + serverPort)
 		<-shutdown
 	} else if chrome.IsInstalled() {
 		data := filepath.Join(config.DataDir, "chrome")

@@ -5,6 +5,7 @@ CD /D "%~dp0"
 
 SET "tgt=RethinkRAW"
 
+
 IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
     ECHO Download ExifTool...
     SET "url=https://github.com/ncruces/go-exiftool/releases/download/dist/exiftool_windows.zip"
@@ -40,6 +41,9 @@ IF [%1]==[test] (
 ) ELSE IF [%1]==[run] (
     ECHO Run app...
     go build -race -o %tgt%\RethinkRAW.exe && %tgt%\RethinkRAW.exe
+) ELSE IF [%1]==[run] (
+    ECHO Run server...
+    go build -race -o %tgt%\RethinkRAW.com && %tgt%\RethinkRAW.com -pass= .
 ) ELSE IF [%1]==[install] (
     ECHO Build installer...
     IF EXIST %tgt%\data RD /S /Q %tgt%\data
