@@ -9,12 +9,12 @@ require (
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
 	github.com/ncruces/go-fs v0.2.1
 	github.com/ncruces/go-image v0.1.0
-	github.com/ncruces/jason v0.3.0
+	github.com/ncruces/jason v0.4.0
 	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
 	github.com/ncruces/zenity v0.8.10
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/net v0.0.0-20220728030405-41545e8bf201
+	golang.org/x/net v0.0.0-20220728153142-1f511ac62c11
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
 	gonum.org/v1/gonum v0.11.0
 )

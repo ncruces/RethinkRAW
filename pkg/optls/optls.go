@@ -67,9 +67,6 @@ func (c *conn) Read(b []byte) (int, error) {
 }
 
 func (c *conn) ReadFrom(r io.Reader) (int64, error) {
-	if rf, ok := c.Conn.(io.ReaderFrom); ok {
-		return rf.ReadFrom(r)
-	}
 	return io.Copy(c.Conn, r)
 }
 

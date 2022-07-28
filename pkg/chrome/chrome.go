@@ -111,9 +111,9 @@ func (c *Cmd) Start() error {
 					}
 					switch msg.Method {
 					case "Target.targetDestroyed", "Target.targetCrashed":
-						targets.Del(jason.To[string](msg.Params["targetId"]))
+						targets.Del(jason.ToA[string](msg.Params["targetId"]))
 					case "Target.targetCreated", "Target.targetInfoChanged":
-						info := jason.To[cdpTargetInfo](msg.Params["targetInfo"])
+						info := jason.ToA[cdpTargetInfo](msg.Params["targetInfo"])
 						if origin(info.URL) == c.url {
 							targets.Add(info.TargetID)
 						} else {
