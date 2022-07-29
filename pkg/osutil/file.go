@@ -109,11 +109,11 @@ func isNotSameDevice(err error) bool {
 // HiddenFile reports whether fi is hidden.
 // Files starting with a period are reported as hidden on all systems, even Windows.
 // Other than that, plaform rules apply.
-func HiddenFile(fi os.FileInfo) bool {
-	if strings.HasPrefix(fi.Name(), ".") {
+func HiddenFile(de os.DirEntry) bool {
+	if strings.HasPrefix(de.Name(), ".") {
 		return true
 	}
-	return isHidden(fi)
+	return isHidden(de)
 }
 
 // ShellOpen opens a file (or a directory, or URL),

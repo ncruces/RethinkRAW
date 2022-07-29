@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -86,7 +85,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		if out, err := exportEdit(path, xmp, exp); err != nil {
 			return httpResult{Error: err}
 		} else if isLocalhost(r) {
-			if err := ioutil.WriteFile(exppath, out, 0666); err != nil {
+			if err := os.WriteFile(exppath, out, 0666); err != nil {
 				return httpResult{Error: err}
 			} else {
 				return httpResult{Status: http.StatusNoContent}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"image"
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -160,7 +159,7 @@ func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error
 			return nil, err
 		}
 
-		return ioutil.ReadFile(wk.temp())
+		return os.ReadFile(wk.temp())
 	} else {
 		data, err := exportJPEG(wk.temp(), exp)
 		if err != nil || exp.Resample {
@@ -171,7 +170,7 @@ func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error
 			writer.Write(data)
 			writer.Close()
 		}()
-		return ioutil.ReadAll(reader)
+		return io.ReadAll(reader)
 	}
 }
 
@@ -301,21 +300,21 @@ func loadSidecar(src, dst string) error {
 	if ext != "" {
 		// if NAME.xmp is there for NAME.EXT, use it
 		name := strings.TrimSuffix(src, ext) + ".xmp"
-		data, err = ioutil.ReadFile(name)
+		data, err = os.ReadFile(name)
 		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			err = os.ErrNotExist
 		}
 	}
 	if os.IsNotExist(err) {
 		// if NAME.EXT.xmp is there for NAME.EXT, use it
-		data, err = ioutil.ReadFile(src + ".xmp")
+		data, err = os.ReadFile(src + ".xmp")
 		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			err = os.ErrNotExist
 		}
 	}
 	if err == nil {
 		// copy xmp file
-		err = ioutil.WriteFile(dst, data, 0600)
+		err = os.WriteFile(dst, data, 0600)
 	}
 	if err == nil || os.IsNotExist(err) {
 		// extract embed XMP data
@@ -330,7 +329,7 @@ func destSidecar(src string) (string, error) {
 	if ext != "" {
 		// if NAME.xmp is there for NAME.EXT, use it
 		name := strings.TrimSuffix(src, ext) + ".xmp"
-		data, err := ioutil.ReadFile(name)
+		data, err := os.ReadFile(name)
 		if err == nil && xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			return name, nil
 		}

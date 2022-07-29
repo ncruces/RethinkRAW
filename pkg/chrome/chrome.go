@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -45,7 +44,7 @@ func Command(url string, dataDir, cacheDir string) *Cmd {
 	prefs := filepath.Join(dataDir, "Default", "Preferences")
 	if _, err := os.Stat(prefs); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(prefs), 0700); err == nil {
-			ioutil.WriteFile(prefs, []byte(`{
+			os.WriteFile(prefs, []byte(`{
 				"profile": {"cookie_controls_mode": 1},
 				"search":  {"suggest_enabled": false},
 				"signin":  {"allowed_on_next_startup": false},

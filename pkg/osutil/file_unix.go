@@ -7,7 +7,7 @@ import (
 	"os/exec"
 )
 
-func isHidden(fi os.FileInfo) bool {
+func isHidden(os.DirEntry) bool {
 	return false
 }
 

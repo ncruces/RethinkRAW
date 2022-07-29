@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,7 +22,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		return r
 	}
 
-	if files, err := ioutil.ReadDir(path); err != nil {
+	if files, err := os.ReadDir(path); err != nil {
 		return httpResult{Error: err}
 	} else {
 		data := struct {
@@ -34,27 +34,29 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			nil, nil,
 		}
 
-		for _, info := range files {
-			if osutil.HiddenFile(info) {
-				continue
-			}
-
-			name := info.Name()
+		for _, entry := range files {
+			name := entry.Name()
 			path := filepath.Join(path, name)
 			item := struct{ Name, Path string }{name, toURLPath(path, prefix)}
 
-			if info.Mode()&os.ModeSymlink != 0 {
-				info, err = os.Stat(path)
-				if err != nil {
-					continue
-				}
-			}
-			const special = os.ModeType &^ os.ModeDir
-			if info.Mode()&special != 0 {
+			if osutil.HiddenFile(entry) {
 				continue
 			}
 
-			if info.IsDir() {
+			if entry.Type()&os.ModeSymlink != 0 {
+				i, err := os.Stat(path)
+				if err != nil {
+					continue
+				}
+				entry = fs.FileInfoToDirEntry(i)
+			}
+
+			const special = os.ModeType &^ os.ModeDir
+			if entry.Type()&special != 0 {
+				continue
+			}
+
+			if entry.IsDir() {
 				data.Dirs = append(data.Dirs, item)
 			} else if _, ok := extensions[strings.ToUpper(filepath.Ext(name))]; ok {
 				data.Photos = append(data.Photos, item)

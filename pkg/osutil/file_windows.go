@@ -13,8 +13,12 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func isHidden(fi os.FileInfo) bool {
-	s, ok := fi.Sys().(*syscall.Win32FileAttributeData)
+func isHidden(de os.DirEntry) bool {
+	i, err := de.Info()
+	if err != nil {
+		return false
+	}
+	s, ok := i.Sys().(*syscall.Win32FileAttributeData)
 	return ok && s.FileAttributes&(syscall.FILE_ATTRIBUTE_HIDDEN|syscall.FILE_ATTRIBUTE_SYSTEM) != 0
 }
 

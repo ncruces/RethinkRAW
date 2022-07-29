@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"io/ioutil"
+	"os"
 )
 
 // GetDCPProfileName extracts the profile name from a DCP file.
 func GetDCPProfileName(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

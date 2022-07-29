@@ -54,17 +54,17 @@ func findPhotos(batch []string) ([]batchPhoto, error) {
 		} else {
 			prefix = path + string(filepath.Separator)
 		}
-		err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		err := filepath.WalkDir(path, func(path string, entry os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-			if osutil.HiddenFile(info) {
-				if info.IsDir() {
+			if osutil.HiddenFile(entry) {
+				if entry.IsDir() {
 					return filepath.SkipDir
 				}
 				return nil
 			}
-			if info.Mode().IsRegular() {
+			if entry.Type().IsRegular() {
 				if _, ok := extensions[strings.ToUpper(filepath.Ext(path))]; ok {
 					var name string
 					if strings.HasPrefix(path, prefix) {
