@@ -26,11 +26,11 @@ func init() {
 }
 
 func dialogHandler(_ http.ResponseWriter, r *http.Request) httpResult {
-	if err := r.ParseForm(); err != nil {
-		return httpResult{Status: http.StatusBadRequest, Error: err}
-	}
 	if !isLocalhost(r) {
 		return httpResult{Status: http.StatusForbidden}
+	}
+	if err := r.ParseForm(); err != nil {
+		return httpResult{Status: http.StatusBadRequest, Error: err}
 	}
 
 	var err error

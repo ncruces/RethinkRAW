@@ -27,11 +27,12 @@ func setupHTTP() *http.Server {
 	mux.Handle("/batch/", http.StripPrefix("/batch", httpHandler(batchHandler)))
 	mux.Handle("/thumb/", http.StripPrefix("/thumb", httpHandler(thumbHandler)))
 	mux.Handle("/dialog", httpHandler(dialogHandler))
+	mux.Handle("/upload", httpHandler(uploadHandler))
 	mux.Handle("/", assetHandler)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !isLocalhost(r) {
-			if !config.ServerMode {
+			if !config.ServerMode || !matchHostServerName(r) {
 				http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 				return
 			}
@@ -178,7 +179,7 @@ func sendAllowed(w http.ResponseWriter, r *http.Request, allowed ...string) http
 }
 
 func isLocalhost(r *http.Request) bool {
-	return strings.TrimSuffix(r.Host, serverPort) == "localhost"
+	return r.TLS == nil && strings.TrimSuffix(r.Host, serverPort) == "localhost"
 }
 
 func getPathPrefix(r *http.Request) string {
@@ -206,6 +207,17 @@ func fromURLPath(path, prefix string) string {
 		path = filepath.FromSlash(strings.TrimPrefix(path, "/"))
 	}
 	return filepath.Join(prefix, path)
+}
+
+func matchHostServerName(r *http.Request) bool {
+	if r.TLS == nil {
+		return true
+	}
+	host, _, err := net.SplitHostPort(r.Host)
+	if err != nil {
+		host = r.Host
+	}
+	return r.TLS.ServerName == host
 }
 
 func canUseTLS(r *http.Request) (url string) {
@@ -271,22 +283,12 @@ func getAppDomain(name string) string {
 			return name + ".app.rethinkraw.com"
 
 		} else if len(ip) == net.IPv6len {
-			count := strings.Count(name, ":")
-			switch {
-			case strings.HasPrefix(name, "::"):
-				if count < 7 {
-					name = "0" + name
-				} else {
-					name = "0:0" + name[1:]
-				}
-			case strings.HasSuffix(name, "::"):
-				if count < 7 {
-					name = name + "0"
-				} else {
-					name = name[:len(name)-1] + "0:0"
-				}
+			if strings.HasPrefix(name, "::") {
+				name = "0" + name
 			}
-
+			if strings.HasSuffix(name, "::") {
+				name = name + "0"
+			}
 			name = strings.ReplaceAll(name, ":", "-")
 			return name + ".app.rethinkraw.com"
 		}
