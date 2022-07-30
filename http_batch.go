@@ -142,10 +142,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 		data := struct {
-			Photos []struct{ Name, Path string }
 			Export bool
+			Photos []struct{ Name, Path string }
 		}{
-			nil, isLocalhost(r),
+			isLocalhost(r), nil,
 		}
 
 		for _, photo := range photos {

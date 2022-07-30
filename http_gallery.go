@@ -26,12 +26,16 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		return httpResult{Error: err}
 	} else {
 		data := struct {
-			Title, Path  string
+			Title        string
+			Path, Upload string
 			Dirs, Photos []struct{ Name, Path string }
 		}{
 			filepath.Clean(path),
-			toURLPath(path, prefix),
+			toURLPath(path, prefix), "",
 			nil, nil,
+		}
+		if !isLocalhost(r) {
+			data.Upload = data.Path
 		}
 
 		for _, entry := range files {
@@ -42,7 +46,12 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			if osutil.HiddenFile(entry) {
 				continue
 			}
-
+			if entry.Type().IsRegular() {
+				if _, ok := extensions[strings.ToUpper(filepath.Ext(name))]; ok {
+					data.Photos = append(data.Photos, item)
+				}
+				continue
+			}
 			if entry.Type()&os.ModeSymlink != 0 {
 				i, err := os.Stat(path)
 				if err != nil {
@@ -50,16 +59,8 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 				}
 				entry = fs.FileInfoToDirEntry(i)
 			}
-
-			const special = os.ModeType &^ os.ModeDir
-			if entry.Type()&special != 0 {
-				continue
-			}
-
 			if entry.IsDir() {
 				data.Dirs = append(data.Dirs, item)
-			} else if _, ok := extensions[strings.ToUpper(filepath.Ext(name))]; ok {
-				data.Photos = append(data.Photos, item)
 			}
 		}
 

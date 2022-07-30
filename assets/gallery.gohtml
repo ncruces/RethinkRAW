@@ -11,6 +11,8 @@
     <link rel="preload" as="style" href="/fontawesome.css">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fa-solid-900.woff2">
     <script src="/main.js" defer></script>
+    <script src="/gallery.js" defer></script>
+    <script>const upload = "{{.Upload}}";</script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
 
     <style>
@@ -39,6 +41,11 @@
         <span>No RAW photos here.</span>
         {{- end}}
     </div>
+
+    <dialog id=progress-dialog>
+        Lorem ipsum<br>
+        <progress></progress>
+    </dialog>    
 </body>
 
 </html>
