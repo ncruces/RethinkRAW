@@ -160,7 +160,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return httpResult{
 			Error: templates.ExecuteTemplate(w, "photo.gohtml", map[string]string{
-				"Title": filepath.Clean(path),
+				"Title": toUsrPath(path, prefix),
 				"Name":  filepath.Base(path),
 				"Path":  toURLPath(path, prefix),
 			}),

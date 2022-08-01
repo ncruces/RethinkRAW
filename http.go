@@ -189,13 +189,24 @@ func getPathPrefix(r *http.Request) string {
 	return ""
 }
 
+func toUsrPath(path, prefix string) string {
+	path = filepath.Clean(path)
+	if prefix != "" {
+		if len(path) == len(prefix) || !strings.HasPrefix(path, prefix) {
+			return "/"
+		}
+		path = path[len(prefix):]
+		return filepath.ToSlash(path)
+	}
+	return path
+}
+
 func toURLPath(path, prefix string) string {
 	path = filepath.Clean(path)
-	if strings.HasPrefix(path, prefix) {
-		path = path[len(prefix):]
-	} else {
+	if !strings.HasPrefix(path, prefix) {
 		return ""
 	}
+	path = path[len(prefix):]
 	if filepath.Separator == '\\' && strings.HasPrefix(path, `\\`) {
 		return `\\` + filepath.ToSlash(path[2:])
 	}

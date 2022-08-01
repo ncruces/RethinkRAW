@@ -30,7 +30,7 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			Path, Upload string
 			Dirs, Photos []struct{ Name, Path string }
 		}{
-			filepath.Clean(path),
+			toUsrPath(path, prefix),
 			toURLPath(path, prefix), "",
 			nil, nil,
 		}
