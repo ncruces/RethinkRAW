@@ -85,8 +85,6 @@ func (c *Cmd) Start() error {
 		return err
 	}
 
-	var started bool
-	var targets = set[string]{}
 	scan := bufio.NewScanner(pipe)
 	for scan.Scan() {
 		const prefix = "DevTools listening on "
@@ -97,37 +95,8 @@ func (c *Cmd) Start() error {
 			if err != nil {
 				return err
 			}
-			c.send("Target.setDiscoverTargets", "", jason.Object{"discover": true})
-			go func() {
-				for {
-					var msg cdpMessage
-					err := websocket.JSON.Receive(c.ws, &msg)
-					if err == io.EOF {
-						break
-					}
-					if err != nil {
-						log.Print("chrome:", err)
-					}
-					switch msg.Method {
-					case "Target.targetDestroyed", "Target.targetCrashed":
-						targets.Del(jason.ToA[string](msg.Params["targetId"]))
-					case "Target.targetCreated", "Target.targetInfoChanged":
-						info := jason.ToA[cdpTargetInfo](msg.Params["targetInfo"])
-						if origin(info.URL) == c.url {
-							targets.Add(info.TargetID)
-						} else {
-							targets.Del(info.TargetID)
-						}
-						if info.Type == "page" {
-							started = true
-						}
-					}
-					if started && len(targets) == 0 {
-						c.Close()
-					}
-				}
-			}()
-			break
+			go c.receiveloop()
+			return nil
 		}
 	}
 	return scan.Err()
@@ -146,6 +115,39 @@ func (c *Cmd) Signal(sig os.Signal) error {
 // Close closes Chrome.
 func (c *Cmd) Close() error {
 	return c.send("Browser.close", "", nil)
+}
+
+func (c *Cmd) receiveloop() {
+	var started bool
+	var targets = set[string]{}
+	c.send("Target.setDiscoverTargets", "", jason.Object{"discover": true})
+	for {
+		var msg cdpMessage
+		err := websocket.JSON.Receive(c.ws, &msg)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Print("chrome:", err)
+		}
+		switch msg.Method {
+		case "Target.targetDestroyed", "Target.targetCrashed":
+			targets.Del(jason.ToA[string](msg.Params["targetId"]))
+		case "Target.targetCreated", "Target.targetInfoChanged":
+			info := jason.ToA[cdpTargetInfo](msg.Params["targetInfo"])
+			if origin(info.URL) == c.url {
+				targets.Add(info.TargetID)
+			} else {
+				targets.Del(info.TargetID)
+			}
+			if info.Type == "page" {
+				started = true
+			}
+		}
+		if started && len(targets) == 0 {
+			c.Close()
+		}
+	}
 }
 
 func (c *Cmd) send(method, session string, params any) error {
