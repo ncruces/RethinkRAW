@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/ncruces/rethinkraw/pkg/osutil"
+	"golang.org/x/sync/errgroup"
 )
 
 func toBatchPath(paths ...string) string {
@@ -86,27 +86,19 @@ func findPhotos(batch []string) ([]batchPhoto, error) {
 
 func batchProcess(photos []batchPhoto, proc func(photo batchPhoto) error) <-chan error {
 	const parallelism = 2
-
 	output := make(chan error, parallelism)
-	input := make(chan batchPhoto)
-	wait := sync.WaitGroup{}
-	wait.Add(parallelism)
-
-	for n := 0; n < parallelism; n++ {
-		go func() {
-			for photo := range input {
-				output <- proc(photo)
-			}
-			wait.Done()
-		}()
-	}
 
 	go func() {
+		var group errgroup.Group
+		group.SetLimit(parallelism)
 		for _, photo := range photos {
-			input <- photo
+			photo := photo
+			group.Go(func() error {
+				output <- proc(photo)
+				return nil
+			})
 		}
-		close(input)
-		wait.Wait()
+		group.Wait()
 		close(output)
 	}()
 

@@ -14,8 +14,9 @@ require (
 	github.com/ncruces/zenity v0.8.10
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/net v0.0.0-20220728153142-1f511ac62c11
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
+	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sys v0.0.0-20220731174439-a90be440212d
 	gonum.org/v1/gonum v0.11.0
 )
 
