@@ -26,16 +26,16 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		return httpResult{Error: err}
 	} else {
 		data := struct {
-			Title        string
-			Path, Upload string
+			Title, Path  string
 			Dirs, Photos []struct{ Name, Path string }
+			Template     map[string]any
 		}{
 			toUsrPath(path, prefix),
-			toURLPath(path, prefix), "",
-			nil, nil,
+			toURLPath(path, prefix),
+			nil, nil, map[string]any{},
 		}
 		if !isLocalhost(r) {
-			data.Upload = data.Path
+			data.Template["Upload"] = data.Path
 		}
 
 		for _, entry := range files {
