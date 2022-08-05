@@ -1,11 +1,17 @@
 form#settings {
-    font-size: small;
-    flex-shrink: 0;
+    position: sticky;
+    float: right;
+    z-index: 1;
+    top: 0;
     width: 15rem;
+    height: 100vh;
+    padding: 0 8px;
+    font-size: small;
     overflow-y: scroll;
+    scrollbar-gutter: stable;
 }
 
-@supports (overflow: overlay) {
+@supports (overflow: overlay) and (not (scrollbar-gutter: stable)) {
     form#settings {
         padding-right: 1rem;
         overflow: overlay;

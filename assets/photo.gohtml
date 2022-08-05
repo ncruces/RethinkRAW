@@ -20,6 +20,8 @@
     {{- template "const.gohtml" .}}
 </head>
 <body>
+    {{- template "raw-editor.gohtml"}}
+
     <div id=box1>
         <div id=menu>
             <div class="toolbar">
@@ -43,8 +45,6 @@
             <img id=print>
         </div>
     </div>
-
-    {{- template "raw-editor.gohtml"}}
 
     <dialog id=meta-dialog></dialog>
     <dialog id=progress-dialog>

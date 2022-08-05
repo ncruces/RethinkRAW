@@ -2,13 +2,11 @@ body {
     margin: 0;
     height: 100vh;
     overflow: hidden;
-    display: flex;
 }
 
 #box1 {
-    flex: auto;
     height: 100%;
-    margin: 8px;
+    padding: 8px;
 }
 
 #box2 {

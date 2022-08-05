@@ -3,7 +3,6 @@
 
 body {
     font-family: -apple-system, 'Segoe UI', system-ui, 'Roboto', 'Helvetica Neue', sans-serif;
-    margin: 8px;
     user-select: none;
 }
 
@@ -55,6 +54,8 @@ body {
 
 #menu .toolbar {
     width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 #menu .toolbar>button {
@@ -96,15 +97,18 @@ body {
     position: sticky;
     top: 0;
     background: white;
-    padding-top: 8px;
-    padding-bottom: 2px;
     margin-bottom: -2px;
+    padding: 8px 0 2px 8px;
+}
+
+#drop-target {
+    height: 100%;
 }
 
 #gallery {
     display: flex;
     flex-flow: row wrap;
-    margin-top: 8px;
+    padding: 8px 0 8px 8px;
 }
 
 #gallery span {

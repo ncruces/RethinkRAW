@@ -7,17 +7,16 @@
     <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="/gallery.css">
+    <link rel="stylesheet" href="/dialog-polyfill.css">
     <link rel="preload" as="style" href="/normalize.css">
     <link rel="preload" as="style" href="/fontawesome.css">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fa-solid-900.woff2">
+    <script src="/dialog-polyfill.js" defer></script>
     <script src="/main.js" defer></script>
     <script src="/gallery.js" defer></script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
     {{- template "const.gohtml" .Template}}
-
-    <style>
-        body { margin-top: 0; }
-    </style>
 </head>
 
 <body>
@@ -34,12 +33,14 @@
             {{- end}}
         </div>
     </div>
-    <div id=gallery>
-        {{- range .Photos}}
-        <a href="/photo/{{.Path}}"><img loading=lazy title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
-        {{- else}}
-        <span>No RAW photos here.</span>
-        {{- end}}
+    <div id=drop-target>
+        <div id=gallery>
+            {{- range .Photos}}
+            <a href="/photo/{{.Path}}"><img loading=lazy title="{{.Name}}" alt="{{.Name}}" src="/thumb/{{.Path}}" onerror="parentNode.hidden=true"></a>
+            {{- else}}
+            <span>No RAW photos here.</span>
+            {{- end}}
+        </div>
     </div>
 
     <dialog id=progress-dialog>

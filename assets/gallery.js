@@ -2,7 +2,7 @@ void function () {
 
 if (typeof template.Upload !== 'string') return;
 
-let gallery = document.getElementById('gallery');
+let drop = document.getElementById('drop-target');
 
 async function walkdir(directory) {
     function readEntries(reader) {
@@ -29,8 +29,8 @@ async function walkdir(directory) {
     return await readAll(directory.createReader())
 }
 
-gallery.addEventListener('dragover', evt => evt.preventDefault());
-gallery.addEventListener('drop', async evt => {
+drop.addEventListener('dragover', evt => evt.preventDefault());
+drop.addEventListener('drop', async evt => {
     evt.preventDefault();
     let files = [];
     let directories = [];
