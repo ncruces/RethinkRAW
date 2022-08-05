@@ -826,28 +826,4 @@ if (photo) {
     loadSettings();
 }
 
-JSON.parseLast = ndjson => {
-    let end = ndjson.lastIndexOf('\n');
-    if (end < 0) return void 0;
-    let start = ndjson.lastIndexOf('\n', end - 1);
-    return JSON.parse(ndjson.substring(start, end));
-};
-
-JSON.parseLines = ndjson => {
-    return ndjson.trimEnd().split('\n').map(JSON.parse);
-};
-
-// dialog polyfill, add type=cancel buttons
-for (let d of document.querySelectorAll('dialog')) {
-    dialogPolyfill.registerDialog(d);
-    d.addEventListener('cancel', () => d.returnValue = '');
-    for (let b of d.querySelectorAll('form button[type=cancel]')) {
-        b.type = 'button';
-        b.addEventListener('click', () => {
-            d.dispatchEvent(new Event('cancel'));
-            d.close();
-        });
-    }
-}
-
 }();

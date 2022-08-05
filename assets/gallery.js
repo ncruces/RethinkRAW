@@ -1,6 +1,6 @@
 void function () {
 
-if (typeof template.Upload !== 'string') return;
+if (!template.Upload) return;
 
 let drop = document.getElementById('drop-target');
 
@@ -46,9 +46,20 @@ drop.addEventListener('drop', async evt => {
     for (let d of directories) {
         files.push(...await walkdir(d));
     }
-    for (let e of files) {
-        console.log(e.fullPath);
+    for (let f of files) {
+        if (ext(f.name).toUpperCase() in template.Upload.Exts) {
+            console.log(f.fullPath);
+        }
     }
 });
+
+function ext(name) {
+    let slash = name.lastIndexOf('/');
+    let dot = name.lastIndexOf('.');
+    if (dot >= 0 && dot > slash) {
+        return name.substring(dot);
+    }
+    return '';
+}
 
 }();

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/schema"
+	"github.com/ncruces/jason"
 	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/zenity"
 )
@@ -159,7 +160,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		w.Header().Set("Cache-Control", "max-age=300")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return httpResult{
-			Error: templates.ExecuteTemplate(w, "photo.gohtml", map[string]string{
+			Error: templates.ExecuteTemplate(w, "photo.gohtml", jason.Object{
 				"Title": toUsrPath(path, prefix),
 				"Name":  filepath.Base(path),
 				"Path":  toURLPath(path, prefix),

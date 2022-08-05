@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncruces/jason"
 	"github.com/ncruces/rethinkraw/internal/config"
 )
 
@@ -131,7 +132,7 @@ func sendError(w http.ResponseWriter, r *http.Request, status int, message strin
 	if strings.HasPrefix(r.Header.Get("Accept"), "text/html") {
 		h.Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
-		templates.ExecuteTemplate(w, "error.gohtml", map[string]string{
+		templates.ExecuteTemplate(w, "error.gohtml", jason.Object{
 			"Status":  http.StatusText(status),
 			"Message": message,
 		})

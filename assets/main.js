@@ -58,6 +58,31 @@ document.documentElement.addEventListener('contextmenu', function (evt) {
     evt.preventDefault();
 });
 
+// Newline-delimited JSON.
+JSON.parseLast = function (ndjson) {
+    let end = ndjson.lastIndexOf('\n');
+    if (end < 0) return void 0;
+    let start = ndjson.lastIndexOf('\n', end - 1);
+    return JSON.parse(ndjson.substring(start, end));
+};
+
+JSON.parseLines = function (ndjson) {
+    return ndjson.trimEnd().split('\n').map(JSON.parse);
+};
+
+// Register dialogs with polyfill, add type=cancel buttons.
+for (let d of document.querySelectorAll('dialog')) {
+    dialogPolyfill.registerDialog(d);
+    d.addEventListener('cancel', function () { return d.returnValue = '' });
+    for (let b of d.querySelectorAll('form button[type=cancel]')) {
+        b.type = 'button';
+        b.addEventListener('click', function () {
+            d.dispatchEvent(new Event('cancel'));
+            d.close();
+        });
+    }
+}
+
 }();
 
 function back() {

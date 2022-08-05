@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ncruces/jason"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
@@ -28,14 +29,17 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		data := struct {
 			Title, Path  string
 			Dirs, Photos []struct{ Name, Path string }
-			Template     map[string]any
+			Template     jason.Object
 		}{
 			toUsrPath(path, prefix),
 			toURLPath(path, prefix),
-			nil, nil, map[string]any{},
+			nil, nil, jason.Object{},
 		}
 		if !isLocalhost(r) {
-			data.Template["Upload"] = data.Path
+			data.Template["Upload"] = jason.Object{
+				"Path": data.Path,
+				"Exts": extensions,
+			}
 		}
 
 		for _, entry := range files {
