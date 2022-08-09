@@ -14,7 +14,7 @@ IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
 
 IF NOT EXIST %tgt%\utils\dcraw.exe (
     ECHO Download dcraw...
-    SET "url=https://github.com/ncruces/dcraw/releases/download/v9.28.2-win/dcraw.zip"
+    SET "url=https://github.com/ncruces/dcraw/releases/download/v9.28.3-win/dcraw.zip"
     go run github.com/ncruces/go-fetch -unpack !url! %tgt%\utils
 )
 
