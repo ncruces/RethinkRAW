@@ -201,7 +201,7 @@ func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err er
 	}
 
 	if !wk.hasPixels && len(coords) == 2 {
-		err = getRawPixels(wk.edit())
+		err = getRawPixels(wk.edit(), wk.pixels())
 		if err != nil {
 			return wb, err
 		}

@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strconv"
 
 	"github.com/ncruces/go-exiftool"
-	"github.com/ncruces/rethinkraw/internal/config"
+	"github.com/ncruces/rethinkraw/internal/dcraw"
 	"github.com/ncruces/rethinkraw/internal/util"
 	"github.com/ncruces/rethinkraw/pkg/dng"
 )
@@ -467,48 +465,30 @@ func loadFloat64s(dst *[]float64, m map[string][]byte, key string) {
 	}
 }
 
-var dcrawThumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
-
 func dngPreview(path string) string {
 	log.Print("dcraw (get thumb size)...")
-	cmd := exec.Command(config.Dcraw, "-i", "-v", path)
-	out, err := cmd.Output()
+	size, err := dcraw.GetThumbSize(path)
 	if err != nil {
 		return ""
 	}
 
-	var max int
-	if match := dcrawThumbRegex.FindSubmatch(out); match != nil {
-		width, _ := strconv.Atoi(string(match[1]))
-		height, _ := strconv.Atoi(string(match[2]))
-		if width > height {
-			max = width
-		} else {
-			max = height
-		}
-	}
-
 	switch {
-	case max > 1024:
+	case size > 1024:
 		return "p2"
-	case max > 256:
+	case size > 256:
 		return "p1"
 	default:
 		return "p0"
 	}
 }
 
-func getRawPixels(path string) error {
+func getRawPixels(path, dest string) error {
 	log.Print("dcraw (get raw pixels)...")
-	cmd := exec.Command(config.Dcraw,
-		"-r", "1", "1", "1", "1",
-		"-o", "0",
-		"-h",
-		"-4",
-		"-t", "0",
-		path)
-	_, err := cmd.Output()
-	return err
+	data, err := dcraw.GetRAWPixels(path)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dest, data, 0600)
 }
 
 func getMultipliers(path string, coords []float64) ([]float64, error) {

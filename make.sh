@@ -12,10 +12,10 @@ if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     curl -sL "$url" | tar xz -C "$tgt/utils"
 fi
 
-if [ ! -f "$tgt/utils/dcraw" ]; then
+if [ ! -f "$tgt/utils/dcraw.wasm" ]; then
     echo Download dcraw...
-    url="https://github.com/ncruces/dcraw/releases/download/v9.28.3/dcraw.gz"
-    curl -sL "$url" | gzcat > "$tgt/utils/dcraw" && chmod +x "$tgt/utils/dcraw"
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.3-wasm/dcraw.wasm.gz"
+    curl -sL "$url" | gzcat > "$tgt/utils/dcraw.wasm"
 fi
 
 if [ ! -f "assets/normalize.css" ]; then
