@@ -55,11 +55,11 @@ type conn struct {
 	p    [1]byte
 	n    int
 	err  error
-	done int32
+	done atomic.Bool
 }
 
 func (c *conn) Read(b []byte) (int, error) {
-	if len(b) > 0 && atomic.SwapInt32(&c.done, 1) != 1 {
+	if len(b) > 0 && !c.done.Swap(true) {
 		b[0] = c.p[0]
 		return c.n, c.err
 	}
@@ -71,6 +71,6 @@ func (c *conn) ReadFrom(r io.Reader) (int64, error) {
 }
 
 func (c *conn) Close() error {
-	defer atomic.StoreInt32(&c.done, 1)
+	defer c.done.Store(true)
 	return c.Conn.Close()
 }

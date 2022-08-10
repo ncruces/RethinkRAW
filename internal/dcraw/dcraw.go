@@ -27,7 +27,7 @@ var (
 	module     wazero.CompiledModule
 	sem        *semaphore.Weighted
 	thumbRegex *regexp.Regexp
-	counter    uint64
+	counter    atomic.Uint64
 )
 
 func compile() {
@@ -69,7 +69,7 @@ func run(root fs.FS, args ...string) ([]byte, error) {
 	var buf bytes.Buffer
 	cfg := wazero.NewModuleConfig().
 		WithArgs(args...).WithStdout(&buf).WithFS(root).
-		WithName("dcraw-" + strconv.FormatUint(atomic.AddUint64(&counter, 1), 10))
+		WithName("dcraw-" + strconv.FormatUint(counter.Add(1), 10))
 	module, err := wasm.InstantiateModule(ctx, module, cfg)
 	if err != nil {
 		return nil, err

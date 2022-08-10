@@ -30,7 +30,7 @@ type Cmd struct {
 	cmd *exec.Cmd
 	ws  *websocket.Conn
 	url string
-	msg uint32
+	msg atomic.Uint32
 }
 
 // Command returns the Cmd struct to execute a Chrome app loaded from url,
@@ -152,7 +152,7 @@ func (c *Cmd) receiveloop() {
 
 func (c *Cmd) send(method, session string, params any) error {
 	return websocket.JSON.Send(c.ws, jason.Object{
-		"id":        atomic.AddUint32(&c.msg, 1),
+		"id":        c.msg.Add(1),
 		"method":    method,
 		"params":    params,
 		"sessionId": session,
