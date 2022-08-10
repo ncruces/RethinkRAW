@@ -105,3 +105,16 @@ function sleep(ms) {
         return setTimeout(resolve, ms);
     });
 }
+
+function alertError(src, err) {
+    console.log(err);
+    var name = err && err.name || 'Error';
+    var message = err && err.message;
+    if (message) {
+        var end = /\w$/.test(message) ? '.' : '';
+        var sep = message.length > 25 ? '\n' : ' ';
+        alert(name + '\n' + src + ' with:' + sep + message + end);
+    } else {
+        alert(name + '\n' + src + '.');
+    }
+}

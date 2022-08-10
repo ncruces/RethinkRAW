@@ -32,6 +32,8 @@ async function walkdir(directory) {
 drop.addEventListener('dragover', evt => evt.preventDefault());
 drop.addEventListener('drop', async evt => {
     evt.preventDefault();
+
+    // Recursively find files.
     let files = [];
     let directories = [];
     for (let i of evt.dataTransfer.items) {
@@ -46,12 +48,63 @@ drop.addEventListener('drop', async evt => {
     for (let d of directories) {
         files.push(...await walkdir(d));
     }
-    for (let f of files) {
-        if (ext(f.name).toUpperCase() in template.Upload.Exts) {
-            console.log(f.fullPath);
+
+    // Filter files by wanted extensions.
+    files = files.filter(f => ext(f.name).toUpperCase() in template.Upload.Exts);
+    
+    let dialog = document.getElementById('progress-dialog');
+    let progress = dialog.querySelector('progress');
+    progress.removeAttribute('value');
+    progress.max = files.length;
+    dialog.firstChild.textContent = 'Uploading…';
+    dialog.showModal();
+
+    // Upload files.
+    try {
+        let i = 0;
+        for (let f of files) {
+            await uploadRequest(f);
+            progress.value = ++i;
         }
+    } catch (err) {
+        alertError('Upload failed', err);
     }
+
+    dialog.close();
+    location.reload();
 });
+
+function uploadRequest(entry) {
+    return new Promise((resolve, reject) => {
+        entry.file(file => {
+            let data = new FormData();
+            data.set('root', template.Upload.Path)
+            data.set('path', entry.fullPath)
+            data.set('file', file);
+
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload');
+            xhr.onload = () => {
+                if (xhr.status < 400) {
+                    resolve(xhr.response);
+                } else {
+                    reject({
+                        status: xhr.status,
+                        name: xhr.statusText,
+                        message: xhr.response,
+                    });
+                }
+            };
+            xhr.onerror = () => reject({
+                status: xhr.status,
+                name: xhr.statusText,
+            });
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.responseType = 'json';
+            xhr.send(data);
+        }, reject);
+    });
+}
 
 function ext(name) {
     let slash = name.lastIndexOf('/');

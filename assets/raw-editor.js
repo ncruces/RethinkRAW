@@ -460,19 +460,6 @@ function disableInputs(n) {
     }
 }
 
-function alertError(src, err) {
-    console.log(err);
-    let name = err && err.name || 'Error';
-    let message = err && err.message;
-    if (message) {
-        let end = /\w$/.test(message) ? '.' : '';
-        let sep = message.length > 25 ? '\n' : ' ';
-        alert(name + '\n' + src + ' with:' + sep + message + end);
-    } else {
-        alert(name + '\n' + src + '.');
-    }
-}
-
 let updatePhoto = function () {
     if (!photo) return () => {};
     let loading, query, size;
@@ -579,10 +566,6 @@ function restRequest(method, url, { body, progress } = {}) {
                     xhr.responseType = 'blob';
                     return;
                 }
-                if (xhr.getResponseHeader('Content-Type') === 'application/json') {
-                    xhr.responseType = 'json';
-                    return;
-                }
             }
         };
         xhr.onload = () => {
@@ -664,6 +647,7 @@ function restRequest(method, url, { body, progress } = {}) {
             body = JSON.stringify(body);
         }
         xhr.setRequestHeader('Accept', 'application/json');
+        xhr.responseType = 'json';
         xhr.send(body);
     });
 }

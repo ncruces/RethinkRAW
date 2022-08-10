@@ -57,11 +57,11 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 				continue
 			}
 			if entry.Type()&os.ModeSymlink != 0 {
-				i, err := os.Stat(path)
+				fi, err := os.Stat(path)
 				if err != nil {
 					continue
 				}
-				entry = fs.FileInfoToDirEntry(i)
+				entry = fs.FileInfoToDirEntry(fi)
 			}
 			if entry.IsDir() {
 				data.Dirs = append(data.Dirs, item)
