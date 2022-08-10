@@ -29,7 +29,7 @@ func RandomID() string {
 
 func PercentEncode(s string) string {
 	const upperhex = "0123456789ABCDEF"
-	mustEncode := func(c byte) bool {
+	unreserved := func(c byte) bool {
 		switch {
 		case c >= 'a':
 			return c <= 'z' || c == '~'
@@ -44,7 +44,7 @@ func PercentEncode(s string) string {
 
 	hex := 0
 	for _, c := range []byte(s) {
-		if mustEncode(c) {
+		if !unreserved(c) {
 			hex++
 		}
 	}
@@ -55,14 +55,14 @@ func PercentEncode(s string) string {
 	i := 0
 	buf := make([]byte, len(s)+2*hex)
 	for _, c := range []byte(s) {
-		if mustEncode(c) {
+		if unreserved(c) {
+			buf[i] = c
+			i++
+		} else {
 			buf[i+0] = '%'
 			buf[i+1] = upperhex[c>>4]
 			buf[i+2] = upperhex[c&15]
 			i += 3
-		} else {
-			buf[i] = c
-			i++
 		}
 	}
 	return *(*string)(unsafe.Pointer(&buf))

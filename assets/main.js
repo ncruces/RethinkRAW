@@ -60,9 +60,9 @@ document.documentElement.addEventListener('contextmenu', function (evt) {
 
 // Newline-delimited JSON.
 JSON.parseLast = function (ndjson) {
-    let end = ndjson.lastIndexOf('\n');
+    var end = ndjson.lastIndexOf('\n');
     if (end < 0) return void 0;
-    let start = ndjson.lastIndexOf('\n', end - 1);
+    var start = ndjson.lastIndexOf('\n', end - 1);
     return JSON.parse(ndjson.substring(start, end));
 };
 
@@ -71,16 +71,22 @@ JSON.parseLines = function (ndjson) {
 };
 
 // Register dialogs with polyfill, add type=cancel buttons.
-for (let d of document.querySelectorAll('dialog')) {
-    dialogPolyfill.registerDialog(d);
-    d.addEventListener('cancel', function () { return d.returnValue = '' });
-    for (let b of d.querySelectorAll('form button[type=cancel]')) {
-        b.type = 'button';
-        b.addEventListener('click', function () {
-            d.dispatchEvent(new Event('cancel'));
-            d.close();
-        });
-    }
+var dialogs = document.querySelectorAll('dialog');
+for (var i = 0; i < dialogs.length; ++i) {
+    (function (dialog) {
+        dialogPolyfill.registerDialog(dialog);
+        dialog.addEventListener('cancel', function () { return dialog.returnValue = '' });
+        var buttons = dialog.querySelectorAll('form button[type=cancel]');
+        for (var i = 0; i < buttons.length; ++i) {
+            (function (button) {
+                button.type = 'button';
+                button.addEventListener('click', function () {
+                    dialog.dispatchEvent(new Event('cancel'));
+                    dialog.close();
+                });
+            })(buttons[i]);
+        }
+    })(dialogs[i]);
 }
 
 }();
