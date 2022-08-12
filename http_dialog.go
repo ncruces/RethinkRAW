@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -53,7 +54,7 @@ func dialogHandler(_ http.ResponseWriter, r *http.Request) httpResult {
 	}
 
 	if path != "" {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
 			return httpResult{Status: http.StatusUnprocessableEntity, Message: err.Error()}
 		} else if err != nil {
 			return httpResult{Error: err}

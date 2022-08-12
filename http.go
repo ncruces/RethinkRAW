@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -101,9 +102,9 @@ func (h httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func errorStatus(err error) (status int, message string) {
 	switch {
-	case os.IsNotExist(err):
+	case errors.Is(err, fs.ErrNotExist):
 		status = http.StatusNotFound
-	case os.IsPermission(err):
+	case errors.Is(err, fs.ErrPermission):
 		status = http.StatusForbidden
 	default:
 		status = http.StatusInternalServerError

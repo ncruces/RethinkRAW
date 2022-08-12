@@ -90,30 +90,11 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			}
 		}
 
-		results := batchProcess(photos, func(photo batchPhoto) (err error) {
-			xmp := xmp
-			xmp.Filename = filepath.Base(photo.Path)
-			out, err := exportEdit(photo.Path, xmp, exp)
-			if err != nil {
-				return err
+		results := batchProcess(photos, func(photo batchPhoto) error {
+			err := batchProcessPhoto(photo, exppath, xmp, exp)
+			if err == nil && exp.Both {
+				err = batchProcessPhoto(photo, exppath, xmp, exportSettings{})
 			}
-
-			exppath := filepath.Join(exppath, exportPath(photo.Name, exp))
-			if err := os.MkdirAll(filepath.Dir(exppath), 0777); err != nil {
-				return err
-			}
-			f, err := osutil.NewFile(exppath)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				cerr := f.Close()
-				if err == nil {
-					err = cerr
-				}
-			}()
-
-			_, err = f.Write(out)
 			return err
 		})
 
@@ -157,6 +138,32 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			Error: templates.ExecuteTemplate(w, "batch.gohtml", data),
 		}
 	}
+}
+
+func batchProcessPhoto(photo batchPhoto, exppath string, xmp xmpSettings, exp exportSettings) error {
+	xmp.Filename = filepath.Base(photo.Path)
+	out, err := exportEdit(photo.Path, xmp, exp)
+	if err != nil {
+		return err
+	}
+
+	exppath = filepath.Join(exppath, exportPath(photo.Name, exp))
+	if err := os.MkdirAll(filepath.Dir(exppath), 0777); err != nil {
+		return err
+	}
+	f, err := osutil.NewFile(exppath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := f.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+
+	_, err = f.Write(out)
+	return err
 }
 
 func batchResultWriter(w http.ResponseWriter, results <-chan error, total int) {

@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"io"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -215,6 +217,7 @@ type exportSettings struct {
 	Preview string
 	Lossy   bool
 	Embed   bool
+	Both    bool
 
 	Resample bool
 	Quality  int
@@ -305,7 +308,7 @@ func loadSidecar(src, dst string) error {
 			err = os.ErrNotExist
 		}
 	}
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		// if NAME.EXT.xmp is there for NAME.EXT, use it
 		data, err = os.ReadFile(src + ".xmp")
 		if err == nil && !xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
@@ -316,7 +319,7 @@ func loadSidecar(src, dst string) error {
 		// copy xmp file
 		err = os.WriteFile(dst, data, 0600)
 	}
-	if err == nil || os.IsNotExist(err) {
+	if err == nil || errors.Is(err, fs.ErrNotExist) {
 		// extract embed XMP data
 		return extractXMP(src, dst)
 	}
@@ -333,7 +336,7 @@ func destSidecar(src string) (string, error) {
 		if err == nil && xmp.IsSidecarForExt(bytes.NewReader(data), ext) {
 			return name, nil
 		}
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return "", err
 		}
 	}
@@ -341,7 +344,7 @@ func destSidecar(src string) (string, error) {
 	// if NAME.EXT.xmp exists, use it
 	if _, err := os.Stat(src + ".xmp"); err == nil {
 		return src + ".xmp", nil
-	} else if !os.IsNotExist(err) {
+	} else if !errors.Is(err, fs.ErrNotExist) {
 		return "", err
 	}
 

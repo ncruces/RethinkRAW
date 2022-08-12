@@ -331,8 +331,8 @@ window.showMeta = async () => {
 window.exportChange = e => {
     let form = e.tagName === 'FORM' ? e : e.form;
 
-    document.getElementById('export-dng').hidden = form.format.value !== 'DNG';
     document.getElementById('export-jpeg').hidden = form.format.value !== 'JPEG';
+    document.getElementById('export-dng').hidden = form.format.value === 'JPEG';
 
     // density unit changed?
     let newden = form.denunit.value;
@@ -538,9 +538,12 @@ function exportQuery(query) {
     if (query === void 0) query = new URLSearchParams();
 
     let form = document.getElementById('export-form');
-    if (form.format.value === 'DNG') {
+    if (form.format.value !== 'JPEG') {
         query.set('dng', '1');
         query.set('preview', form.preview.value);
+        if (form.format.value === 'DNG+JPEG') {
+            query.set('both', '1');
+        }
         for (let k of ['lossy', 'embed']) {
             if (form[k].checked) query.set(k, '1');
         }
@@ -566,6 +569,10 @@ function restRequest(method, url, { body, progress } = {}) {
                     xhr.responseType = 'blob';
                     return;
                 }
+            }
+            if (xhr.getResponseHeader('Content-Type') === 'application/json') {
+                xhr.responseType = 'json';
+                return;
             }
         };
         xhr.onload = () => {
@@ -647,7 +654,6 @@ function restRequest(method, url, { body, progress } = {}) {
             body = JSON.stringify(body);
         }
         xhr.setRequestHeader('Accept', 'application/json');
-        xhr.responseType = 'json';
         xhr.send(body);
     });
 }

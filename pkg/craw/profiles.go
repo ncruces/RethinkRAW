@@ -1,7 +1,8 @@
 package craw
 
 import (
-	"os"
+	"errors"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -17,7 +18,7 @@ func GetCameraProfiles(make, model string) ([]string, error) {
 		return nil, err
 	}
 	usr, err := LoadIndex(filepath.Join(UserSettings, filepath.FromSlash("CameraProfiles/Index.dat")))
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
 

@@ -161,11 +161,15 @@
     <form id=export-form method=dialog>
         <div>
             <label style="grid-column: auto/span 4">Image format:</label>
-            <select style="grid-column: auto/span 2" name=format onchange="exportChange(this)">
+            <select style="grid-column: auto/span 3" name=format onchange="exportChange(this)">
                 <option>JPEG</option>
                 <option>DNG</option>
+                {{-- if .}}
+                <option>DNG+JPEG</option>
+                {{-- end}}
             </select>
         </div>
+
         <div id=export-jpeg>
             <label style="grid-area: 1/1/auto/span 4" for=resample>Export for web/print:</label>
             <input style="grid-area: 1/5/auto/span 1" type=checkbox id=resample name=resample onchange="exportChange(this)">

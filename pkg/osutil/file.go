@@ -4,6 +4,7 @@ package osutil
 import (
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"regexp"
 	"runtime"
@@ -19,7 +20,7 @@ var newFilenameRE = regexp.MustCompile(`\A(.*?)(?: \((\d{1,4})\))?(\.\w*)?\z`)
 func NewFile(name string) (*os.File, error) {
 	for {
 		f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
-		if os.IsExist(err) {
+		if errors.Is(err, fs.ErrExist) {
 			m := newFilenameRE.FindStringSubmatch(name)
 			if m != nil {
 				var i = 0
@@ -65,7 +66,7 @@ func Move(src, dst string) error {
 		if err := Copy(src, dst); err != nil {
 			return err
 		}
-		if err := os.Remove(src); os.IsNotExist(err) {
+		if err := os.Remove(src); errors.Is(err, fs.ErrNotExist) {
 			return nil
 		} else {
 			return err
@@ -87,11 +88,10 @@ func Lnky(src, dst string) error {
 		return nil
 	}
 
-	err = os.Link(src, dst)
-	if os.IsExist(err) || isNotSameDevice(err) {
-		return Copy(src, dst)
+	if os.Link(src, dst) == nil {
+		return nil
 	}
-	return err
+	return Copy(src, dst)
 }
 
 func isNotSameDevice(err error) bool {
