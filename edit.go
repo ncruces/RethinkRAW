@@ -107,7 +107,7 @@ func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 
 		return previewJPEG(wk.temp())
 	} else {
-		// create edit.dng (downscaled to at most 2560 on the widest side)
+		// create edit.dng (downscaled to 2560 on the widest side)
 
 		err = editXMP(wk.origXMP(), xmp)
 		if err != nil {

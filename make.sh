@@ -14,7 +14,7 @@ fi
 
 if [ ! -f "$tgt/utils/dcraw.wasm" ]; then
     echo Download dcraw...
-    url="https://github.com/ncruces/dcraw/releases/download/v9.28.3-wasm/dcraw.wasm.gz"
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.4-wasm/dcraw.wasm.gz"
     curl -sL "$url" | gzcat > "$tgt/utils/dcraw.wasm"
 fi
 
