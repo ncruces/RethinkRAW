@@ -3,6 +3,8 @@ package dcraw
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
+	"io"
 	"io/fs"
 	"os"
 	"regexp"
@@ -80,7 +82,26 @@ func run(root fs.FS, args ...string) ([]byte, error) {
 }
 
 func GetThumb(path string) ([]byte, error) {
-	return run(fileFS(path), "dcraw", "-e", "-c", "input")
+	out, err := run(fileFS(path), "dcraw", "-e", "-c", "input")
+	if err != nil {
+		return nil, err
+	}
+
+	if off := len(out) - 20; off >= 0 && bytes.HasPrefix(out[off:], []byte("\xff\xee\x12\x00")) {
+		offset := int64(binary.LittleEndian.Uint64(out[off+4+0:]))
+		length := int64(binary.LittleEndian.Uint64(out[off+4+8:]))
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		out = append(out[:off], make([]byte, int(length))...)
+		_, err = io.ReadFull(io.NewSectionReader(f, offset, length), out[off:])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
 }
 
 func GetThumbSize(path string) (int, error) {

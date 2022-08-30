@@ -10,13 +10,14 @@ require (
 	github.com/ncruces/go-fs v0.2.1
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
+	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
 	github.com/ncruces/zenity v0.9.0
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
-	github.com/tetratelabs/wazero v1.0.0-beta.1
+	github.com/tetratelabs/wazero v1.0.0-beta1
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
-	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
+	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
 	gonum.org/v1/gonum v0.11.0
 )
 
