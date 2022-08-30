@@ -85,7 +85,7 @@ func findPhotos(batch []string) ([]batchPhoto, error) {
 }
 
 func batchProcess(photos []batchPhoto, proc func(photo batchPhoto) error) <-chan error {
-	const parallelism = 2
+	const parallelism = 6
 	output := make(chan error, parallelism)
 
 	go func() {

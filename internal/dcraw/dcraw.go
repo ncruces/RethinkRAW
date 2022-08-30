@@ -33,7 +33,7 @@ var (
 func compile() {
 	ctx := context.Background()
 
-	wasm = wazero.NewRuntime()
+	wasm = wazero.NewRuntime(ctx)
 	_, err := wasi_snapshot_preview1.Instantiate(ctx, wasm)
 	if err != nil {
 		panic(err)
@@ -51,7 +51,7 @@ func compile() {
 		panic(err)
 	}
 
-	sem = semaphore.NewWeighted(5)
+	sem = semaphore.NewWeighted(6)
 
 	thumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 }
@@ -116,8 +116,11 @@ func GetRAWPixels(path string) ([]byte, error) {
 type fileFS string
 
 func (file fileFS) Open(name string) (fs.File, error) {
-	if fs.ValidPath(name) {
+	if name == "input" {
 		return os.Open(string(file))
+	}
+	if fs.ValidPath(name) {
+		return nil, fs.ErrNotExist
 	}
 	return nil, fs.ErrInvalid
 }

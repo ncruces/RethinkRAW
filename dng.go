@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -9,7 +10,10 @@ import (
 	"strconv"
 
 	"github.com/ncruces/rethinkraw/internal/config"
+	"golang.org/x/sync/semaphore"
 )
+
+var semDNGConverter = semaphore.NewWeighted(3)
 
 func testDNGConverter() error {
 	_, err := os.Stat(config.DngConverter)
@@ -43,6 +47,11 @@ func runDNGConverter(input, output string, side int, exp *exportSettings) error 
 		opts = append(opts, "-p2")
 	}
 	opts = append(opts, "-d", dir, "-o", output, input)
+
+	if err := semDNGConverter.Acquire(context.TODO(), 1); err != nil {
+		return err
+	}
+	defer semDNGConverter.Release(1)
 
 	log.Print("dng converter...")
 	cmd := exec.Command(config.DngConverter, opts...)

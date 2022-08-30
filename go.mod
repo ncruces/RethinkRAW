@@ -13,11 +13,11 @@ require (
 	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
 	github.com/ncruces/zenity v0.9.0
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
-	github.com/tetratelabs/wazero v0.0.0-20220810022027-00bd58e74f10
-	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/net v0.0.0-20220809184613-07c6da5e1ced
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
-	golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664
+	github.com/tetratelabs/wazero v0.0.0-20220829085532-f2b141ef9c9a
+	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
+	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
+	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
 	gonum.org/v1/gonum v0.11.0
 )
 
