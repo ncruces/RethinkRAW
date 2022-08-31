@@ -6,16 +6,13 @@ cd -P -- "$(dirname -- "$0")"
 tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
 srv="RethinkRAW.app/Contents/Resources/rethinkraw-server"
 
+mkdir -p "$tgt/utils"
+cp "build/exiftool_config.pl" "$tgt/utils"
+
 if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
     url="https://github.com/ncruces/go-exiftool/releases/download/dist/exiftool_unix.tgz"
     curl -sL "$url" | tar xz -C "$tgt/utils"
-fi
-
-if [ ! -f "$tgt/utils/dcraw.wasm" ]; then
-    echo Download dcraw...
-    url="https://github.com/ncruces/dcraw/releases/download/v9.28.4-wasm/dcraw.wasm.gz"
-    curl -sL "$url" | gzcat > "$tgt/utils/dcraw.wasm"
 fi
 
 if [ ! -f "assets/normalize.css" ]; then

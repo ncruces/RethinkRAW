@@ -12,16 +12,15 @@ import (
 	"sync"
 	"sync/atomic"
 
+	_ "embed"
+
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/wasi_snapshot_preview1"
 	"golang.org/x/sync/semaphore"
 )
 
-// Configure Dcraw.
-var (
-	Binary []byte // Binary to execute.
-	Path   string // Path to load the binary from.
-)
+//go:embed dcraw.wasm
+var Binary []byte
 
 var (
 	once       sync.Once
@@ -39,13 +38,6 @@ func compile() {
 	_, err := wasi_snapshot_preview1.Instantiate(ctx, wasm)
 	if err != nil {
 		panic(err)
-	}
-
-	if Binary == nil && Path != "" {
-		Binary, err = os.ReadFile(Path)
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	module, err = wasm.CompileModule(ctx, Binary, wazero.NewCompileConfig())
