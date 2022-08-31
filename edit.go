@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"image"
 	"io"
@@ -25,7 +26,7 @@ func loadEdit(path string) (xmp xmpSettings, err error) {
 	return loadXMP(wk.origXMP())
 }
 
-func saveEdit(path string, xmp xmpSettings) error {
+func saveEdit(ctx context.Context, path string, xmp xmpSettings) error {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return err
@@ -50,10 +51,10 @@ func saveEdit(path string, xmp xmpSettings) error {
 		exp := exportSettings{
 			DNG:     true,
 			Embed:   true,
-			Preview: dngPreview(wk.orig()),
+			Preview: dngPreview(ctx, wk.orig()),
 		}
 
-		err = runDNGConverter(wk.orig(), wk.temp(), 0, &exp)
+		err = runDNGConverter(ctx, wk.orig(), wk.temp(), 0, &exp)
 		if err != nil {
 			return err
 		}
@@ -69,7 +70,7 @@ func saveEdit(path string, xmp xmpSettings) error {
 	return os.Rename(dest+".bak", dest)
 }
 
-func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
+func previewEdit(ctx context.Context, path string, size int, xmp xmpSettings) ([]byte, error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return nil, err
@@ -88,12 +89,12 @@ func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 			return nil, err
 		}
 
-		err = runDNGConverter(wk.orig(), wk.temp(), 0, &exportSettings{})
+		err = runDNGConverter(ctx, wk.orig(), wk.temp(), 0, &exportSettings{})
 		if err != nil {
 			return nil, err
 		}
 
-		return previewJPEG(wk.temp())
+		return previewJPEG(ctx, wk.temp())
 	} else if wk.hasEdit {
 		// use edit.dng (downscaled to at most 2560 on the widest side)
 
@@ -102,12 +103,12 @@ func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 			return nil, err
 		}
 
-		err = runDNGConverter(wk.edit(), wk.temp(), size, nil)
+		err = runDNGConverter(ctx, wk.edit(), wk.temp(), size, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		return previewJPEG(wk.temp())
+		return previewJPEG(ctx, wk.temp())
 	} else {
 		// create edit.dng (downscaled to 2560 on the widest side)
 
@@ -116,16 +117,16 @@ func previewEdit(path string, size int, xmp xmpSettings) ([]byte, error) {
 			return nil, err
 		}
 
-		err = runDNGConverter(wk.orig(), wk.edit(), 2560, nil)
+		err = runDNGConverter(ctx, wk.orig(), wk.edit(), 2560, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		return previewJPEG(wk.edit())
+		return previewJPEG(ctx, wk.edit())
 	}
 }
 
-func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error) {
+func exportEdit(ctx context.Context, path string, xmp xmpSettings, exp exportSettings) ([]byte, error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return nil, err
@@ -150,7 +151,7 @@ func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error
 		}
 	}
 
-	err = runDNGConverter(wk.orig(), wk.temp(), 0, &exp)
+	err = runDNGConverter(ctx, wk.orig(), wk.temp(), 0, &exp)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func exportEdit(path string, xmp xmpSettings, exp exportSettings) ([]byte, error
 
 		return os.ReadFile(wk.temp())
 	} else {
-		data, err := exportJPEG(wk.temp(), exp)
+		data, err := exportJPEG(ctx, wk.temp(), exp)
 		if err != nil || exp.Resample {
 			return data, err
 		}
@@ -186,7 +187,7 @@ func exportPath(path string, exp exportSettings) string {
 	return strings.TrimSuffix(path, filepath.Ext(path)) + ext
 }
 
-func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err error) {
+func loadWhiteBalance(ctx context.Context, path string, coords []float64) (wb xmpWhiteBalance, err error) {
 	wk, err := openWorkspace(path)
 	if err != nil {
 		return wb, err
@@ -196,14 +197,14 @@ func loadWhiteBalance(path string, coords []float64) (wb xmpWhiteBalance, err er
 	if !wk.hasEdit {
 		// create edit.dng (downscaled to at most 2560 on the widest side)
 
-		err = runDNGConverter(wk.orig(), wk.edit(), 2560, nil)
+		err = runDNGConverter(ctx, wk.orig(), wk.edit(), 2560, nil)
 		if err != nil {
 			return wb, err
 		}
 	}
 
 	if !wk.hasPixels && len(coords) == 2 {
-		err = getRawPixels(wk.edit(), wk.pixels())
+		err = getRawPixels(ctx, wk.edit(), wk.pixels())
 		if err != nil {
 			return wb, err
 		}

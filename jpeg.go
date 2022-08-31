@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -14,13 +15,9 @@ import (
 	"github.com/ncruces/rethinkraw/internal/dcraw"
 )
 
-func extractThumb(path string) ([]byte, error) {
+func previewJPEG(ctx context.Context, path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
-	return dcraw.GetThumb(path)
-}
-
-func previewJPEG(path string) ([]byte, error) {
-	data, err := extractThumb(path)
+	data, err := dcraw.GetThumb(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +41,9 @@ func previewJPEG(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func exportJPEG(path string, settings exportSettings) ([]byte, error) {
-	data, err := extractThumb(path)
+func exportJPEG(ctx context.Context, path string, settings exportSettings) ([]byte, error) {
+	log.Print("dcraw (get thumb)...")
+	data, err := dcraw.GetThumb(ctx, path)
 	if err != nil {
 		return nil, err
 	}

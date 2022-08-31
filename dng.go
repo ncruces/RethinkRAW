@@ -20,7 +20,7 @@ func testDNGConverter() error {
 	return err
 }
 
-func runDNGConverter(input, output string, side int, exp *exportSettings) error {
+func runDNGConverter(ctx context.Context, input, output string, side int, exp *exportSettings) error {
 	err := os.RemoveAll(output)
 	if err != nil {
 		return err
@@ -48,13 +48,13 @@ func runDNGConverter(input, output string, side int, exp *exportSettings) error 
 	}
 	opts = append(opts, "-d", dir, "-o", output, input)
 
-	if err := semDNGConverter.Acquire(context.TODO(), 1); err != nil {
+	if err := semDNGConverter.Acquire(ctx, 1); err != nil {
 		return err
 	}
 	defer semDNGConverter.Release(1)
 
 	log.Print("dng converter...")
-	cmd := exec.Command(config.DngConverter, opts...)
+	cmd := exec.CommandContext(ctx, config.DngConverter, opts...)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("DNG Converter: %w", err)
 	}

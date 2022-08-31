@@ -44,7 +44,7 @@ func dialogHandler(_ http.ResponseWriter, r *http.Request) httpResult {
 
 	switch {
 	case batch:
-		paths, err = zenity.SelectFileMutiple(zenity.Context(r.Context()), filters)
+		paths, err = zenity.SelectFileMultiple(zenity.Context(r.Context()), filters)
 	case photo:
 		path, err = zenity.SelectFile(zenity.Context(r.Context()), filters)
 	case gallery:

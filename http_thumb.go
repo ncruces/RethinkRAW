@@ -19,7 +19,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		return httpResult{}
 	}
 
-	if out, err := previewJPEG(path); err != nil {
+	if out, err := previewJPEG(r.Context(), path); err != nil {
 		return httpResult{Error: err}
 	} else {
 		w.Write(out)

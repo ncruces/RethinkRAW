@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/flate"
+	"context"
 	"encoding/base64"
 	"io"
 	"os"
@@ -84,17 +85,17 @@ func findPhotos(batch []string) ([]batchPhoto, error) {
 	return photos, nil
 }
 
-func batchProcess(photos []batchPhoto, proc func(photo batchPhoto) error) <-chan error {
+func batchProcess(ctx context.Context, photos []batchPhoto, proc func(ctx context.Context, photo batchPhoto) error) <-chan error {
 	const parallelism = 6
 	output := make(chan error, parallelism)
 
 	go func() {
-		var group errgroup.Group
+		group, ctx := errgroup.WithContext(ctx)
 		group.SetLimit(parallelism)
 		for _, photo := range photos {
 			photo := photo
 			group.Go(func() error {
-				output <- proc(photo)
+				output <- proc(ctx, photo)
 				return nil
 			})
 		}
