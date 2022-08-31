@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 
 	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/wasi_snapshot_preview1"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"golang.org/x/sync/semaphore"
 )
 
