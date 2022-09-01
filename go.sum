@@ -29,8 +29,6 @@ github.com/ncruces/go-image v0.1.0 h1:PCbPeiqA2Pbc7m3jWBjhJodwkGew8HEB7fC8SVM+8E
 github.com/ncruces/go-image v0.1.0/go.mod h1:DUnNl2l0T6tEuK266gUGy3Xq8C+A/71XuoWsAHh8bzg=
 github.com/ncruces/jason v0.4.0 h1:0Gy0/YHmy+P2tBNFo31mgzowJuhe35S7jxcEilXIIBI=
 github.com/ncruces/jason v0.4.0/go.mod h1:gaKw0MQbOK/IR2sJ6zBSCOLn+uPOv0iLH4VxOtdkGtU=
-github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff h1:7/ezL9FCZF1G50fjRG3r7rFxOnrbbzZUFzDj7Dll4mY=
-github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff/go.mod h1:MBsmMDae55NRj6StMZFdH2jjj4eCGkQU1wtRmQyIUZI=
 github.com/ncruces/zenity v0.9.0 h1:h2LbKKH4W4CbtBB1t3LxH8PurSpOYXuPBGbLZbBYq14=
 github.com/ncruces/zenity v0.9.0/go.mod h1:KqkrqV3gBDEa6Rrlir2rRWzCvw2dUKe/pMcpE6QCbOA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -75,7 +73,6 @@ golang.org/x/sys v0.0.0-20220829200755-d48e67d00261/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
-golang.org/x/text v0.3.7 h1:olpwvP2KacW1ZWvsR7uQhoyTYvKAupfQrRGBFM352Gk=
 golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
 gonum.org/v1/gonum v0.11.0 h1:f1IJhK4Km5tBJmaiJXtk/PkL4cdVX6J+tGiM187uT5E=
