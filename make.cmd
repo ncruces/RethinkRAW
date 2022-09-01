@@ -6,15 +6,12 @@ CD /D "%~dp0"
 SET "tgt=RethinkRAW"
 
 
+MKDIR %tgt%\utils
+COPY build\exiftool_config.pl %tgt%\utils
+
 IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
     ECHO Download ExifTool...
     SET "url=https://github.com/ncruces/go-exiftool/releases/download/dist/exiftool_windows.zip"
-    go run github.com/ncruces/go-fetch -unpack !url! %tgt%\utils
-)
-
-IF NOT EXIST %tgt%\utils\dcraw.wasm (
-    ECHO Download dcraw...
-    SET "url=https://github.com/ncruces/dcraw/releases/download/v9.28.4-wasm/dcraw.wasm.gz"
     go run github.com/ncruces/go-fetch -unpack !url! %tgt%\utils
 )
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -52,10 +53,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		}
 		xmp.Orientation = 0
 
-		results := batchProcess(photos, func(photo batchPhoto) error {
+		results := batchProcess(r.Context(), photos, func(ctx context.Context, photo batchPhoto) error {
 			xmp := xmp
 			xmp.Filename = filepath.Base(photo.Path)
-			return saveEdit(photo.Path, xmp)
+			return saveEdit(ctx, photo.Path, xmp)
 		})
 
 		w.Header().Set("Content-Type", "application/x-ndjson")
@@ -90,10 +91,10 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			}
 		}
 
-		results := batchProcess(photos, func(photo batchPhoto) error {
-			err := batchProcessPhoto(photo, exppath, xmp, exp)
+		results := batchProcess(r.Context(), photos, func(ctx context.Context, photo batchPhoto) error {
+			err := batchProcessPhoto(ctx, photo, exppath, xmp, exp)
 			if err == nil && exp.Both {
-				err = batchProcessPhoto(photo, exppath, xmp, exportSettings{})
+				err = batchProcessPhoto(ctx, photo, exppath, xmp, exportSettings{})
 			}
 			return err
 		})
@@ -140,9 +141,9 @@ func batchHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	}
 }
 
-func batchProcessPhoto(photo batchPhoto, exppath string, xmp xmpSettings, exp exportSettings) error {
+func batchProcessPhoto(ctx context.Context, photo batchPhoto, exppath string, xmp xmpSettings, exp exportSettings) error {
 	xmp.Filename = filepath.Base(photo.Path)
-	out, err := exportEdit(photo.Path, xmp, exp)
+	out, err := exportEdit(ctx, photo.Path, xmp, exp)
 	if err != nil {
 		return err
 	}

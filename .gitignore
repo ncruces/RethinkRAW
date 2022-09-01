@@ -35,10 +35,6 @@ Thumbs.db
 /assets/fa-solid-900.woff2
 /assets/fontawesome.css
 /RethinkRAW/data
+/RethinkRAW/utils
 /RethinkRAW/debug.log
-/RethinkRAW/utils/dcraw.wasm
-/RethinkRAW/utils/exiftool
-/RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/data
-/RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/rethinkraw
-/RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/utils/dcraw.wasm
-/RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS/utils/exiftool
+/RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS

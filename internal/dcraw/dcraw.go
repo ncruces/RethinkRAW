@@ -12,16 +12,15 @@ import (
 	"sync"
 	"sync/atomic"
 
+	_ "embed"
+
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"golang.org/x/sync/semaphore"
 )
 
-// Configure Dcraw.
-var (
-	Binary []byte // Binary to execute.
-	Path   string // Path to load the binary from.
-)
+//go:embed dcraw.wasm
+var Binary []byte
 
 var (
 	once       sync.Once
@@ -41,13 +40,6 @@ func compile() {
 		panic(err)
 	}
 
-	if Binary == nil && Path != "" {
-		Binary, err = os.ReadFile(Path)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	module, err = wasm.CompileModule(ctx, Binary, wazero.NewCompileConfig())
 	if err != nil {
 		panic(err)
@@ -58,10 +50,9 @@ func compile() {
 	thumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 }
 
-func run(root fs.FS, args ...string) ([]byte, error) {
+func run(ctx context.Context, root fs.FS, args ...string) ([]byte, error) {
 	once.Do(compile)
 
-	ctx := context.TODO()
 	err := sem.Acquire(ctx, 1)
 	if err != nil {
 		return nil, err
@@ -81,8 +72,8 @@ func run(root fs.FS, args ...string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func GetThumb(path string) ([]byte, error) {
-	out, err := run(fileFS(path), "dcraw", "-e", "-c", "input")
+func GetThumb(ctx context.Context, path string) ([]byte, error) {
+	out, err := run(ctx, fileFS(path), "dcraw", "-e", "-c", "input")
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +95,8 @@ func GetThumb(path string) ([]byte, error) {
 	return out, nil
 }
 
-func GetThumbSize(path string) (int, error) {
-	out, err := run(fileFS(path), "dcraw", "-i", "-v", "input")
+func GetThumbSize(ctx context.Context, path string) (int, error) {
+	out, err := run(ctx, fileFS(path), "dcraw", "-i", "-v", "input")
 	if err != nil {
 		return 0, err
 	}
@@ -123,8 +114,8 @@ func GetThumbSize(path string) (int, error) {
 	return max, nil
 }
 
-func GetRAWPixels(path string) ([]byte, error) {
-	return run(fileFS(path), "dcraw",
+func GetRAWPixels(ctx context.Context, path string) ([]byte, error) {
+	return run(ctx, fileFS(path), "dcraw",
 		"-r", "1", "1", "1", "1",
 		"-o", "0",
 		"-h",

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -465,9 +466,9 @@ func loadFloat64s(dst *[]float64, m map[string][]byte, key string) {
 	}
 }
 
-func dngPreview(path string) string {
+func dngPreview(ctx context.Context, path string) string {
 	log.Print("dcraw (get thumb size)...")
-	size, err := dcraw.GetThumbSize(path)
+	size, err := dcraw.GetThumbSize(ctx, path)
 	if err != nil {
 		return ""
 	}
@@ -482,9 +483,9 @@ func dngPreview(path string) string {
 	}
 }
 
-func getRawPixels(path, dest string) error {
+func getRawPixels(ctx context.Context, path, dest string) error {
 	log.Print("dcraw (get raw pixels)...")
-	data, err := dcraw.GetRAWPixels(path)
+	data, err := dcraw.GetRAWPixels(ctx, path)
 	if err != nil {
 		return err
 	}

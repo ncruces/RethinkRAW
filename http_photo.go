@@ -51,7 +51,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		}
 		xmp.Filename = filepath.Base(path)
 
-		if err := saveEdit(path, xmp); err != nil {
+		if err := saveEdit(r.Context(), path, xmp); err != nil {
 			return httpResult{Error: err}
 		} else {
 			return httpResult{Status: http.StatusNoContent}
@@ -83,7 +83,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 			}
 		}
 
-		if out, err := exportEdit(path, xmp, exp); err != nil {
+		if out, err := exportEdit(r.Context(), path, xmp, exp); err != nil {
 			return httpResult{Error: err}
 		} else if isLocalhost(r) {
 			if err := os.WriteFile(exppath, out, 0666); err != nil {
@@ -114,7 +114,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		if err := dec.Decode(&size, r.Form); err != nil {
 			return httpResult{Error: err}
 		}
-		if out, err := previewEdit(path, size.Preview, xmp); err != nil {
+		if out, err := previewEdit(r.Context(), path, size.Preview, xmp); err != nil {
 			return httpResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "image/jpeg")
@@ -141,7 +141,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		if err := dec.Decode(&coords, r.Form); err != nil {
 			return httpResult{Error: err}
 		}
-		if wb, err := loadWhiteBalance(path, coords.WB); err != nil {
+		if wb, err := loadWhiteBalance(r.Context(), path, coords.WB); err != nil {
 			return httpResult{Error: err}
 		} else {
 			w.Header().Set("Content-Type", "application/json")
