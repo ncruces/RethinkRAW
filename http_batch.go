@@ -156,15 +156,13 @@ func batchProcessPhoto(ctx context.Context, photo batchPhoto, exppath string, xm
 	if err != nil {
 		return err
 	}
-	defer func() {
-		cerr := f.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
+	defer f.Close()
 
 	_, err = f.Write(out)
-	return err
+	if err != nil {
+		return err
+	}
+	return f.Close()
 }
 
 func batchResultWriter(w http.ResponseWriter, results <-chan error, total int) {

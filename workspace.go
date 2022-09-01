@@ -105,6 +105,11 @@ func (wk *workspace) temp() string {
 	return wk.base + "temp.dng"
 }
 
+// A JPG used as the target for export.
+func (wk *workspace) jpeg() string {
+	return wk.base + "temp.jpg"
+}
+
 // A DNG conversion of the original RAW file used for editing previews (downscaled to 2560).
 func (wk *workspace) edit() string {
 	return wk.base + "edit.dng"

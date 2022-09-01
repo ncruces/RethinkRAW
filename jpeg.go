@@ -42,39 +42,37 @@ func previewJPEG(ctx context.Context, path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func exportJPEG(ctx context.Context, path string, settings exportSettings) ([]byte, error) {
+func exportJPEG(ctx context.Context, path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
 	data, err := dcraw.GetThumb(ctx, path)
 	if err != nil {
 		return nil, err
 	}
-
 	if !bytes.HasPrefix(data, []byte("\xff\xd8")) {
 		return nil, errors.New("not a JPEG file")
 	}
+	return data, nil
+}
 
-	if settings.Resample {
-		img, err := jpeg.Decode(bytes.NewReader(data))
-		if err != nil {
-			return nil, err
-		}
-
-		exf := rotateflip.Orientation(exifOrientation(data))
-		img = rotateflip.Image(img, exf.Op())
-		fit := settings.FitImage(img.Bounds().Size())
-		img = resize.Thumbnail(uint(fit.X), uint(fit.Y), img, resize.Lanczos2)
-
-		buf := bytes.Buffer{}
-		// https://fotoforensics.com/tutorial.php?tt=estq
-		opt := jpeg.Options{Quality: [13]int{30, 34, 47, 62, 69, 76, 79, 82, 86, 90, 93, 97, 99}[settings.Quality]}
-		if err := jpeg.Encode(&buf, img, &opt); err != nil {
-			return nil, err
-		}
-
-		return append(jfifHeader(settings), buf.Bytes()[2:]...), nil
+func resampleJPEG(data []byte, settings exportSettings) ([]byte, error) {
+	img, err := jpeg.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
 	}
 
-	return data, err
+	exf := rotateflip.Orientation(exifOrientation(data))
+	img = rotateflip.Image(img, exf.Op())
+	fit := settings.FitImage(img.Bounds().Size())
+	img = resize.Thumbnail(uint(fit.X), uint(fit.Y), img, resize.Lanczos2)
+
+	buf := bytes.Buffer{}
+	// https://fotoforensics.com/tutorial.php?tt=estq
+	opt := jpeg.Options{Quality: [13]int{30, 34, 47, 62, 69, 76, 79, 82, 86, 90, 93, 97, 99}[settings.Quality]}
+	if err := jpeg.Encode(&buf, img, &opt); err != nil {
+		return nil, err
+	}
+
+	return append(jfifHeader(settings), buf.Bytes()[2:]...), nil
 }
 
 func exifOrientation(data []byte) int {

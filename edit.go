@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"image"
-	"io"
 	"io/fs"
 	"math"
 	"os"
@@ -142,15 +141,6 @@ func exportEdit(ctx context.Context, path string, xmp xmpSettings, exp exportSet
 		return nil, err
 	}
 
-	var reader io.ReadCloser
-	var writer io.WriteCloser
-	if !exp.DNG && !exp.Resample {
-		writer, reader, err = fixMetaJPEGAsync(wk.orig())
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	err = runDNGConverter(ctx, wk.orig(), wk.temp(), 0, &exp)
 	if err != nil {
 		return nil, err
@@ -161,19 +151,25 @@ func exportEdit(ctx context.Context, path string, xmp xmpSettings, exp exportSet
 		if err != nil {
 			return nil, err
 		}
-
 		return os.ReadFile(wk.temp())
 	} else {
-		data, err := exportJPEG(ctx, wk.temp(), exp)
-		if err != nil || exp.Resample {
-			return data, err
+		data, err := exportJPEG(ctx, wk.temp())
+		if err != nil {
+			return nil, err
+		}
+		if exp.Resample {
+			return resampleJPEG(data, exp)
 		}
 
-		go func() {
-			writer.Write(data)
-			writer.Close()
-		}()
-		return io.ReadAll(reader)
+		err = os.WriteFile(wk.jpeg(), data, 0600)
+		if err != nil {
+			return nil, err
+		}
+		err = fixMetaJPEG(wk.orig(), wk.jpeg())
+		if err != nil {
+			return nil, err
+		}
+		return os.ReadFile(wk.jpeg())
 	}
 }
 

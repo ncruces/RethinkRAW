@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"path/filepath"
 
@@ -36,14 +35,16 @@ func fixMetaDNG(orig, dest, name string) error {
 	return err
 }
 
-func fixMetaJPEGAsync(orig string) (io.WriteCloser, io.ReadCloser, error) {
+func fixMetaJPEG(orig, dest string) error {
 	opts := []string{"-tagsFromFile", orig, "-fixBase",
 		"-CommonIFD0", "-ExifIFD:all", "-GPS:all", // https://exiftool.org/forum/index.php?topic=8378.msg43043#msg43043
 		"-IPTC:all", "-XMP-dc:all", "-XMP-dc:Format=",
-		"-fast", "-ignoreMinorErrors", "-"}
+		"-fast", "-ignoreMinorErrors",
+		"-overwrite_original", dest}
 
 	log.Print("exiftool (fix jpeg)...")
-	return exiftool.CommandAsync(opts...)
+	_, err := exifserver.Command(opts...)
+	return err
 }
 
 func dngHasEdits(path string) bool {
