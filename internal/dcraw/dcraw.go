@@ -35,12 +35,10 @@ func compile() {
 	ctx := context.Background()
 
 	wasm = wazero.NewRuntime(ctx)
-	_, err := wasi_snapshot_preview1.Instantiate(ctx, wasm)
-	if err != nil {
-		panic(err)
-	}
+	wasi_snapshot_preview1.MustInstantiate(ctx, wasm)
 
-	module, err = wasm.CompileModule(ctx, Binary, wazero.NewCompileConfig())
+	var err error
+	module, err = wasm.CompileModule(ctx, Binary)
 	if err != nil {
 		panic(err)
 	}
