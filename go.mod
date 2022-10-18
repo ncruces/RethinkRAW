@@ -13,12 +13,12 @@ require (
 	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
 	github.com/ncruces/zenity v0.9.0
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
-	github.com/tetratelabs/wazero v1.0.0-pre.1
-	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
-	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
-	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
-	gonum.org/v1/gonum v0.11.0
+	github.com/tetratelabs/wazero v1.0.0-pre.2
+	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95
+	golang.org/x/net v0.0.0-20221017152216-f25eb7ecb193
+	golang.org/x/sync v0.1.0
+	golang.org/x/sys v0.1.0
+	gonum.org/v1/gonum v0.12.0
 )
 
 require (
@@ -26,8 +26,8 @@ require (
 	github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.1 // indirect
 	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94 // indirect
-	github.com/tdewolff/minify/v2 v2.12.1 // indirect
-	github.com/tdewolff/parse/v2 v2.6.3 // indirect
-	golang.org/x/image v0.0.0-20220722155232-062f8c9fd539 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	github.com/tdewolff/minify/v2 v2.12.4 // indirect
+	github.com/tdewolff/parse/v2 v2.6.4 // indirect
+	golang.org/x/image v0.0.0-20221017200508-ffcb3fe7d1bf // indirect
+	golang.org/x/text v0.4.0 // indirect
 )

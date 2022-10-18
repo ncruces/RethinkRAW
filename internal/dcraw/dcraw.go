@@ -35,14 +35,11 @@ func compile() {
 	ctx := context.Background()
 
 	wasm = wazero.NewRuntime(ctx)
-	_, err := wasi_snapshot_preview1.Instantiate(ctx, wasm)
-	if err != nil {
+	wasi_snapshot_preview1.MustInstantiate(ctx, wasm)
+	if m, err := wasm.CompileModule(ctx, Binary); err != nil {
 		panic(err)
-	}
-
-	module, err = wasm.CompileModule(ctx, Binary, wazero.NewCompileConfig())
-	if err != nil {
-		panic(err)
+	} else {
+		module = m
 	}
 
 	sem = semaphore.NewWeighted(6)
