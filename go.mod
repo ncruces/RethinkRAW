@@ -11,13 +11,13 @@ require (
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
 	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
-	github.com/ncruces/zenity v0.9.0
+	github.com/ncruces/zenity v0.10.0
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
-	github.com/tetratelabs/wazero v1.0.0-pre.2
-	golang.org/x/exp v0.0.0-20221012211006-4de253d81b95
-	golang.org/x/net v0.0.0-20221017152216-f25eb7ecb193
+	github.com/tetratelabs/wazero v1.0.0-pre.4
+	golang.org/x/exp v0.0.0-20221204150635-6dcec336b2bb
+	golang.org/x/net v0.2.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.1.0
+	golang.org/x/sys v0.3.0
 	gonum.org/v1/gonum v0.12.0
 )
 
@@ -28,6 +28,6 @@ require (
 	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94 // indirect
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
-	golang.org/x/image v0.0.0-20221017200508-ffcb3fe7d1bf // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/image v0.1.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 )
