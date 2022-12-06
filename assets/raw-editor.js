@@ -232,16 +232,11 @@ window.saveFile = async () => {
         await restRequest('POST', '?save&' + query, { progress: progress });
         edit.disabled = false;
         save.disabled = true;
+        if (!photo) location.reload();
     } catch (err) {
         alertError('Save failed', err);
     }
     dialog.close();
-
-    if (template.Path) {
-        pingRequest(`/thumb/${encodeURI(template.Path)}`);
-    } else for (let photo of template.Photos) {
-        pingRequest(`/thumb/${encodeURI(photo.Path)}`);
-    }
 };
 
 window.exportFile = async state => {
@@ -569,10 +564,10 @@ function restRequest(method, url, { body, progress } = {}) {
                     xhr.responseType = 'blob';
                     return;
                 }
-            }
-            if (xhr.getResponseHeader('Content-Type') === 'application/json') {
-                xhr.responseType = 'json';
-                return;
+                if (xhr.getResponseHeader('Content-Type') === 'application/json') {
+                    xhr.responseType = 'json';
+                    return;
+                }
             }
         };
         xhr.onload = () => {
@@ -680,13 +675,6 @@ function htmlRequest(method, url) {
         xhr.setRequestHeader('Accept', 'text/html');
         xhr.send();
     });
-}
-
-function pingRequest(url) {
-    let xhr = new XMLHttpRequest();
-    xhr.open('HEAD', url);
-    xhr.setRequestHeader('Cache-Control', 'max-age=0');
-    xhr.send();
 }
 
 function formatNumber(val, step) {

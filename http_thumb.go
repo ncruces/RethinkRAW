@@ -9,7 +9,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) httpResult {
 	prefix := getPathPrefix(r)
 	path := fromURLPath(r.URL.Path, prefix)
 
-	w.Header().Set("Cache-Control", "max-age=60")
+	w.Header().Set("Cache-Control", "max-age=10")
 	if r := sendCached(w, r, path); r.Done() {
 		return r
 	}

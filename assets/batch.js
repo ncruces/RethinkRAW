@@ -9,7 +9,7 @@ window.popup = (elem, evt) => {
     if (minimalUI) {
         return !window.open(elem.href, void 0, 'location=no,scrollbars=yes');
     }
-    return !window.open(elem.href);    
+    return !window.open(elem.href);
 };
 
 }();

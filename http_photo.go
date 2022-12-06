@@ -29,7 +29,7 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 
 	switch {
 	case meta:
-		w.Header().Set("Cache-Control", "max-age=60")
+		w.Header().Set("Cache-Control", "max-age=10")
 		if r := sendCached(w, r, path); r.Done() {
 			return r
 		}
@@ -162,8 +162,8 @@ func photoHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		return httpResult{
 			Error: templates.ExecuteTemplate(w, "photo.gohtml", jason.Object{
 				"Title": toUsrPath(path, prefix),
-				"Name":  filepath.Base(path),
 				"Path":  toURLPath(path, prefix),
+				"Name":  filepath.Base(path),
 			}),
 		}
 	}

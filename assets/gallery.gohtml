@@ -16,7 +16,7 @@
     <script src="/main.js" defer></script>
     <script src="/gallery.js" defer></script>
     <noscript><meta http-equiv="refresh" content="0;url=/browser.html"></noscript>
-    {{- template "const.gohtml" .Template}}
+    {{- template "const.gohtml" .JSON}}
 </head>
 
 <body>
@@ -25,6 +25,9 @@
             <div class="toolbar">
                 <button type=button title="Go back" class="minimal-ui" onclick="back()"><i class="fas fa-arrow-left"></i></button>
                 <button type=button title="Reload folder" class="minimal-ui" onclick="location.reload()"><i class="fas fa-sync"></i></button>
+                {{- if .Upload}}
+                <button type=button title="Upload" onclick="upload()"><i class="fas fa-file-upload"></i></button>
+                {{- end}}
                 <button type=button title="Batch process folder…" onclick="location='/batch/{{.Path}}'"><i class="fas fa-tasks"></i></button>
                 <span>{{.Title}}</span>
             </div>
@@ -46,7 +49,7 @@
     <dialog id=progress-dialog>
         Lorem ipsum<br>
         <progress></progress>
-    </dialog>    
+    </dialog>
 </body>
 
 </html>

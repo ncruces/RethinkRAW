@@ -13,7 +13,7 @@ import (
 var exifserver *exiftool.Server
 
 func setupExifTool() (s *exiftool.Server, err error) {
-	exifserver, err = exiftool.NewServer("-ignoreMinorErrors")
+	exifserver, err = exiftool.NewServer("-ignoreMinorErrors", "-quiet", "-quiet")
 	return exifserver, err
 }
 
@@ -39,8 +39,7 @@ func fixMetaJPEG(orig, dest string) error {
 	opts := []string{"-tagsFromFile", orig, "-fixBase",
 		"-CommonIFD0", "-ExifIFD:all", "-GPS:all", // https://exiftool.org/forum/index.php?topic=8378.msg43043#msg43043
 		"-IPTC:all", "-XMP-dc:all", "-XMP-dc:Format=",
-		"-fast", "-ignoreMinorErrors",
-		"-overwrite_original", dest}
+		"-fast", "-overwrite_original", dest}
 
 	log.Print("exiftool (fix jpeg)...")
 	_, err := exifserver.Command(opts...)

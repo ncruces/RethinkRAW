@@ -27,19 +27,19 @@ func galleryHandler(w http.ResponseWriter, r *http.Request) httpResult {
 		return httpResult{Error: err}
 	} else {
 		data := struct {
+			Upload       bool
 			Title, Path  string
 			Dirs, Photos []struct{ Name, Path string }
-			Template     jason.Object
+			JSON         jason.Object
 		}{
+			!isLocalhost(r),
 			toUsrPath(path, prefix),
 			toURLPath(path, prefix),
 			nil, nil, jason.Object{},
 		}
-		if !isLocalhost(r) {
-			data.Template["Upload"] = jason.Object{
-				"Path": data.Path,
-				"Exts": extensions,
-			}
+		if data.Upload {
+			data.JSON["uploadPath"] = data.Path
+			data.JSON["uploadExts"] = extensions
 		}
 
 		for _, entry := range files {

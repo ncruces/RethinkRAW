@@ -1,34 +1,20 @@
 void function () {
 
-if (!template.Upload) return;
+if (!template.uploadPath) return;
+
+let form = document.createElement('input');
+form.type = 'file';
+form.hidden = true;
+form.multiple = true;
+form.accept = Object.keys(template.uploadExts).join(',');
+form.addEventListener('change', async () => {
+    await uploadFiles(form.files);
+    location.reload();
+});
+
+window.upload = () => form.click();
 
 let drop = document.getElementById('drop-target');
-
-async function walkdir(directory) {
-    function readEntries(reader) {
-        return new Promise((resolve, reject) => reader.readEntries(resolve, reject));
-    }
-
-    async function readAll(reader) {
-        let files = [];
-        let entries;
-        do {
-            entries = await readEntries(reader);
-            for (let entry of entries) {
-                if (entry.isFile) {
-                    files.push(entry);
-                }
-                if (entry.isDirectory) {
-                    files.push(...await walkdir(entry))
-                }        
-            }
-        } while (entries.length > 0);
-        return files;
-    }
-
-    return await readAll(directory.createReader())
-}
-
 drop.addEventListener('dragover', evt => evt.preventDefault());
 drop.addEventListener('drop', async evt => {
     evt.preventDefault();
@@ -50,8 +36,37 @@ drop.addEventListener('drop', async evt => {
     }
 
     // Filter files by wanted extensions.
-    files = files.filter(f => ext(f.name).toUpperCase() in template.Upload.Exts);
-    
+    files = files.filter(f => ext(f.name).toUpperCase() in template.uploadExts);
+    await uploadFiles(files);
+    location.reload();
+});
+
+async function walkdir(directory) {
+    function readEntries(reader) {
+        return new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+    }
+
+    async function readAll(reader) {
+        let files = [];
+        let entries;
+        do {
+            entries = await readEntries(reader);
+            for (let entry of entries) {
+                if (entry.isFile) {
+                    files.push(entry);
+                }
+                if (entry.isDirectory) {
+                    files.push(...await walkdir(entry))
+                }
+            }
+        } while (entries.length > 0);
+        return files;
+    }
+
+    return await readAll(directory.createReader())
+}
+
+async function uploadFiles(files) {
     let dialog = document.getElementById('progress-dialog');
     let progress = dialog.querySelector('progress');
     progress.removeAttribute('value');
@@ -59,27 +74,25 @@ drop.addEventListener('drop', async evt => {
     dialog.firstChild.textContent = 'Uploading…';
     dialog.showModal();
 
-    // Upload files.
     try {
         let i = 0;
-        for (let f of files) {
-            await uploadRequest(f);
+        for (let file of files) {
+            await uploadFile(file);
             progress.value = ++i;
         }
     } catch (err) {
         alertError('Upload failed', err);
+    } finally {
+        dialog.close();
     }
+}
 
-    dialog.close();
-    location.reload();
-});
-
-function uploadRequest(entry) {
+function uploadFile(entry) {
     return new Promise((resolve, reject) => {
-        entry.file(file => {
+        function request(file) {
             let data = new FormData();
-            data.set('root', template.Upload.Path)
-            data.set('path', entry.fullPath)
+            data.set('root', template.uploadPath)
+            data.set('path', entry.fullPath || file.name)
             data.set('file', file);
 
             let xhr = new XMLHttpRequest();
@@ -102,7 +115,13 @@ function uploadRequest(entry) {
             xhr.setRequestHeader('Accept', 'application/json');
             xhr.responseType = 'json';
             xhr.send(data);
-        }, reject);
+        };
+
+        if (entry.fullPath) {
+            entry.file(request, reject);
+        } else {
+            request(entry);
+        }
     });
 }
 

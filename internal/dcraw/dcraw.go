@@ -42,6 +42,12 @@ func compile() {
 		module = m
 	}
 
+	// Fix race in wazero v1.0.0-pre.4.
+	cfg := wazero.NewModuleConfig()
+	if m, err := wasm.InstantiateModule(ctx, module, cfg); err == nil {
+		m.Close(ctx)
+	}
+
 	sem = semaphore.NewWeighted(6)
 
 	thumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
