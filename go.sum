@@ -29,10 +29,8 @@ github.com/ncruces/go-image v0.1.0 h1:PCbPeiqA2Pbc7m3jWBjhJodwkGew8HEB7fC8SVM+8E
 github.com/ncruces/go-image v0.1.0/go.mod h1:DUnNl2l0T6tEuK266gUGy3Xq8C+A/71XuoWsAHh8bzg=
 github.com/ncruces/jason v0.4.0 h1:0Gy0/YHmy+P2tBNFo31mgzowJuhe35S7jxcEilXIIBI=
 github.com/ncruces/jason v0.4.0/go.mod h1:gaKw0MQbOK/IR2sJ6zBSCOLn+uPOv0iLH4VxOtdkGtU=
-github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff h1:7/ezL9FCZF1G50fjRG3r7rFxOnrbbzZUFzDj7Dll4mY=
-github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff/go.mod h1:MBsmMDae55NRj6StMZFdH2jjj4eCGkQU1wtRmQyIUZI=
-github.com/ncruces/zenity v0.10.0 h1:cu2OKaarFbLHdJx8xStMhdamSjZ+eNB2LGUkFD+0VYU=
-github.com/ncruces/zenity v0.10.0/go.mod h1:XKTS4jDNihIYL8aESCCb4bT8uej0gpdnxWdxG470CN0=
+github.com/ncruces/zenity v0.10.1 h1:qfa3ZiIx3momWjd0AMWFSiF4yteiaZI9cl4LNE8h+j0=
+github.com/ncruces/zenity v0.10.1/go.mod h1:qFjCrIyK2pEBdNazAYtpOYVpz4/vCEfLfCybTexGuEY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 h1:GranzK4hv1/pqTIhMTXt2X8MmMOuH3hMeUR0o9SP5yc=
@@ -58,8 +56,8 @@ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACk
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/exp v0.0.0-20221204150635-6dcec336b2bb h1:QIsP/NmClBICkqnJ4rSIhnrGiGR7Yv9ZORGGnmmLTPk=
 golang.org/x/exp v0.0.0-20221204150635-6dcec336b2bb/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
-golang.org/x/image v0.1.0 h1:r8Oj8ZA2Xy12/b5KZYj3tuv7NG/fBz3TwQVvpJ9l8Rk=
-golang.org/x/image v0.1.0/go.mod h1:iyPr49SD/G/TBxYVB/9RRtGUT5eNbo2u4NamWeQcD5c=
+golang.org/x/image v0.2.0 h1:/DcQ0w3VHKCC5p0/P2B0JpAZ9Z++V2KOo2fyU89CXBQ=
+golang.org/x/image v0.2.0/go.mod h1:la7oBXb9w3YFjBqaAwtynVioc1ZvOnNteUNrifGNmAI=
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
 golang.org/x/net v0.0.0-20210119194325-5f4716e94777/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
@@ -87,8 +85,6 @@ golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuX
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
-golang.org/x/text v0.4.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
-golang.org/x/text v0.5.0 h1:OLmvp0KP+FVG99Ct/qFiL/Fhk4zp4QQnZ7b2U+5piUM=
 golang.org/x/text v0.5.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
 golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
