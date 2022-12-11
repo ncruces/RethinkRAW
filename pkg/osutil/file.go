@@ -1,4 +1,3 @@
-// Package osutil provides additional platform-independent access to operating system functionality.
 package osutil
 
 import (
@@ -106,7 +105,7 @@ func isNotSameDevice(err error) bool {
 	return false
 }
 
-// HiddenFile reports whether fi is hidden.
+// HiddenFile reports whether de is hidden.
 // Files starting with a period are reported as hidden on all systems, even Windows.
 // Other than that, plaform rules apply.
 func HiddenFile(de os.DirEntry) bool {

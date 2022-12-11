@@ -6,8 +6,8 @@ CD /D "%~dp0"
 SET "tgt=RethinkRAW"
 
 
-MKDIR %tgt%\utils
-COPY build\exiftool_config.pl %tgt%\utils
+MKDIR %tgt%\utils 2>NUL
+COPY build\exiftool_config.pl %tgt%\utils >NUL
 
 IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
     ECHO Download ExifTool...
