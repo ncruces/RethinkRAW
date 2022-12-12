@@ -1,18 +1,26 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -eo pipefail
 
 cd -P -- "$(dirname -- "$0")"
 
-tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS"
-srv="RethinkRAW.app/Contents/Resources/rethinkraw-server"
+pkg="RethinkRAW.app/Contents/Resources"
+tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents"
 
-mkdir -p "$tgt/utils"
-cp "build/exiftool_config.pl" "$tgt/utils"
+osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
+mkdir -p "$tgt/Resources"
+mkdir -p "$tgt/MacOS/utils"
+cp "build/app.plist" "$tgt/Info.plist"
+cp "build/icon.icns" "$tgt/Resources/"
+cp "build/icon.icns" "$pkg/droplet.icns"
+cp "build/exiftool_config.pl" "$tgt/MacOS/utils"
+plutil -replace CFBundleVersion -string "0.9.1" RethinkRAW.app/Contents/Info.plist
+plutil -replace CFBundleDocumentTypes -xml "$(cat build/doctypes.plist)" RethinkRAW.app/Contents/Info.plist
+ln -sf "RethinkRAW.app/Contents/MacOS/rethinkraw" "$pkg/rethinkraw-server"
 
-if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
+if [ ! -f "$tgt/MacOS/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
     url="https://github.com/ncruces/go-exiftool/releases/download/dist/exiftool_unix.tgz"
-    curl -sL "$url" | tar xz -C "$tgt/utils"
+    curl -sL "$url" | tar xz -C "$tgt/MacOS/utils"
 fi
 
 if [ ! -f "assets/normalize.css" ]; then
@@ -37,25 +45,24 @@ if [[ "$1" == test ]]; then
     go test ./...
 elif [[ "$1" == run ]]; then
     echo Run app...
-    go build -race -o "$tgt/rethinkraw" && shift && exec "$tgt/rethinkraw" "$@"
+    go build -race -o "$tgt/MacOS/rethinkraw" && shift && exec "$tgt/MacOS/rethinkraw" "$@"
 elif [[ "$1" == serve ]]; then
     echo Run server...
-    go build -race -o "$tgt/rethinkraw" && shift && exec "$srv" "$@"
+    go build -race -o "$tgt/MacOS/rethinkraw" && shift && exec "$srv/rethinkraw-server" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
-    rm -rf "$tgt/data"
+    rm -rf "$tgt/MacOS/data"
     tmp="$(mktemp -d)"
     ln -s /Applications "$tmp"
     cp -r RethinkRAW.app "$tmp"
     hdiutil create -volname RethinkRAW -srcfolder "$tmp" -format UDBZ -ov RethinkRAW.dmg
 else
     echo Build release...
-    osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
     tmp="$(mktemp -d)"
     CGO_ENABLED=0
     go clean
     go generate
     GOARCH=amd64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_x64"
     GOARCH=arm64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_arm"
-    go run github.com/randall77/makefat "$tgt/rethinkraw" "$tmp/rethinkraw_x64" "$tmp/rethinkraw_arm"
+    go run github.com/randall77/makefat "$tgt/MacOS/rethinkraw" "$tmp/rethinkraw_x64" "$tmp/rethinkraw_arm"
 fi

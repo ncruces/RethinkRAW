@@ -2,7 +2,18 @@ let app = Application.currentApplication();
 app.includeStandardAdditions = true;
 
 function run() {
-    openDocuments([]);
+    ObjC.import('stdlib');
+    let argv = [];
+    let args = $.NSProcessInfo.processInfo.arguments;
+    try {
+        let argc = args.count;
+        for (let i = 1; i < argc; ++i) {
+            argv.push(ObjC.unwrap(args.objectAtIndex(i)));
+        }    
+    } finally {
+        delete args;
+    }
+    openDocuments(argv);
 }
 
 function openDocuments(docs) {

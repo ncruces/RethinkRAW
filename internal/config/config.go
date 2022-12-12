@@ -22,11 +22,9 @@ func init() {
 }
 
 func SetupPaths() (err error) {
-	exe, err := os.Executable()
-	if err != nil {
+	if exe, err := os.Executable(); err != nil {
 		return err
-	}
-	if exe, err := filepath.EvalSymlinks(exe); err != nil {
+	} else if exe, err := filepath.EvalSymlinks(exe); err != nil {
 		return err
 	} else {
 		BaseDir = filepath.Dir(exe)
@@ -40,18 +38,24 @@ func SetupPaths() (err error) {
 		return err
 	}
 
+	name := filepath.Base(os.Args[0])
 	switch runtime.GOOS {
 	case "windows":
-		ServerMode = filepath.Base(exe) == "RethinkRAW.com"
+		ServerMode = name == "RethinkRAW.com"
 		exiftool.Exec = BaseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
 		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
 		DngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 	case "darwin":
-		ServerMode = filepath.Base(exe) == "rethinkraw-server"
+		ServerMode = name == "rethinkraw-server"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
 		DngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
+	default:
+		ServerMode = name == "rethinkraw-server"
+		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
+		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
+		DngConverter = BaseDir + "/utils/dng-converter.sh"
 	}
 
 	if testDataDir() == nil {

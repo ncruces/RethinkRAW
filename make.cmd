@@ -5,7 +5,6 @@ CD /D "%~dp0"
 
 SET "tgt=RethinkRAW"
 
-
 MKDIR %tgt%\utils 2>NUL
 COPY build\exiftool_config.pl %tgt%\utils >NUL
 
@@ -46,16 +45,12 @@ IF [%1]==[test] (
     IF EXIST %tgt%\data RD /S /Q %tgt%\data
     IF EXIST %tgt%\debug.log DEL /Q %tgt%\debug.log
     7z a -mx9 -myx9 -sfx7z.sfx RethinkRAW.exe %tgt%
-    REM
-    REM
 ) ELSE (
     ECHO Release build...
     go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo -64 build/versioninfo.json
-    REM
     SET CGO_ENABLED=0
     go clean
     go generate ^
  && go build -tags memfs -ldflags "-s -w" -trimpath -o %tgt%\RethinkRAW.com ^
  && go build -tags memfs -ldflags "-s -w -H windowsgui" -trimpath -o %tgt%\RethinkRAW.exe
-    REM
 )

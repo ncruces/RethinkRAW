@@ -34,7 +34,5 @@ Thumbs.db
 /assets/dialog-polyfill.*
 /assets/fa-solid-900.woff2
 /assets/fontawesome.css
-/RethinkRAW/data
-/RethinkRAW/utils
-/RethinkRAW/debug.log
-/RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents/MacOS
+/RethinkRAW/
+/RethinkRAW.app/

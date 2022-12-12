@@ -1,0 +1,14 @@
+<array>
+	<dict>
+		<key>CFBundleTypeIconFiles</key>
+		<array/>
+		<key>CFBundleTypeName</key>
+		<string>Camera RAW image</string>
+		<key>LSHandlerRank</key>
+		<string>Alternate</string>
+		<key>LSItemContentTypes</key>
+		<array>
+			<string>public.camera-raw-image</string>
+		</array>
+	</dict>
+</array>
