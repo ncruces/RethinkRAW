@@ -12,7 +12,7 @@ func CreateConsole() error {
 	return createConsole()
 }
 
-// CleanupArgs cleans up os.Args.
+// CleanupArgs cleans up [os.Args].
 // On macOS, it removes the Process Serial Number arg.
 func CleanupArgs() {
 	if runtime.GOOS == "darwin" {

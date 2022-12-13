@@ -27,7 +27,14 @@ func open(file string) error {
 }
 
 func isANSIString(s string) bool {
-	if s == "" {
+	ascii := true
+	for _, c := range []byte(s) {
+		if c < ' ' || c > '~' {
+			ascii = false
+			break
+		}
+	}
+	if ascii {
 		return true
 	}
 

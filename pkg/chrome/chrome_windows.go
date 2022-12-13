@@ -11,7 +11,12 @@ import (
 func findChrome() {
 	versions := []string{`Google\Chrome`, `Chromium`, `Microsoft\Edge`}
 	suffixes := []string{`Application\chrome.exe`, `Application\msedge.exe`}
-	prefixes := []string{os.Getenv("LOCALAPPDATA"), os.Getenv("PROGRAMFILES"), os.Getenv("PROGRAMFILES(X86)")}
+	prefixes := []string{
+		os.Getenv("LOCALAPPDATA"),
+		os.Getenv("PROGRAMW6432"),
+		os.Getenv("PROGRAMFILES"),
+		os.Getenv("PROGRAMFILES(X86)"),
+	}
 
 	for _, v := range versions {
 		for _, s := range suffixes {

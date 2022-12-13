@@ -58,7 +58,7 @@ func Copy(src, dst string) (err error) {
 }
 
 // Move moves src to dst.
-// Tries os.Rename. Failing that, does a Copy followed by a os.Remove.
+// Tries [os.Rename]. Failing that, does a Copy followed by a [os.Remove].
 func Move(src, dst string) error {
 	err := os.Rename(src, dst)
 	if isNotSameDevice(err) {
@@ -75,7 +75,7 @@ func Move(src, dst string) error {
 }
 
 // Lnky copies src to dst.
-// Tries os.Link to create a hardlink. Failing that, does a Copy.
+// Tries [os.Link] to create a hardlink. Failing that, does a Copy.
 func Lnky(src, dst string) error {
 	sfi, err := os.Stat(src)
 	if err != nil {

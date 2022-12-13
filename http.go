@@ -75,7 +75,7 @@ type httpResult struct {
 
 func (r *httpResult) Done() bool { return r.Status != 0 || r.Location != "" || r.Error != nil }
 
-// httpHandler is an http.Handler that returns an httpResult
+// httpHandler is an [http.Handler] that returns an httpResult
 type httpHandler func(w http.ResponseWriter, r *http.Request) httpResult
 
 func (h httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -8,7 +8,14 @@ import (
 )
 
 func findChrome() {
-	versions := []string{"google-chrome-stable", "google-chrome", "chromium-browser", "chromium", "microsoft-edge-stable", "microsoft-edge"}
+	versions := []string{
+		"google-chrome-stable",
+		"google-chrome",
+		"chromium-browser",
+		"chromium",
+		"microsoft-edge-stable",
+		"microsoft-edge",
+	}
 
 	for _, v := range versions {
 		if c, err := exec.LookPath(v); err == nil {

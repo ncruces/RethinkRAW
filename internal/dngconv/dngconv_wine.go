@@ -3,26 +3,25 @@
 package dngconv
 
 import (
-	"bytes"
 	"os"
-	"os/exec"
+
+	"github.com/ncruces/rethinkraw/internal/wine"
 )
 
 func CheckInstall() error {
-	out, err := exec.Command("wine", "cmd", "/c", "echo", "%ProgramW6432%").Output()
+	programs, err := wine.Getenv("ProgramW6432")
 	if err != nil {
 		return err
 	}
-	out = bytes.TrimRight(out, "\r\n")
 
-	converter := string(out) + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
-	out, err = exec.Command("winepath", converter).Output()
+	converter := programs + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+
+	file, err := wine.FromWindows(converter)
 	if err != nil {
 		return err
 	}
-	out = bytes.TrimRight(out, "\n")
 
-	_, err = os.Stat(string(out))
+	_, err = os.Stat(file)
 	if err != nil {
 		return err
 	}
@@ -40,11 +39,10 @@ func dngPath(path string) (string, error) {
 		return p, nil
 	}
 
-	out, err := exec.Command("winepath", "-w", path).Output()
+	p, err := wine.ToWindows(path)
 	if err != nil {
 		return "", err
 	}
-	p = string(bytes.TrimRight(out, "\n"))
 
 	if len(dngPathCache) > 100 {
 		for k := range dngPathCache {
