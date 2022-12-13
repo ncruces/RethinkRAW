@@ -5,8 +5,8 @@ CD /D "%~dp0"
 
 SET "tgt=RethinkRAW"
 
-MKDIR %tgt%\utils 2>NUL
-COPY build\exiftool_config.pl %tgt%\utils >NUL
+IF NOT EXIST %tgt%\utils MKDIR %tgt%\utils
+COPY build\exiftool_config.pl  %tgt%\utils >NUL
 
 IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
     ECHO Download ExifTool...
@@ -42,7 +42,7 @@ IF [%1]==[test] (
     go build -race -o %tgt%\RethinkRAW.com && %tgt%\RethinkRAW.com -pass= .
 ) ELSE IF [%1]==[install] (
     ECHO Build installer...
-    IF EXIST %tgt%\data RD /S /Q %tgt%\data
+    IF EXIST %tgt%\data RMDIR /S /Q %tgt%\data
     IF EXIST %tgt%\debug.log DEL /Q %tgt%\debug.log
     7z a -mx9 -myx9 -sfx7z.sfx RethinkRAW.exe %tgt%
 ) ELSE (

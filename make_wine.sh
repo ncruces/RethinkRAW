@@ -6,7 +6,7 @@ cd -P -- "$(dirname -- "$0")"
 tgt="RethinkRAW"
 
 mkdir -p "$tgt/utils"
-cp "build/exiftool_config.pl" "build/dng-converter.sh" "$tgt/utils"
+cp "build/exiftool_config.pl" "$tgt/utils"
 ln -sf rethinkraw "$tgt/rethinkraw-server"
 
 if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
@@ -43,6 +43,7 @@ elif [[ "$1" == serve ]]; then
     go build -race -o "$tgt/rethinkraw" && shift && exec "$tgt/rethinkraw-server" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
+    rm -rf "$tgt/MacOS/data"
     exit 1
 else
     echo Build release...

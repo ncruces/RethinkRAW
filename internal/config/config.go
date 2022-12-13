@@ -8,13 +8,11 @@ import (
 	"strings"
 
 	"github.com/ncruces/go-exiftool"
-	"github.com/ncruces/rethinkraw/pkg/osutil"
 )
 
 var (
 	ServerMode                bool
 	BaseDir, DataDir, TempDir string
-	DngConverter              string
 )
 
 func init() {
@@ -33,11 +31,6 @@ func SetupPaths() (err error) {
 	DataDir = filepath.Join(BaseDir, "data")
 	TempDir = filepath.Join(os.TempDir(), "RethinkRAW")
 
-	TempDir, err = osutil.GetANSIPath(TempDir)
-	if err != nil {
-		return err
-	}
-
 	name := filepath.Base(os.Args[0])
 	switch runtime.GOOS {
 	case "windows":
@@ -45,17 +38,14 @@ func SetupPaths() (err error) {
 		exiftool.Exec = BaseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
 		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
-		DngConverter = os.Getenv("PROGRAMFILES") + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
 	case "darwin":
 		ServerMode = name == "rethinkraw-server"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
-		DngConverter = "/Applications/Adobe DNG Converter.app/Contents/MacOS/Adobe DNG Converter"
 	default:
 		ServerMode = name == "rethinkraw-server"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
-		DngConverter = BaseDir + "/utils/dng-converter.sh"
 	}
 
 	if testDataDir() == nil {

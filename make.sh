@@ -3,7 +3,7 @@ set -eo pipefail
 
 cd -P -- "$(dirname -- "$0")"
 
-pkg="RethinkRAW.app/Contents/Resources"
+app="RethinkRAW.app/Contents/Resources"
 tgt="RethinkRAW.app/Contents/Resources/RethinkRAW.app/Contents"
 
 osacompile -l JavaScript -o RethinkRAW.app build/droplet.js
@@ -11,11 +11,11 @@ mkdir -p "$tgt/Resources"
 mkdir -p "$tgt/MacOS/utils"
 cp "build/app.plist" "$tgt/Info.plist"
 cp "build/icon.icns" "$tgt/Resources/"
-cp "build/icon.icns" "$pkg/droplet.icns"
+cp "build/icon.icns" "$app/droplet.icns"
 cp "build/exiftool_config.pl" "$tgt/MacOS/utils"
 plutil -replace CFBundleVersion -string "0.9.1" RethinkRAW.app/Contents/Info.plist
 plutil -replace CFBundleDocumentTypes -xml "$(cat build/doctypes.plist)" RethinkRAW.app/Contents/Info.plist
-ln -sf "RethinkRAW.app/Contents/MacOS/rethinkraw" "$pkg/rethinkraw-server"
+ln -sf "RethinkRAW.app/Contents/MacOS/rethinkraw" "$app/rethinkraw-server"
 
 if [ ! -f "$tgt/MacOS/utils/exiftool/exiftool" ]; then
     echo Download ExifTool...
@@ -48,7 +48,7 @@ elif [[ "$1" == run ]]; then
     go build -race -o "$tgt/MacOS/rethinkraw" && shift && exec "$tgt/MacOS/rethinkraw" "$@"
 elif [[ "$1" == serve ]]; then
     echo Run server...
-    go build -race -o "$tgt/MacOS/rethinkraw" && shift && exec "$srv/rethinkraw-server" "$@"
+    go build -race -o "$tgt/MacOS/rethinkraw" && shift && exec "$app/rethinkraw-server" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
     rm -rf "$tgt/MacOS/data"

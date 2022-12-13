@@ -16,7 +16,7 @@ Or download the [latest release](https://github.com/ncruces/RethinkRAW/releases/
 
 ## Build
 
-Run [`make.sh`](make.sh) (macOS) or [`make.cmd`](make.cmd) (Windows).
+Run [`make.cmd`](make.cmd) (Windows), [`make.sh`](make.sh) (macOS), or [`make_wine.sh`](make_wine.sh) (other Unixes). 
 
 ## Features
 

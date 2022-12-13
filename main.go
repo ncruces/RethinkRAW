@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/ncruces/rethinkraw/internal/config"
+	"github.com/ncruces/rethinkraw/internal/dngconv"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/ncruces/rethinkraw/pkg/optls"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
@@ -97,7 +98,7 @@ func run() error {
 			}
 		}
 		serverConfig.NextProtos = []string{"h2"}
-		if err := testDNGConverter(); err != nil {
+		if err := dngconv.CheckInstall(); err != nil {
 			return err
 		}
 	} else {
@@ -119,7 +120,7 @@ func run() error {
 			}
 		}
 
-		if err := testDNGConverter(); err != nil {
+		if err := dngconv.CheckInstall(); err != nil {
 			url.Path = "/dngconv.html"
 		}
 	}
