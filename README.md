@@ -1,4 +1,4 @@
-# RethinkRAW [<img src="https://github.com/ncruces/RethinkRAW/raw/master/assets/favicon-192.png" alt="R" width="96" height="96" align="right">](https://rethinkraw.com)
+# RethinkRAW [<img src="https://ncruces.github.io/RethinkRAW/assets/favicon-192.png" alt="R" width="96" height="96" align="right">](https://rethinkraw.com)
 
 RethinkRAW is an unpretentious, free RAW photo editor.
 
@@ -16,7 +16,10 @@ Or download the [latest release](https://github.com/ncruces/RethinkRAW/releases/
 
 ## Build
 
-Run [`make.cmd`](make.cmd) (Windows), [`make.sh`](make.sh) (macOS), or [`make_wine.sh`](make_wine.sh) (elsewhere). 
+Run
+[`make.cmd`](https://github.com/ncruces/RethinkRAW/blob/master/make.cmd) (Windows),
+[`make.sh`](https://github.com/ncruces/RethinkRAW/blob/master/make.sh) (macOS), or
+[`make_wine.sh`](https://github.com/ncruces/RethinkRAW/blob/master/make_wine.sh) (elsewhere). 
 
 ## Features
 
