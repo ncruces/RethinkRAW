@@ -2,10 +2,10 @@
 package craw
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 )
 
 // Paths used to find Camera Raw settings.
@@ -20,22 +20,13 @@ const (
 	globalPrefixMac = "/Library/Application Support/Adobe/CameraRaw/"
 )
 
-func init() {
-	switch runtime.GOOS {
-	case "windows":
-		GlobalSettings = os.Getenv("PROGRAMDATA") + `\Adobe\CameraRaw`
-		UserSettings = os.Getenv("APPDATA") + `\Adobe\CameraRaw`
-	case "darwin":
-		GlobalSettings = "/Library/Application Support/Adobe/CameraRaw"
-		UserSettings = os.Getenv("HOME") + "/Library/Application Support/Adobe/CameraRaw"
-	}
-}
+var once sync.Once
 
 func fixPath(path string) string {
 	if strings.HasPrefix(path, globalPrefixWin) {
 		path = filepath.Join(GlobalSettings, path[len(globalPrefixWin):])
 	}
-	if runtime.GOOS == "windows" && strings.HasPrefix(path, globalPrefixMac) {
+	if runtime.GOOS != "darwin" && strings.HasPrefix(path, globalPrefixMac) {
 		path = filepath.Join(GlobalSettings, path[len(globalPrefixMac):])
 	}
 	return filepath.FromSlash(path)

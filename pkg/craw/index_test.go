@@ -6,6 +6,8 @@ import (
 )
 
 func TestLoadIndex(t *testing.T) {
+	once.Do(initPaths)
+
 	tests := []string{
 		"CameraProfiles/Index.dat",
 		"LensProfiles/Index.dat",

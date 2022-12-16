@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"syscall"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/ncruces/rethinkraw/pkg/chrome"
 	"github.com/ncruces/rethinkraw/pkg/optls"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
+	"github.com/ncruces/rethinkraw/pkg/wine"
 	"github.com/ncruces/zenity"
 )
 
@@ -63,6 +65,10 @@ func run() error {
 	*pass = unspecified
 	flag.Parse()
 
+	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
+		wine.Startup()
+	}
+
 	serverPort = ":" + strconv.Itoa(*port)
 	var url url.URL
 
@@ -98,9 +104,6 @@ func run() error {
 			}
 		}
 		serverConfig.NextProtos = []string{"h2"}
-		if err := dngconv.CheckInstall(); err != nil {
-			return err
-		}
 	} else {
 		serverHost = "localhost"
 		url.Scheme = "http"
@@ -119,10 +122,13 @@ func run() error {
 				url.Path = "/photo/" + toURLPath(abs, "")
 			}
 		}
+	}
 
-		if err := dngconv.CheckInstall(); err != nil {
-			url.Path = "/dngconv.html"
+	if !dngconv.IsInstalled() {
+		if config.ServerMode {
+			log.Fatal("Please download and install Adobe DNG Converter.")
 		}
+		url.Path = "/dngconv.html"
 	}
 
 	if ln, err := optls.Listen("tcp", serverHost+serverPort, &serverConfig); err == nil {
@@ -134,6 +140,7 @@ func run() error {
 		defer func() {
 			http.Shutdown(context.Background())
 			exif.Shutdown()
+			wine.Shutdown()
 			os.RemoveAll(config.TempDir)
 		}()
 		go http.Serve(ln)
@@ -142,26 +149,31 @@ func run() error {
 	}
 
 	if config.ServerMode {
-		log.Println("listening on http://local.app.rethinkraw.com" + serverPort)
+		log.Print("listening on http://local.app.rethinkraw.com" + serverPort)
 		<-shutdown
-	} else if chrome.IsInstalled() {
-		data := filepath.Join(config.DataDir, "chrome")
-		cache := filepath.Join(config.TempDir, "chrome")
-		cmd := chrome.Command(url.String(), data, cache)
+		return nil
+	}
 
-		if err := cmd.Start(); err != nil {
-			return err
-		}
-		go func() {
-			for s := range shutdown {
-				cmd.Signal(s)
-			}
-		}()
-		return cmd.Wait()
-	} else {
+	if !zenity.IsAvailable() {
+		log.Fatal("Please install zenity.")
+	}
+	if !chrome.IsInstalled() {
 		return zenity.Error(
 			"Please download and install either Google Chrome or Microsoft Edge.",
 			zenity.Title("Google Chrome not found"))
 	}
-	return nil
+
+	data := filepath.Join(config.DataDir, "chrome")
+	cache := filepath.Join(config.TempDir, "chrome")
+	cmd := chrome.Command(url.String(), data, cache)
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	go func() {
+		for s := range shutdown {
+			cmd.Signal(s)
+		}
+	}()
+	return cmd.Wait()
 }

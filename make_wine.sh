@@ -43,8 +43,9 @@ elif [[ "$1" == serve ]]; then
     go build -race -o "$tgt/rethinkraw" && shift && exec "$tgt/rethinkraw-server" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
-    rm -rf "$tgt/MacOS/data"
-    exit 1
+    cp "assets/favicon-192.png" "$tgt/icon.png"
+    rm -rf "$tgt/data"
+    tar cfj RethinkRAW.tbz "$tgt"
 else
     echo Build release...
     CGO_ENABLED=0

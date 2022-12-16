@@ -13,7 +13,7 @@ require (
 	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
 	github.com/ncruces/zenity v0.10.4
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844
-	github.com/tetratelabs/wazero v1.0.0-pre.4
+	github.com/tetratelabs/wazero v1.0.0-pre.5.0.20221216080254-238daebeadd1
 	golang.org/x/exp v0.0.0-20221212164502-fae10dda9338
 	golang.org/x/net v0.4.0
 	golang.org/x/sync v0.1.0

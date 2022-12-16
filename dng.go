@@ -36,5 +36,5 @@ func runDNGConverter(ctx context.Context, input, output string, side int, exp *e
 	defer semDNGConverter.Release(1)
 
 	log.Print("dng converter...")
-	return dngconv.Run(ctx, input, output, args...)
+	return dngconv.Convert(ctx, input, output, args...)
 }

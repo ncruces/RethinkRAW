@@ -42,14 +42,7 @@ func compile() {
 		module = m
 	}
 
-	// Fix race in wazero v1.0.0-pre.4.
-	cfg := wazero.NewModuleConfig()
-	if m, err := wasm.InstantiateModule(ctx, module, cfg); err == nil {
-		m.Close(ctx)
-	}
-
 	sem = semaphore.NewWeighted(6)
-
 	thumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 }
 
@@ -76,7 +69,7 @@ func run(ctx context.Context, root fs.FS, args ...string) ([]byte, error) {
 }
 
 func GetThumb(ctx context.Context, path string) ([]byte, error) {
-	out, err := run(ctx, fileFS(path), "dcraw", "-e", "-c", "input")
+	out, err := run(ctx, fileFS(path), "dcraw", "-e", "-c", fileFSname)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +92,7 @@ func GetThumb(ctx context.Context, path string) ([]byte, error) {
 }
 
 func GetThumbSize(ctx context.Context, path string) (int, error) {
-	out, err := run(ctx, fileFS(path), "dcraw", "-i", "-v", "input")
+	out, err := run(ctx, fileFS(path), "dcraw", "-i", "-v", fileFSname)
 	if err != nil {
 		return 0, err
 	}
@@ -125,13 +118,15 @@ func GetRAWPixels(ctx context.Context, path string) ([]byte, error) {
 		"-4",
 		"-t", "0",
 		"-c",
-		"input")
+		fileFSname)
 }
 
 type fileFS string
 
+const fileFSname = "input"
+
 func (file fileFS) Open(name string) (fs.File, error) {
-	if name == "input" {
+	if name == fileFSname {
 		return os.Open(string(file))
 	}
 	if fs.ValidPath(name) {

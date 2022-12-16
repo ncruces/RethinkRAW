@@ -4,16 +4,25 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"sync"
 )
 
-var (
-	conv string
-	arg1 string
-)
+var Path string
 
-func Run(ctx context.Context, input, output string, args ...string) error {
+var once sync.Once
+
+// IsInstalled checks if Adobe DNG Converter is installed.
+// If true, [Path] will be set to the converter's executable path.
+func IsInstalled() bool {
+	once.Do(findConverter)
+	return Path != ""
+}
+
+// Convert converts an input RAW file into an output DNG using Adobe DNG Converter.
+func Convert(ctx context.Context, input, output string, args ...string) error {
+	once.Do(findConverter)
+
 	input, err := dngPath(input)
 	if err != nil {
 		return err
@@ -29,14 +38,10 @@ func Run(ctx context.Context, input, output string, args ...string) error {
 		return err
 	}
 
-	if arg1 != "" {
-		args = append([]string{arg1}, args...)
-	}
 	args = append(args, "-d", dir, "-o", filepath.Base(output), input)
-
-	cmd := exec.CommandContext(ctx, conv, args...)
-	if _, err := cmd.Output(); err != nil {
-		return fmt.Errorf("DNG Converter: %w", err)
+	err = runConverter(ctx, args...)
+	if err != nil {
+		return fmt.Errorf("dng converter: %w", err)
 	}
 	return nil
 }

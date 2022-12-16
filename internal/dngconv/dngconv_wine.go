@@ -3,32 +3,41 @@
 package dngconv
 
 import (
+	"context"
 	"os"
 
-	"github.com/ncruces/rethinkraw/internal/wine"
+	"github.com/ncruces/rethinkraw/pkg/wine"
 )
 
-func CheckInstall() error {
-	programs, err := wine.Getenv("ProgramW6432")
-	if err != nil {
-		return err
+func findConverter() {
+	const converter = `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+	paths := []string{
+		"PROGRAMW6432",
+		"PROGRAMFILES",
+		"PROGRAMFILES(X86)",
 	}
+	for _, path := range paths {
+		env, err := wine.Getenv(path)
+		if err != nil {
+			continue
+		}
 
-	converter := programs + `\Adobe\Adobe DNG Converter\Adobe DNG Converter.exe`
+		unix, err := wine.FromWindows(env + converter)
+		if err != nil {
+			continue
+		}
 
-	file, err := wine.FromWindows(converter)
-	if err != nil {
-		return err
+		_, err = os.Stat(unix)
+		if err == nil {
+			Path = unix
+			break
+		}
 	}
+}
 
-	_, err = os.Stat(file)
-	if err != nil {
-		return err
-	}
-
-	conv = "wine"
-	arg1 = converter
-	return nil
+func runConverter(ctx context.Context, args ...string) error {
+	_, err := wine.CommandContext(ctx, Path, args...).Output()
+	return err
 }
 
 var dngPathCache = map[string]string{}

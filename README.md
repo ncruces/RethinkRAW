@@ -4,19 +4,19 @@ RethinkRAW is an unpretentious, free RAW photo editor.
 
 ## Install
 
-On macOS using [Homebrew](https://brew.sh/) 🍺:
-
-    brew install ncruces/tap/rethinkraw
-
 On Windows using [Scoop](https://scoop.sh/) 🍨:
 
     scoop install https://ncruces.github.io/scoop/RethinkRAW.json
+
+On macOS using [Homebrew](https://brew.sh/) 🍺:
+
+    brew install ncruces/tap/rethinkraw
 
 Or download the [latest release](https://github.com/ncruces/RethinkRAW/releases/latest).
 
 ## Build
 
-Run [`make.cmd`](make.cmd) (Windows), [`make.sh`](make.sh) (macOS), or [`make_wine.sh`](make_wine.sh) (other Unixes). 
+Run [`make.cmd`](make.cmd) (Windows), [`make.sh`](make.sh) (macOS), or [`make_wine.sh`](make_wine.sh) (elsewhere). 
 
 ## Features
 

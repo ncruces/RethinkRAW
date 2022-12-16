@@ -13,6 +13,8 @@ import (
 // Returns the DCP file paths for the profiles.
 // It looks for profiles under the GlobalSettings and UserSettings directories.
 func GetCameraProfiles(make, model string) ([]string, error) {
+	once.Do(initPaths)
+
 	glb, err := LoadIndex(filepath.Join(GlobalSettings, filepath.FromSlash("CameraProfiles/Index.dat")))
 	if err != nil {
 		return nil, err
@@ -48,6 +50,8 @@ func GetCameraProfiles(make, model string) ([]string, error) {
 // It looks for profiles under the GlobalSettings and UserSettings directories,
 // and in the EmbedProfiles file, if set.
 func GetCameraProfileNames(make, model string) ([]string, error) {
+	once.Do(initPaths)
+
 	profiles, err := GetCameraProfiles(make, model)
 	if err != nil {
 		return nil, err

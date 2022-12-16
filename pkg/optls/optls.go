@@ -17,7 +17,7 @@ func Listen(network, address string, config *tls.Config) (net.Listener, error) {
 	return NewListener(inner, config), nil
 }
 
-// NewListener creates a Listener which accepts connections from an inner Listener.
+// NewListener creates a listener which accepts connections from an inner [net.Listener].
 // If config is valid, and the client sends a ClientHello message,
 // the connection is wrapped with a [tls.Server].
 func NewListener(inner net.Listener, config *tls.Config) net.Listener {

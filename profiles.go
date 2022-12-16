@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ncruces/rethinkraw/internal/dngconv"
 	"github.com/ncruces/rethinkraw/pkg/craw"
 	"golang.org/x/exp/slices"
 )
@@ -105,7 +106,7 @@ func loadProfiles(make, model string, process float32, grayscale bool, profile, 
 			return res.adobe, res.other
 		}
 
-		// craw.EmbedProfiles = config.DngConverter
+		craw.EmbedProfiles = dngconv.Path
 		profiles, _ := craw.GetCameraProfileNames(make, model)
 
 		res.adobe = "Adobe Standard"
