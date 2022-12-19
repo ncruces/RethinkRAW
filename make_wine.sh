@@ -48,7 +48,7 @@ elif [[ "$1" == install ]]; then
     tar cfj RethinkRAW.tbz "$tgt"
 else
     echo Build release...
-    CGO_ENABLED=0
+    export CGO_ENABLED=0
     go clean
     go generate
     go build -tags memfs -ldflags "-s -w" -trimpath -o "$tgt/rethinkraw"

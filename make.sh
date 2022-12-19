@@ -59,10 +59,11 @@ elif [[ "$1" == install ]]; then
 else
     echo Build release...
     tmp="$(mktemp -d)"
-    CGO_ENABLED=0
+    export CGO_ENABLED=0
+    export GOOS=darwin
     go clean
     go generate
     GOARCH=amd64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_x64"
     GOARCH=arm64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_arm"
-    go run github.com/randall77/makefat "$tgt/MacOS/rethinkraw" "$tmp/rethinkraw_x64" "$tmp/rethinkraw_arm"
+    lipo -create "$tmp/rethinkraw_x64" "$tmp/rethinkraw_arm" -output "$tgt/MacOS/rethinkraw"
 fi
