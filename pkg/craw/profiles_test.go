@@ -3,7 +3,7 @@ package craw
 import (
 	"testing"
 
-	"github.com/ncruces/rethinkraw/internal/dngconv"
+	"github.com/ncruces/rethinkraw/pkg/dngconv"
 )
 
 func TestGetCameraProfiles(t *testing.T) {

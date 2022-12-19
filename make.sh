@@ -13,7 +13,7 @@ cp "build/app.plist" "$tgt/Info.plist"
 cp "build/icon.icns" "$tgt/Resources/"
 cp "build/icon.icns" "$app/droplet.icns"
 cp "build/exiftool_config.pl" "$tgt/MacOS/utils"
-plutil -replace CFBundleVersion -string "0.10.0" RethinkRAW.app/Contents/Info.plist
+plutil -replace CFBundleVersion -string "0.10.1" RethinkRAW.app/Contents/Info.plist
 plutil -replace CFBundleDocumentTypes -xml "$(cat build/doctypes.plist)" RethinkRAW.app/Contents/Info.plist
 ln -sf "RethinkRAW.app/Contents/MacOS/rethinkraw" "$app/rethinkraw-server"
 

@@ -13,7 +13,7 @@ import (
 
 	"github.com/ncruces/go-image/resize"
 	"github.com/ncruces/go-image/rotateflip"
-	"github.com/ncruces/rethinkraw/internal/dcraw"
+	"github.com/ncruces/rethinkraw/pkg/dcraw"
 )
 
 func previewJPEG(ctx context.Context, path string) ([]byte, error) {

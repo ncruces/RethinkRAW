@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ncruces/rethinkraw/internal/dngconv"
 	"github.com/ncruces/rethinkraw/pkg/craw"
+	"github.com/ncruces/rethinkraw/pkg/dngconv"
 	"golang.org/x/exp/slices"
 )
 

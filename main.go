@@ -15,8 +15,8 @@ import (
 	"syscall"
 
 	"github.com/ncruces/rethinkraw/internal/config"
-	"github.com/ncruces/rethinkraw/internal/dngconv"
 	"github.com/ncruces/rethinkraw/pkg/chrome"
+	"github.com/ncruces/rethinkraw/pkg/dngconv"
 	"github.com/ncruces/rethinkraw/pkg/optls"
 	"github.com/ncruces/rethinkraw/pkg/osutil"
 	"github.com/ncruces/rethinkraw/pkg/wine"

@@ -1,3 +1,12 @@
+// Package dngconv provides support to locate and run Adobe DNG Converter.
+//
+// Adobe DNG Converter is available for Windows and macOS.
+// In other OSes, you must install it using Wine:
+// https://www.winehq.org/
+//
+// Documentation for command line arguments of Adobe DNG Converter
+// is available at:
+// https://github.com/ncruces/RethinkRAW/blob/master/pkg/dngconv/doc.pdf
 package dngconv
 
 import (

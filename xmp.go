@@ -11,8 +11,8 @@ import (
 	"strconv"
 
 	"github.com/ncruces/go-exiftool"
-	"github.com/ncruces/rethinkraw/internal/dcraw"
 	"github.com/ncruces/rethinkraw/internal/util"
+	"github.com/ncruces/rethinkraw/pkg/dcraw"
 	"github.com/ncruces/rethinkraw/pkg/dng"
 )
 

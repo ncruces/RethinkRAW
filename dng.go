@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/ncruces/rethinkraw/internal/dngconv"
+	"github.com/ncruces/rethinkraw/pkg/dngconv"
 	"golang.org/x/sync/semaphore"
 )
 

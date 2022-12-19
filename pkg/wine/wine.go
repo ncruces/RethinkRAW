@@ -1,3 +1,4 @@
+// Package wine provides support to run Windows programs under Wine.
 package wine
 
 import (

@@ -1,3 +1,8 @@
+// Package dcraw provides support running an embed version of dcraw.
+//
+// Importing this package embeds a WASM build of dcraw into your binaries.
+// Source code for that build of dcraw is available from:
+// https://github.com/ncruces/dcraw/blob/ncruces-rethinkraw/dcraw.c
 package dcraw
 
 import (
@@ -68,8 +73,12 @@ func run(ctx context.Context, root fs.FS, args ...string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func GetThumb(ctx context.Context, path string) ([]byte, error) {
-	out, err := run(ctx, fileFS(path), "dcraw", "-e", "-c", fileFSname)
+// GetThumb extracts a thumbnail from a RAW file.
+//
+// The thumbnail will either be a JPEG, or a PNM file in 8-bit P5/P6 format.
+// For more about PNM, see https://en.wikipedia.org/wiki/Netpbm
+func GetThumb(ctx context.Context, file string) ([]byte, error) {
+	out, err := run(ctx, fileFS(file), "dcraw", "-e", "-c", fileFSname)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +86,7 @@ func GetThumb(ctx context.Context, path string) ([]byte, error) {
 	if off := len(out) - 20; off >= 0 && bytes.HasPrefix(out[off:], []byte("\xff\xee\x12\x00")) {
 		offset := int64(binary.LittleEndian.Uint64(out[off+4+0:]))
 		length := int64(binary.LittleEndian.Uint64(out[off+4+8:]))
-		f, err := os.Open(path)
+		f, err := os.Open(file)
 		if err != nil {
 			return nil, err
 		}
@@ -91,8 +100,10 @@ func GetThumb(ctx context.Context, path string) ([]byte, error) {
 	return out, nil
 }
 
-func GetThumbSize(ctx context.Context, path string) (int, error) {
-	out, err := run(ctx, fileFS(path), "dcraw", "-i", "-v", fileFSname)
+// GetThumbSize returns the size of the thumbnail [GetThumb] would extract.
+// The size is the bigger of width/height, in pixels.
+func GetThumbSize(ctx context.Context, file string) (int, error) {
+	out, err := run(ctx, fileFS(file), "dcraw", "-i", "-v", fileFSname)
 	if err != nil {
 		return 0, err
 	}
@@ -110,8 +121,10 @@ func GetThumbSize(ctx context.Context, path string) (int, error) {
 	return max, nil
 }
 
-func GetRAWPixels(ctx context.Context, path string) ([]byte, error) {
-	return run(ctx, fileFS(path), "dcraw",
+// GetRAWPixels develops an half-resolution, demosaiced, not white balanced
+// image from the RAW file.
+func GetRAWPixels(ctx context.Context, file string) ([]byte, error) {
+	return run(ctx, fileFS(file), "dcraw",
 		"-r", "1", "1", "1", "1",
 		"-o", "0",
 		"-h",
