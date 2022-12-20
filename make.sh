@@ -13,7 +13,7 @@ cp "build/app.plist" "$tgt/Info.plist"
 cp "build/icon.icns" "$tgt/Resources/"
 cp "build/icon.icns" "$app/droplet.icns"
 cp "build/exiftool_config.pl" "$tgt/MacOS/utils"
-plutil -replace CFBundleVersion -string "0.10.1" RethinkRAW.app/Contents/Info.plist
+plutil -replace CFBundleVersion -string "0.10.2" RethinkRAW.app/Contents/Info.plist
 plutil -replace CFBundleDocumentTypes -xml "$(cat build/doctypes.plist)" RethinkRAW.app/Contents/Info.plist
 ln -sf "RethinkRAW.app/Contents/MacOS/rethinkraw" "$app/rethinkraw-server"
 
@@ -62,7 +62,7 @@ else
     export CGO_ENABLED=0
     export GOOS=darwin
     go clean
-    go generate
+    GOOS= GOARCH= go generate
     GOARCH=amd64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_x64"
     GOARCH=arm64 go build -tags memfs -ldflags "-s -w" -trimpath -o "$tmp/rethinkraw_arm"
     lipo -create "$tmp/rethinkraw_x64" "$tmp/rethinkraw_arm" -output "$tgt/MacOS/rethinkraw"

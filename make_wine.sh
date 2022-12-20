@@ -50,6 +50,6 @@ else
     echo Build release...
     export CGO_ENABLED=0
     go clean
-    go generate
+    GOOS= GOARCH= go generate
     go build -tags memfs -ldflags "-s -w" -trimpath -o "$tgt/rethinkraw"
 fi

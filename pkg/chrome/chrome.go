@@ -8,9 +8,11 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"sync/atomic"
 
@@ -37,7 +39,7 @@ type Cmd struct {
 
 // Command returns the Cmd struct to execute a Chrome app loaded from url,
 // and with the given user data and disk cache directories.
-func Command(url string, dataDir, cacheDir string) *Cmd {
+func Command(url string, dataDir, cacheDir string, arg ...string) *Cmd {
 	once.Do(findChrome)
 	if chrome == "" {
 		return nil
@@ -55,14 +57,22 @@ func Command(url string, dataDir, cacheDir string) *Cmd {
 		}
 	}
 
+	// https://peter.sh/experiments/chromium-command-line-switches/
 	// https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md
 	// https://source.chromium.org/chromium/chromium/src/+/master:chrome/test/chromedriver/chrome_launcher.cc
-	cmd := exec.Command(chrome, "--app="+url, "--user-data-dir="+dataDir, "--disk-cache-dir="+cacheDir,
+	arg = append([]string{
+		"--app=" + url,
+		"--user-data-dir=" + dataDir,
+		"--disk-cache-dir=" + cacheDir,
+		"--class=" + strconv.FormatUint(rand.Uint64(), 16),
 		"--incognito", "--inprivate", "--bwsi", "--remote-debugging-port=0",
-		"--no-first-run", "--no-default-browser-check", "--no-service-autorun",
+		"--no-first-run", "--no-default-browser-check", "--no-service-autorun", "--no-pings",
 		"--disable-sync", "--disable-breakpad", "--disable-extensions", "--disable-default-apps",
 		"--disable-component-extensions-with-background-pages", "--disable-background-networking",
-		"--disable-domain-reliability", "--disable-client-side-phishing-detection", "--disable-component-update")
+		"--disable-domain-reliability", "--disable-client-side-phishing-detection", "--disable-component-update",
+	}, arg...)
+
+	cmd := exec.Command(chrome, arg...)
 	return &Cmd{cmd: cmd, url: origin(url)}
 }
 
