@@ -16,10 +16,11 @@ Or download the [latest release](https://github.com/ncruces/RethinkRAW/releases/
 
 ## Build
 
-Run
-[`make.cmd`](https://github.com/ncruces/RethinkRAW/blob/master/make.cmd) (Windows),
-[`make.sh`](https://github.com/ncruces/RethinkRAW/blob/master/make.sh) (macOS), or
-[`make_wine.sh`](https://github.com/ncruces/RethinkRAW/blob/master/make_wine.sh) (elsewhere). 
+Download and unpack the [latest source code](https://github.com/ncruces/RethinkRAW/releases/latest)
+and run:
+- [`./make.cmd`](https://github.com/ncruces/RethinkRAW/blob/master/make.cmd) (on Windows)
+- [`./make.sh`](https://github.com/ncruces/RethinkRAW/blob/master/make.sh) (on macOS) or
+- [`./make_wine.sh`](https://github.com/ncruces/RethinkRAW/blob/master/make_wine.sh) (elsewhere)
 
 ## Features
 
@@ -41,17 +42,21 @@ To achieve this, RethinkRAW leverages the free
 
 RethinkRAW can act like a server that you can access remotely.
 
-On macOS run:
-
-    /Applications/RethinkRAW.app/Contents/Resources/rethinkraw-server --password [SECRET] [DIRECTORY]
-
 On Windows run:
 
     [PATH_TO]\RethinkRAW.com --password [SECRET] [DIRECTORY]
 
+On macOS run:
+
+    /Applications/RethinkRAW.app/Contents/Resources/rethinkraw-server --password [SECRET] [DIRECTORY]
+
+Elsewhere run:
+
+    [PATH_TO]/rethinkraw-server --password [SECRET] [DIRECTORY]
+
 You can edit photos in `DIRECTORY` by visiting:
 - http://local.app.rethinkraw.com:39639 (on the same computer) or
-- http://127.0.0.1:39639 (replacing ***127.0.0.1*** by your IP address).
+- http://127.0.0.1:39639 (replacing ***127.0.0.1*** by your IP address)
 
 ## Screenshots
 
