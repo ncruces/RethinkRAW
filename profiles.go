@@ -109,16 +109,26 @@ func loadProfiles(make, model string, process float32, grayscale bool, profile, 
 		craw.EmbedProfiles = dngconv.Path
 		profiles, _ := craw.GetCameraProfileNames(make, model)
 
-		res.adobe = "Adobe Standard"
+		upgraded := map[string]string{}
 		for _, name := range profiles {
-			if slices.Contains(profiles, name+" v2") {
-				// skip legacy
-				continue
+			key := name
+			switch {
+			case strings.HasSuffix(key, " v2"):
+				key = name[:len(key)-len(" v2")]
+			case strings.HasSuffix(key, " v4"):
+				key = name[:len(key)-len(" v4")]
 			}
-			if strings.HasPrefix(name, "Adobe Standard") {
+			if upgraded[key] < name {
+				upgraded[key] = name
+			}
+		}
+
+		res.adobe = "Adobe Standard"
+		for key, name := range upgraded {
+			if key == "Adobe Standard" {
 				res.adobe = name
 			} else {
-				res.other = append(res.other, string(name))
+				res.other = append(res.other, name)
 			}
 		}
 

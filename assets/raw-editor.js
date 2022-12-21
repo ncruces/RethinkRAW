@@ -38,7 +38,7 @@ async function loadSettings() {
     if (settings.process) form.process.value = settings.process.toFixed(1);
     if (settings.profiles) {
         let group = form.profile.lastElementChild;
-        group.prepend(...settings.profiles.map(p => new Option(p.replace(/ v2$/, ''), p)));
+        group.prepend(...settings.profiles.map(p => new Option(p.replace(/ v\d$/, ''), p)));
     }
     form.toneCurve.value = settings.toneCurve;
     form.lensProfile.checked = settings.lensProfile;

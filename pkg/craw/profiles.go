@@ -34,8 +34,7 @@ func GetCameraProfiles(make, model string) ([]string, error) {
 		var matches bool
 		if test == "" || test == model || test == makeModel {
 			matches = true
-		} else if n := strings.IndexByte(test, ' '); n > 0 {
-			testMake, testModel := test[:n], test[n+1:]
+		} else if testMake, testModel, ok := strings.Cut(test, " "); ok {
 			matches = testModel == model && strings.Contains(make, testMake)
 		}
 		if matches {
