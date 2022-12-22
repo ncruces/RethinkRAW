@@ -9,6 +9,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
+	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
 	"io/fs"
 	"os"
@@ -19,6 +23,7 @@ import (
 
 	_ "embed"
 
+	"github.com/ncruces/go-image/rotateflip"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 	"golang.org/x/sync/semaphore"
@@ -123,6 +128,40 @@ func GetThumbSize(ctx context.Context, file string) (int, error) {
 	return max, nil
 }
 
+// GetThumbJPEG extracts a JPEG thumbnail from a RAW file.
+//
+// This is the same as calling [GetThumb], but converts PNM thumbnails to JPEG.
+func GetThumbJPEG(ctx context.Context, file string) ([]byte, error) {
+	data, err := GetThumb(ctx, file)
+	if err != nil {
+		return nil, err
+	}
+
+	if bytes.HasPrefix(data, []byte("\xff\xd8")) {
+		return data, nil
+	}
+
+	orientation := make(chan int)
+	go func() {
+		defer close(orientation)
+		orientation <- GetOrientation(ctx, file)
+	}()
+
+	img, err := pnmDecodeThumb(data)
+	if err != nil {
+		return nil, err
+	}
+
+	exf := rotateflip.Orientation(<-orientation)
+	img = rotateflip.Image(img, exf.Op())
+
+	buf := bytes.Buffer{}
+	if err := jpeg.Encode(&buf, img, nil); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 // GetOrientation returns the EXIF orientation of the RAW file, or 0 if unknown.
 func GetOrientation(ctx context.Context, file string) int {
 	out, err := run(ctx, fileFS(file), "dcraw", "-i", "-v", fileFSname)
@@ -161,4 +200,36 @@ func (file fileFS) Open(name string) (fs.File, error) {
 		return nil, fs.ErrNotExist
 	}
 	return nil, fs.ErrInvalid
+}
+
+func pnmDecodeThumb(data []byte) (image.Image, error) {
+	var format, width, height int
+	n, _ := fmt.Fscanf(bytes.NewReader(data), "P%d\n%d %d\n255\n", &format, &width, &height)
+	if n == 3 {
+		for i := 0; i < 3; i++ {
+			data = data[bytes.IndexByte(data, '\n')+1:]
+		}
+
+		rect := image.Rect(0, 0, width, height)
+		switch {
+		case format == 5 && len(data) == width*height:
+			img := image.NewGray(rect)
+			copy(img.Pix, data)
+			return img, nil
+
+		case format == 6 && len(data) == 3*width*height:
+			img := image.NewRGBA(rect)
+			var i, j int
+			for k := 0; k < width*height; k++ {
+				img.Pix[i+0] = data[j+0]
+				img.Pix[i+1] = data[j+1]
+				img.Pix[i+2] = data[j+2]
+				img.Pix[i+3] = 255
+				i += 4
+				j += 3
+			}
+			return img, nil
+		}
+	}
+	return nil, errors.New("unsupported thumbnail")
 }

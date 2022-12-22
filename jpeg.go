@@ -3,11 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"encoding/binary"
 	"errors"
-	"fmt"
-	"image"
 	"image/jpeg"
 	"log"
 
@@ -18,28 +15,7 @@ import (
 
 func previewJPEG(ctx context.Context, path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
-	data, err := dcraw.GetThumb(ctx, path)
-	if err != nil {
-		return nil, err
-	}
-
-	if bytes.HasPrefix(data, []byte("\xff\xd8")) {
-		return data, nil
-	}
-
-	img, err := pnmDecodeThumb(data)
-	if err != nil {
-		return nil, err
-	}
-
-	exf := rotateflip.Orientation(dcraw.GetOrientation(ctx, path))
-	img = rotateflip.Image(img, exf.Op())
-
-	buf := bytes.Buffer{}
-	if err := jpeg.Encode(&buf, img, nil); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+	return dcraw.GetThumbJPEG(ctx, path)
 }
 
 func exportJPEG(ctx context.Context, path string) ([]byte, error) {
@@ -176,36 +152,4 @@ func jfifHeader(settings exportSettings) []byte {
 		data[13] = 2
 	}
 	return data[:]
-}
-
-func pnmDecodeThumb(data []byte) (image.Image, error) {
-	var format, width, height int
-	n, _ := fmt.Fscanf(bytes.NewReader(data), "P%d\n%d %d\n255\n", &format, &width, &height)
-	if n == 3 {
-		for i := 0; i < 3; i++ {
-			data = data[bytes.IndexByte(data, '\n')+1:]
-		}
-
-		rect := image.Rect(0, 0, width, height)
-		switch {
-		case format == 5 && len(data) == width*height:
-			img := image.NewGray(rect)
-			copy(img.Pix, data)
-			return img, nil
-
-		case format == 6 && len(data) == 3*width*height:
-			img := image.NewRGBA(rect)
-			var i, j int
-			for k := 0; k < width*height; k++ {
-				img.Pix[i+0] = data[j+0]
-				img.Pix[i+1] = data[j+1]
-				img.Pix[i+2] = data[j+2]
-				img.Pix[i+3] = 255
-				i += 4
-				j += 3
-			}
-			return img, nil
-		}
-	}
-	return nil, errors.New("unsupported thumbnail")
 }
