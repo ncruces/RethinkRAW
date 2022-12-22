@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -50,22 +49,6 @@ func dngHasEdits(path string) bool {
 	log.Print("exiftool (has edits?)...")
 	out, err := exifserver.Command("-XMP-photoshop:all", path)
 	return err == nil && len(out) > 0
-}
-
-func rawOrientation(path string) int {
-	log.Print("exiftool (get orientation)...")
-	out, err := exifserver.Command("--printConv", "-short3", "-fast2", "-Orientation", path)
-	if err != nil {
-		return 0
-	}
-
-	var orientation int
-	_, err = fmt.Fscanf(bytes.NewReader(out), "%d\n", &orientation)
-	if err != nil {
-		return 0
-	}
-
-	return orientation
 }
 
 func cameraMatchingWhiteBalance(path string) string {

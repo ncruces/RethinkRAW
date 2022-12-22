@@ -32,6 +32,7 @@ var (
 	wasm       wazero.Runtime
 	module     wazero.CompiledModule
 	sem        *semaphore.Weighted
+	orienRegex *regexp.Regexp
 	thumbRegex *regexp.Regexp
 	counter    atomic.Uint64
 )
@@ -48,6 +49,7 @@ func compile() {
 	}
 
 	sem = semaphore.NewWeighted(6)
+	orienRegex = regexp.MustCompile(`Orientation: +(\d)`)
 	thumbRegex = regexp.MustCompile(`Thumb size: +(\d+) x (\d+)`)
 }
 
@@ -78,7 +80,7 @@ func run(ctx context.Context, root fs.FS, args ...string) ([]byte, error) {
 // The thumbnail will either be a JPEG, or a PNM file in 8-bit P5/P6 format.
 // For more about PNM, see https://en.wikipedia.org/wiki/Netpbm
 func GetThumb(ctx context.Context, file string) ([]byte, error) {
-	out, err := run(ctx, fileFS(file), "dcraw", "-e", "-c", fileFSname)
+	out, err := run(ctx, fileFS(file), "dcraw", "-e", "-e", "-c", fileFSname)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +121,19 @@ func GetThumbSize(ctx context.Context, file string) (int, error) {
 		}
 	}
 	return max, nil
+}
+
+// GetOrientation returns the EXIF orientation of the RAW file, or 0 if unknown.
+func GetOrientation(ctx context.Context, file string) int {
+	out, err := run(ctx, fileFS(file), "dcraw", "-i", "-v", fileFSname)
+	if err != nil {
+		return 0
+	}
+
+	if match := orienRegex.FindSubmatch(out); match != nil {
+		return int(match[1][0] - '0')
+	}
+	return 0
 }
 
 // GetRAWPixels develops an half-resolution, demosaiced, not white balanced

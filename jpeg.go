@@ -32,7 +32,7 @@ func previewJPEG(ctx context.Context, path string) ([]byte, error) {
 		return nil, err
 	}
 
-	exf := rotateflip.Orientation(rawOrientation(path))
+	exf := rotateflip.Orientation(dcraw.GetOrientation(ctx, path))
 	img = rotateflip.Image(img, exf.Op())
 
 	buf := bytes.Buffer{}
