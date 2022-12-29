@@ -7,6 +7,7 @@ import (
 	"errors"
 	"image/jpeg"
 	"log"
+	"os"
 
 	"github.com/ncruces/go-image/resize"
 	"github.com/ncruces/go-image/rotateflip"
@@ -15,12 +16,22 @@ import (
 
 func previewJPEG(ctx context.Context, path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
-	return dcraw.GetThumbJPEG(ctx, path)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return dcraw.GetThumbJPEG(ctx, f)
 }
 
 func exportJPEG(ctx context.Context, path string) ([]byte, error) {
 	log.Print("dcraw (get thumb)...")
-	data, err := dcraw.GetThumb(ctx, path)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := dcraw.GetThumb(ctx, f)
 	if err != nil {
 		return nil, err
 	}

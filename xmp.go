@@ -468,7 +468,12 @@ func loadFloat64s(dst *[]float64, m map[string][]byte, key string) {
 
 func dngPreview(ctx context.Context, path string) string {
 	log.Print("dcraw (get thumb size)...")
-	size, err := dcraw.GetThumbSize(ctx, path)
+	f, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+	size, err := dcraw.GetThumbSize(ctx, f)
 	if err != nil {
 		return ""
 	}
@@ -485,7 +490,11 @@ func dngPreview(ctx context.Context, path string) string {
 
 func getRawPixels(ctx context.Context, path, dest string) error {
 	log.Print("dcraw (get raw pixels)...")
-	data, err := dcraw.GetRAWPixels(ctx, path)
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	data, err := dcraw.GetRAWPixels(ctx, f)
 	if err != nil {
 		return err
 	}
