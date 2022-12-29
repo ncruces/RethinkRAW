@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ncruces/go-exiftool"
+	_ "github.com/ncruces/rethinkraw/pkg/dcraw/embed"
 )
 
 var (

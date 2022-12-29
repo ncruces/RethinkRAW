@@ -1,8 +1,15 @@
-// Package dcraw provides support running an embed version of dcraw.
+// Package dcraw provides support running dcraw.
 //
-// Importing this package embeds a WASM build of dcraw into your binaries.
-// Source code for that build of dcraw is available from:
-// https://github.com/ncruces/dcraw/blob/ncruces-rethinkraw/dcraw.c
+// To use this package you need to point it to a WASM/WASI build of dcraw.
+// My builds of dcraw are available from:
+// https://github.com/ncruces/dcraw
+//
+// A build of dcraw build can be provided by your application,
+// loaded from a file path or embed into your application.
+//
+// To embed a build of dcraw into your application, import package embed:
+//
+//	import _ github.com/ncruces/rethinkraw/pkg/dcraw/embed
 package dcraw
 
 import (
@@ -15,6 +22,7 @@ import (
 	"image/jpeg"
 	"io"
 	"io/fs"
+	"os"
 	"regexp"
 	"strconv"
 	"sync"
@@ -28,8 +36,11 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-//go:embed dcraw.wasm
-var Binary []byte
+// Configure Dcraw.
+var (
+	Binary []byte // Binary to execute.
+	Path   string // Path to load the binary from.
+)
 
 var (
 	once       sync.Once
@@ -46,6 +57,15 @@ func compile() {
 
 	wasm = wazero.NewRuntime(ctx)
 	wasi_snapshot_preview1.MustInstantiate(ctx, wasm)
+
+	if Binary == nil && Path != "" {
+		if bin, err := os.ReadFile(Path); err != nil {
+			panic(err)
+		} else {
+			Binary = bin
+		}
+	}
+
 	if m, err := wasm.CompileModule(ctx, Binary); err != nil {
 		panic(err)
 	} else {
