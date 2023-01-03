@@ -112,9 +112,14 @@ func GetThumb(ctx context.Context, r io.ReadSeeker) ([]byte, error) {
 		return nil, err
 	}
 
-	if off := len(out) - 20; off >= 0 && bytes.HasPrefix(out[off:], []byte("\xff\xee\x12\x00")) {
-		offset := int64(binary.LittleEndian.Uint64(out[off+4+0:]))
-		length := int64(binary.LittleEndian.Uint64(out[off+4+8:]))
+	const eoi = "\xff\xd9"
+	const tag = "OFfSeTLeNgtH"
+	const size = 2 + 2*64/8 + len(tag)
+	if off := len(out) - size; off >= 0 &&
+		bytes.HasSuffix(out, []byte(tag)) &&
+		bytes.HasPrefix(out[off:], []byte(eoi)) {
+		offset := int64(binary.LittleEndian.Uint64(out[off+2:]))
+		length := int64(binary.LittleEndian.Uint64(out[off+2+64/8:]))
 		_, err := r.Seek(offset, io.SeekStart)
 		if err != nil {
 			return nil, err

@@ -1,7 +1,7 @@
 // Package embed provides support embeding dcraw into your application.
 //
 // You can obtain this build of dcraw from:
-// https://github.com/ncruces/dcraw/releases/tag/v9.28.5-wasm
+// https://github.com/ncruces/dcraw/releases/tag/v9.28.6-wasm
 //
 // Before importing this package, inspect the dcraw license and
 // consider the implications.
