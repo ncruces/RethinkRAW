@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -12,7 +13,6 @@ import (
 
 var server struct {
 	wg  sync.WaitGroup
-	mtx sync.Mutex
 	cmd *exec.Cmd
 }
 
@@ -22,53 +22,56 @@ func IsInstalled() bool {
 	return err == nil
 }
 
-// Startup starts a persistent Wine server.
-// A persistent Wine server improves the performance and reliability of subsequent usages of Wine.
+// Startup starts a persistent Wine server,
+// which improves the performance and reliability of subsequent usages of Wine.
 func Startup() error {
-	server.mtx.Lock()
-	defer server.mtx.Unlock()
-
-	server.wg.Add(1)
-	server.cmd = exec.Command("wineserver", "--persistent", "--foreground", "--debug=0")
-	if err := server.cmd.Start(); err != nil {
+	cmd := exec.Command("wineserver", "--persistent", "--foreground", "--debug=0")
+	if err := cmd.Start(); err != nil {
 		return err
 	}
 
+	server.cmd = cmd
+	server.wg.Add(1)
 	go func() {
+		// This ensures commands that capture stdout succeed.
 		exec.Command("wine", "cmd", "/c", "ver").Run()
 		server.wg.Done()
-
-		err := server.cmd.Wait()
-
-		server.mtx.Lock()
-		defer server.mtx.Unlock()
-
-		var eerr *exec.ExitError
-		if err == nil || errors.As(err, &eerr) && eerr.ExitCode() == 2 {
-			server.cmd = nil
-		}
 	}()
 
 	return nil
 }
 
-// Shutdown shuts any persistent Wine server started by this package down.
-func Shutdown() error {
-	server.mtx.Lock()
-	defer server.mtx.Unlock()
-
-	cmd := server.cmd
-	if cmd != nil {
+// Shutdown shuts down a persistent Wine server started by this package,
+// and waits for it to complete.
+func Shutdown() (ex error) {
+	if server.cmd != nil {
+		server.cmd.Process.Signal(os.Interrupt)
+		err := server.cmd.Wait()
 		server.cmd = nil
-		return server.cmd.Process.Signal(os.Interrupt)
+
+		var eerr *exec.ExitError
+		if errors.As(err, &eerr) && eerr.ExitCode() == 2 {
+			return nil
+		}
+		return err
 	}
 	return nil
 }
 
 // Getenv retrieves the value of the Windows (Wine) environment variable named by the key.
 func Getenv(key string) (string, error) {
+	for _, b := range []byte(key) {
+		if b == '(' || b == ')' || b == '_' ||
+			'0' <= b && b <= '9' ||
+			'a' <= b && b <= 'z' ||
+			'A' <= b && b <= 'Z' {
+			continue
+		}
+		return "", fmt.Errorf("wine: invalid character %q in variable name", b)
+	}
+
 	server.wg.Wait()
-	out, err := exec.Command("wine", "cmd", "/c", "echo", "%"+key+"%").Output()
+	out, err := exec.Command("wine", "cmd", "/c", "if defined", key, "echo", "%"+key+"%").Output()
 	if err != nil {
 		return "", err
 	}
@@ -97,12 +100,14 @@ func ToWindows(path string) (string, error) {
 
 // Command returns the [exec.Cmd] struct to execute a Windows program using Wine.
 func Command(name string, args ...string) *exec.Cmd {
+	server.wg.Wait()
 	args = append([]string{name}, args...)
 	return exec.Command("wine", args...)
 }
 
 // CommandContext is like [Command] but includes a context.
 func CommandContext(ctx context.Context, name string, args ...string) *exec.Cmd {
+	server.wg.Wait()
 	args = append([]string{name}, args...)
 	return exec.CommandContext(ctx, "wine", args...)
 }
