@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/ncruces/go-exiftool"
-	_ "github.com/ncruces/rethinkraw/pkg/dcraw/embed"
+	"github.com/ncruces/rethinkraw/pkg/dcraw"
 )
 
 var (
@@ -33,18 +33,15 @@ func SetupPaths() (err error) {
 	TempDir = filepath.Join(os.TempDir(), "RethinkRAW")
 
 	name := filepath.Base(os.Args[0])
-	switch runtime.GOOS {
-	case "windows":
+	if runtime.GOOS == "windows" {
 		ServerMode = name == "RethinkRAW.com"
+		dcraw.Path = BaseDir + `\utils\dcraw.wasm`
 		exiftool.Exec = BaseDir + `\utils\exiftool\exiftool.exe`
 		exiftool.Arg1 = strings.TrimSuffix(exiftool.Exec, ".exe")
 		exiftool.Config = BaseDir + `\utils\exiftool_config.pl`
-	case "darwin":
+	} else {
 		ServerMode = name == "rethinkraw-server"
-		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
-		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
-	default:
-		ServerMode = name == "rethinkraw-server"
+		dcraw.Path = BaseDir + "/utils/dcraw.wasm"
 		exiftool.Exec = BaseDir + "/utils/exiftool/exiftool"
 		exiftool.Config = BaseDir + "/utils/exiftool_config.pl"
 	}

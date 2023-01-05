@@ -23,6 +23,12 @@ if [ ! -f "$tgt/MacOS/utils/exiftool/exiftool" ]; then
     curl -sL "$url" | tar xz -C "$tgt/MacOS/utils"
 fi
 
+if [ ! -f "$tgt/MacOS/utils/dcraw.wasm" ]; then
+    echo Download dcraw...
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz"
+    curl -sL "$url" | gzip -dc > "$tgt/MacOS/utils/dcraw.wasm"
+fi
+
 if [ ! -f "assets/normalize.css" ]; then
     echo Download normalize.css...
     curl -sL "https://unpkg.com/@csstools/normalize.css" > assets/normalize.css

@@ -15,6 +15,12 @@ if [ ! -f "$tgt/utils/exiftool/exiftool" ]; then
     curl -sL "$url" | tar xz -C "$tgt/utils"
 fi
 
+if [ ! -f "$tgt/utils/dcraw.wasm" ]; then
+    echo Download dcraw...
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz"
+    curl -sL "$url" | gzip -dc > "$tgt/utils/dcraw.wasm"
+fi
+
 if [ ! -f "assets/normalize.css" ]; then
     echo Download normalize.css...
     curl -sL "https://unpkg.com/@csstools/normalize.css" > assets/normalize.css
@@ -43,8 +49,9 @@ elif [[ "$1" == serve ]]; then
     go build -race -o "$tgt/rethinkraw" && shift && exec "$tgt/rethinkraw-server" "$@"
 elif [[ "$1" == install ]]; then
     echo Build installer...
-    cp "assets/favicon-192.png" "$tgt/icon.png"
     rm -rf "$tgt/data"
+    export COPYFILE_DISABLE=1
+    cp "assets/favicon-192.png" "$tgt/icon.png"
     tar cfj RethinkRAW.tbz "$tgt"
 else
     echo Build release...

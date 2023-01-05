@@ -14,6 +14,12 @@ IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
     go run github.com/ncruces/go-fetch -unpack !url! %tgt%\utils
 )
 
+IF NOT EXIST %tgt%\utils\dcraw.wasm (
+    ECHO Download dcraw...
+    SET "url=https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz"
+    go run github.com/ncruces/go-fetch -unpack !url! %tgt%\utils
+)
+
 IF NOT EXIST assets\normalize.css (
     ECHO Download normalize.css...
     go run github.com/ncruces/go-fetch "https://unpkg.com/@csstools/normalize.css" assets\normalize.css
