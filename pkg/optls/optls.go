@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"sync/atomic"
+	"time"
 )
 
 // Listen creates a listener accepting connections on the given network address using [net.Listen].
@@ -41,6 +42,10 @@ func (l *listener) Accept() (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	deadline := time.Now().Add(time.Second)
+	inner.SetReadDeadline(deadline)
+	defer inner.SetReadDeadline(time.Time{})
 
 	conn := conn{Conn: inner}
 	conn.n, conn.err = inner.Read(conn.p[:])
