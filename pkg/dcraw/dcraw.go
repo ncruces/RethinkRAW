@@ -214,28 +214,6 @@ func GetRAWPixels(ctx context.Context, r io.ReadSeeker) ([]byte, error) {
 		readerFSname)
 }
 
-type readerFS struct{ io.ReadSeeker }
-
-const readerFSname = "input"
-
-func (f readerFS) Open(name string) (fs.File, error) {
-	if name == readerFSname {
-		_, err := f.Seek(0, io.SeekStart)
-		if err != nil {
-			return nil, err
-		}
-		return f, nil
-	}
-	if fs.ValidPath(name) {
-		return nil, fs.ErrNotExist
-	}
-	return nil, fs.ErrInvalid
-}
-
-func (f readerFS) Close() error { return nil }
-
-func (f readerFS) Stat() (fs.FileInfo, error) { panic("not implemented") }
-
 func pnmDecodeThumb(data []byte) (image.Image, error) {
 	var format, width, height int
 	n, _ := fmt.Fscanf(bytes.NewReader(data), "P%d\n%d %d\n255\n", &format, &width, &height)
