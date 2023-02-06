@@ -29,6 +29,8 @@ github.com/ncruces/go-image v0.1.0 h1:PCbPeiqA2Pbc7m3jWBjhJodwkGew8HEB7fC8SVM+8E
 github.com/ncruces/go-image v0.1.0/go.mod h1:DUnNl2l0T6tEuK266gUGy3Xq8C+A/71XuoWsAHh8bzg=
 github.com/ncruces/jason v0.4.0 h1:0Gy0/YHmy+P2tBNFo31mgzowJuhe35S7jxcEilXIIBI=
 github.com/ncruces/jason v0.4.0/go.mod h1:gaKw0MQbOK/IR2sJ6zBSCOLn+uPOv0iLH4VxOtdkGtU=
+github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff h1:7/ezL9FCZF1G50fjRG3r7rFxOnrbbzZUFzDj7Dll4mY=
+github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff/go.mod h1:MBsmMDae55NRj6StMZFdH2jjj4eCGkQU1wtRmQyIUZI=
 github.com/ncruces/zenity v0.10.5 h1:nLgsnwUF+U2RX7cMedsahzpBjAJ2D86kxW1QArd8qV0=
 github.com/ncruces/zenity v0.10.5/go.mod h1:qFjCrIyK2pEBdNazAYtpOYVpz4/vCEfLfCybTexGuEY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -54,8 +56,8 @@ github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5t
 go.uber.org/goleak v1.2.0 h1:xqgm/S+aQvhWFTtR0XK3Jvg7z8kGV8P4X14IzwN3Eqk=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
-golang.org/x/exp v0.0.0-20230113213754-f9f960f08ad4 h1:CNkDRtCj8otM5CFz5jYvbr8ioXX8flVsLfDWEj0M5kk=
-golang.org/x/exp v0.0.0-20230113213754-f9f960f08ad4/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9 h1:frX3nT9RkKybPnjyI+yvZh6ZucTZatCCEm9D47sZ2zo=
+golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/image v0.3.0 h1:HTDXbdK9bjfSWkPzDJIw89W8CAtfFGduujWs33NLLsg=
 golang.org/x/image v0.3.0/go.mod h1:fXd9211C/0VTlYuAcOhW8dY/RtEJqODXOWBDpmYBf+A=
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
