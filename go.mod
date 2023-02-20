@@ -10,9 +10,8 @@ require (
 	github.com/ncruces/go-fs v0.2.1
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/keyless v0.0.0-20220701091349-958263d1e1ff
 	github.com/ncruces/zenity v0.10.5
-	github.com/tetratelabs/wazero v1.0.0-pre.8
+	github.com/tetratelabs/wazero v1.0.0-pre.9
 	golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9
 	golang.org/x/net v0.5.0
 	golang.org/x/sync v0.1.0
@@ -29,5 +28,4 @@ require (
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
 	golang.org/x/image v0.3.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
 )
