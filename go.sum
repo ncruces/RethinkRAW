@@ -29,6 +29,8 @@ github.com/ncruces/go-image v0.1.0 h1:PCbPeiqA2Pbc7m3jWBjhJodwkGew8HEB7fC8SVM+8E
 github.com/ncruces/go-image v0.1.0/go.mod h1:DUnNl2l0T6tEuK266gUGy3Xq8C+A/71XuoWsAHh8bzg=
 github.com/ncruces/jason v0.4.0 h1:0Gy0/YHmy+P2tBNFo31mgzowJuhe35S7jxcEilXIIBI=
 github.com/ncruces/jason v0.4.0/go.mod h1:gaKw0MQbOK/IR2sJ6zBSCOLn+uPOv0iLH4VxOtdkGtU=
+github.com/ncruces/keyless v0.0.0-20230223133947-fcba6242c6a3 h1:jvSzvaXfzO77EwtouvJ+3VhPNdKn2ouZi0wWVjvhyqE=
+github.com/ncruces/keyless v0.0.0-20230223133947-fcba6242c6a3/go.mod h1:Bn19bk/oMEXCIFxgk941V9FzdLVjrcC3xRjYaMCeUBg=
 github.com/ncruces/zenity v0.10.6 h1:lA5SupAxxDSEL4BkaLBkv2LJrh2YxJkbEBxwrF0awXY=
 github.com/ncruces/zenity v0.10.6/go.mod h1:Mp6EUzPkII5A30OSUN/zfEVYOZ3196Fzvq1ba+qyxRk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
