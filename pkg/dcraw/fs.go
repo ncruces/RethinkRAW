@@ -85,7 +85,7 @@ func (d *readerDir) IsDir() bool { return true }
 
 func (d *readerDir) ModTime() time.Time { return time.Time{} }
 
-func (d *readerDir) Mode() fs.FileMode { return 0700 }
+func (d *readerDir) Mode() fs.FileMode { return fs.ModeDir | 0700 }
 
 func (d *readerDir) Name() string { return "." }
 
