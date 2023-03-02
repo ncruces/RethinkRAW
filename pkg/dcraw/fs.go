@@ -67,14 +67,14 @@ func (d *readerDir) Close() error {
 }
 
 func (d *readerDir) ReadDir(n int) (entries []fs.DirEntry, err error) {
-	if d.r != nil {
+	switch {
+	case d.r != nil:
 		entries = []fs.DirEntry{readerFile{d.r}}
 		d.r = nil
+	case n > 0:
+		err = io.EOF
 	}
-	if n <= 0 {
-		return entries, nil
-	}
-	return entries, io.EOF
+	return
 }
 
 func (d *readerDir) Read([]byte) (int, error) { return 0, nil }
