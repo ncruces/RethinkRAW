@@ -13,10 +13,10 @@ require (
 	github.com/ncruces/keyless v0.0.0-20230223133947-fcba6242c6a3
 	github.com/ncruces/zenity v0.10.6
 	github.com/tetratelabs/wazero v1.0.0-rc.1
-	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
-	golang.org/x/net v0.7.0
+	golang.org/x/exp v0.0.0-20230304125523-9ff063c70017
+	golang.org/x/net v0.8.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.5.0
+	golang.org/x/sys v0.6.0
 	gonum.org/v1/gonum v0.12.0
 )
 
@@ -28,6 +28,6 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
-	golang.org/x/image v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/image v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 )
