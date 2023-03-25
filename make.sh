@@ -13,7 +13,7 @@ cp "build/app.plist" "$tgt/Info.plist"
 cp "build/icon.icns" "$tgt/Resources/"
 cp "build/icon.icns" "$app/droplet.icns"
 cp "build/exiftool_config.pl" "$tgt/MacOS/utils"
-plutil -replace CFBundleVersion -string "0.10.5" RethinkRAW.app/Contents/Info.plist
+plutil -replace CFBundleVersion -string "0.10.7" RethinkRAW.app/Contents/Info.plist
 plutil -replace CFBundleDocumentTypes -xml "$(cat build/doctypes.plist)" RethinkRAW.app/Contents/Info.plist
 ln -sf "RethinkRAW.app/Contents/MacOS/rethinkraw" "$app/rethinkraw-server"
 
@@ -25,8 +25,9 @@ fi
 
 if [ ! -f "$tgt/MacOS/utils/dcraw.wasm" ]; then
     echo Download dcraw...
-    url="https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz"
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.7-wasm/dcraw.wasm.gz"
     curl -sL "$url" | gzip -dc > "$tgt/MacOS/utils/dcraw.wasm"
+    cp "$tgt/MacOS/utils/dcraw.wasm" "pkg/dcraw/embed/dcraw.wasm"
 fi
 
 if [ ! -f "assets/normalize.css" ]; then

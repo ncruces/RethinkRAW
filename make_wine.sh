@@ -17,8 +17,9 @@ fi
 
 if [ ! -f "$tgt/utils/dcraw.wasm" ]; then
     echo Download dcraw...
-    url="https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz"
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.7-wasm/dcraw.wasm.gz"
     curl -sL "$url" | gzip -dc > "$tgt/utils/dcraw.wasm"
+    cp "$tgt/utils/dcraw.wasm" "pkg/dcraw/embed/dcraw.wasm"
 fi
 
 if [ ! -f "assets/normalize.css" ]; then

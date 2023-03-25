@@ -16,8 +16,9 @@ IF NOT EXIST %tgt%\utils\exiftool\exiftool.exe (
 
 IF NOT EXIST %tgt%\utils\dcraw.wasm (
     ECHO Download dcraw...
-    SET "url=https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz"
+    SET "url=https://github.com/ncruces/dcraw/releases/download/v9.28.7-wasm/dcraw.wasm.gz"
     go run github.com/ncruces/go-fetch -unpack !url! %tgt%\utils
+    COPY /Y %tgt%\utils\dcraw.wasm pkg\dcraw\embed\dcraw.wasm
 )
 
 IF NOT EXIST assets\normalize.css (

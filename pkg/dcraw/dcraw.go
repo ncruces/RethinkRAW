@@ -26,7 +26,6 @@ import (
 	"regexp"
 	"strconv"
 	"sync"
-	"sync/atomic"
 
 	_ "embed"
 
@@ -49,7 +48,6 @@ var (
 	sem        *semaphore.Weighted
 	orienRegex *regexp.Regexp
 	thumbRegex *regexp.Regexp
-	counter    atomic.Uint64
 )
 
 func compile() {
@@ -88,8 +86,7 @@ func run(ctx context.Context, root fs.FS, args ...string) ([]byte, error) {
 
 	var buf bytes.Buffer
 	cfg := wazero.NewModuleConfig().
-		WithArgs(args...).WithStdout(&buf).WithFS(root).
-		WithName("dcraw-" + strconv.FormatUint(counter.Add(1), 10))
+		WithArgs(args...).WithStdout(&buf).WithFS(root)
 	module, err := wasm.InstantiateModule(ctx, module, cfg)
 	if err != nil {
 		return nil, err

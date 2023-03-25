@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"io"
 	"io/fs"
 	"log"
 	"math/rand"
@@ -16,8 +15,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/gorilla/websocket"
 	"github.com/ncruces/jason"
-	"golang.org/x/net/websocket"
 )
 
 var once sync.Once
@@ -103,7 +102,7 @@ func (c *Cmd) Start() error {
 		line := scan.Bytes()
 		if bytes.HasPrefix(line, []byte(prefix)) {
 			url := line[len(prefix):]
-			c.ws, err = websocket.Dial(string(url), "", c.url)
+			c.ws, _, err = websocket.DefaultDialer.Dial(string(url), nil)
 			if err != nil {
 				return err
 			}
@@ -131,16 +130,19 @@ func (c *Cmd) Close() error {
 
 func (c *Cmd) receiveloop() {
 	var started bool
-	var targets = set[string]{}
+	targets := set[string]{}
 	c.send("Target.setDiscoverTargets", "", jason.Object{"discover": true})
 	for {
 		var msg cdpMessage
-		err := websocket.JSON.Receive(c.ws, &msg)
-		if err == io.EOF {
-			break
-		}
+		err := c.ws.ReadJSON(&msg)
 		if err != nil {
-			log.Print("chrome:", err)
+			if websocket.IsUnexpectedCloseError(err,
+				websocket.CloseGoingAway,
+				websocket.CloseNormalClosure,
+				websocket.CloseAbnormalClosure) {
+				log.Println("chrome:", err)
+			}
+			break
 		}
 		switch msg.Method {
 		case "Target.targetDestroyed", "Target.targetCrashed":
@@ -163,7 +165,7 @@ func (c *Cmd) receiveloop() {
 }
 
 func (c *Cmd) send(method, session string, params any) error {
-	return websocket.JSON.Send(c.ws, jason.Object{
+	return c.ws.WriteJSON(jason.Object{
 		"id":        c.msg.Add(1),
 		"method":    method,
 		"params":    params,
