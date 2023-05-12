@@ -6,12 +6,11 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/josephspurrier/goversioninfo v1.4.0
-	github.com/ncruces/go-exiftool v0.4.0
+	github.com/ncruces/go-exiftool v0.4.1
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
 	github.com/ncruces/go-fs v0.2.1
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/keyless v0.0.0-20230223133947-fcba6242c6a3
 	github.com/ncruces/zenity v0.10.8
 	github.com/tetratelabs/wazero v1.1.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
@@ -31,5 +30,4 @@ require (
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
 	golang.org/x/image v0.7.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
 )
