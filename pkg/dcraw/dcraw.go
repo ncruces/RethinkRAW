@@ -27,8 +27,6 @@ import (
 	"strconv"
 	"sync"
 
-	_ "embed"
-
 	"github.com/ncruces/go-image/rotateflip"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"

@@ -14,7 +14,7 @@ import (
 )
 
 //go:generate -command go-fetch go run github.com/ncruces/go-fetch
-//go:generate go-fetch -unpack "https://github.com/ncruces/dcraw/releases/download/v9.28.6-wasm/dcraw.wasm.gz" dcraw.wasm
+//go:generate go-fetch -unpack "https://github.com/ncruces/dcraw/releases/download/v9.28.8-wasm/dcraw.wasm.gz" dcraw.wasm
 
 //go:embed dcraw.wasm
 var binary []byte

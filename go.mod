@@ -11,7 +11,7 @@ require (
 	github.com/ncruces/go-fs v0.2.2
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/keyless v0.0.0-20230929092343-b1e2916ba698
+	github.com/ncruces/keyless v0.0.0-20231012105822-fdf8c90aaed7
 	github.com/ncruces/zenity v0.10.10
 	github.com/tetratelabs/wazero v1.5.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
