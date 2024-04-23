@@ -11,12 +11,11 @@ require (
 	github.com/ncruces/go-fs v0.2.2
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/keyless v0.0.0-20231012105822-fdf8c90aaed7
 	github.com/ncruces/zenity v0.10.10
 	github.com/tetratelabs/wazero v1.5.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sync v0.4.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/sys v0.18.0
 	gonum.org/v1/gonum v0.14.0
 )
 
@@ -30,6 +29,5 @@ require (
 	github.com/tdewolff/minify/v2 v2.12.9 // indirect
 	github.com/tdewolff/parse/v2 v2.6.8 // indirect
 	golang.org/x/image v0.13.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 )
