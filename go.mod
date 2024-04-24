@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/gorilla/schema v1.2.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/josephspurrier/goversioninfo v1.4.0
 	github.com/ncruces/go-exiftool v0.4.1
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
