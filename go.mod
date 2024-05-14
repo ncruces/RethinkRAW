@@ -11,7 +11,7 @@ require (
 	github.com/ncruces/go-fs v0.2.2
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/zenity v0.10.10
+	github.com/ncruces/zenity v0.10.12
 	github.com/tetratelabs/wazero v1.7.2
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/sync v0.4.0
@@ -28,6 +28,6 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/tdewolff/minify/v2 v2.12.9 // indirect
 	github.com/tdewolff/parse/v2 v2.6.8 // indirect
-	golang.org/x/image v0.13.0 // indirect
+	golang.org/x/image v0.15.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
 )
