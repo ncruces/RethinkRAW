@@ -1,10 +1,12 @@
 module github.com/ncruces/rethinkraw
 
-go 1.20
+go 1.21
+
+toolchain go1.22.3
 
 require (
-	github.com/gorilla/schema v1.2.0
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/schema v1.3.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/josephspurrier/goversioninfo v1.4.0
 	github.com/ncruces/go-exiftool v0.4.1
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
@@ -13,10 +15,10 @@ require (
 	github.com/ncruces/jason v0.4.0
 	github.com/ncruces/zenity v0.10.12
 	github.com/tetratelabs/wazero v1.7.2
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/sync v0.4.0
+	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d
+	golang.org/x/sync v0.7.0
 	golang.org/x/sys v0.20.0
-	gonum.org/v1/gonum v0.14.0
+	gonum.org/v1/gonum v0.15.0
 )
 
 require (
@@ -28,6 +30,7 @@ require (
 	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/tdewolff/minify/v2 v2.12.9 // indirect
 	github.com/tdewolff/parse/v2 v2.6.8 // indirect
-	golang.org/x/image v0.15.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/image v0.16.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 )
