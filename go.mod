@@ -3,7 +3,7 @@ module github.com/ncruces/rethinkraw
 go 1.22
 
 require (
-	github.com/gorilla/schema v1.3.0
+	github.com/gorilla/schema v1.4.0
 	github.com/gorilla/websocket v1.5.2
 	github.com/josephspurrier/goversioninfo v1.4.0
 	github.com/ncruces/go-exiftool v0.4.1
@@ -11,7 +11,6 @@ require (
 	github.com/ncruces/go-fs v0.2.2
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/keyless v0.0.0-20240419131149-ff26ae007212
 	github.com/ncruces/zenity v0.10.12
 	github.com/tetratelabs/wazero v1.7.3
 	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8
@@ -31,5 +30,4 @@ require (
 	github.com/tdewolff/parse/v2 v2.6.8 // indirect
 	golang.org/x/image v0.17.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
 )
