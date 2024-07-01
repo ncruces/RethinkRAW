@@ -3,7 +3,7 @@ module github.com/ncruces/rethinkraw
 go 1.22
 
 require (
-	github.com/gorilla/schema v1.3.0
+	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.5.2
 	github.com/josephspurrier/goversioninfo v1.4.0
 	github.com/ncruces/go-exiftool v0.4.1
