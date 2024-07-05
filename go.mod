@@ -11,11 +11,11 @@ require (
 	github.com/ncruces/go-fs v0.2.2
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/zenity v0.10.12
+	github.com/ncruces/zenity v0.10.13
 	github.com/tetratelabs/wazero v1.7.3
 	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.21.0
+	golang.org/x/sys v0.22.0
 	gonum.org/v1/gonum v0.15.0
 )
 
