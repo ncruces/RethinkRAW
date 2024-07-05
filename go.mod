@@ -15,7 +15,7 @@ require (
 	github.com/tetratelabs/wazero v1.7.3
 	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.21.0
+	golang.org/x/sys v0.22.0
 	gonum.org/v1/gonum v0.15.0
 )
 
