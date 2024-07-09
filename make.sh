@@ -25,7 +25,7 @@ fi
 
 if [ ! -f "$tgt/MacOS/utils/dcraw.wasm" ]; then
     echo Download dcraw...
-    url="https://github.com/ncruces/dcraw/releases/download/v9.28.8-wasm/dcraw.wasm.gz"
+    url="https://github.com/ncruces/dcraw/releases/download/v9.28.9-wasm/dcraw.wasm.gz"
     curl -sL "$url" | gzip -dc > "$tgt/MacOS/utils/dcraw.wasm"
     cp "$tgt/MacOS/utils/dcraw.wasm" "pkg/dcraw/embed/dcraw.wasm"
 fi
