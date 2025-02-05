@@ -16,7 +16,7 @@ require (
 	github.com/ncruces/zenity v0.10.14
 	github.com/tetratelabs/wazero v1.8.2
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
-	golang.org/x/sync v0.10.0
+	golang.org/x/sync v0.11.0
 	golang.org/x/sys v0.29.0
 	gonum.org/v1/gonum v0.15.1
 )
