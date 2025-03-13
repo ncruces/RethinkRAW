@@ -31,5 +31,5 @@ require (
 	github.com/tdewolff/minify/v2 v2.21.2 // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	golang.org/x/image v0.23.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 )
