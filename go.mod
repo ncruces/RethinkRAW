@@ -14,7 +14,7 @@ require (
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
 	github.com/ncruces/zenity v0.10.14
-	github.com/tetratelabs/wazero v1.9.0
+	github.com/tetratelabs/wazero v1.10.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/sync v0.18.0
 	golang.org/x/sys v0.38.0
