@@ -1,8 +1,6 @@
 module github.com/ncruces/rethinkraw
 
-go 1.24.0
-
-toolchain go1.24.1
+go 1.25.0
 
 require (
 	github.com/gorilla/schema v1.4.1
@@ -17,7 +15,7 @@ require (
 	github.com/tetratelabs/wazero v1.11.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/sync v0.19.0
-	golang.org/x/sys v0.41.0
+	golang.org/x/sys v0.42.0
 	gonum.org/v1/gonum v0.17.0
 )
 
