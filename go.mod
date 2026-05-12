@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/josephspurrier/goversioninfo v1.5.0
+	github.com/josephspurrier/goversioninfo v1.7.0
 	github.com/ncruces/go-exiftool v0.4.2
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
 	github.com/ncruces/go-fs v0.2.4
