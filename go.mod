@@ -5,17 +5,17 @@ go 1.25.0
 require (
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/josephspurrier/goversioninfo v1.5.0
+	github.com/josephspurrier/goversioninfo v1.7.0
 	github.com/ncruces/go-exiftool v0.4.2
 	github.com/ncruces/go-fetch v0.0.0-20201125022143-c61f8921eb46
 	github.com/ncruces/go-fs v0.2.4
 	github.com/ncruces/go-image v0.1.0
 	github.com/ncruces/jason v0.4.0
-	github.com/ncruces/zenity v0.10.14
+	github.com/ncruces/zenity v0.10.15
 	github.com/tetratelabs/wazero v1.11.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/sync v0.21.0
-	golang.org/x/sys v0.46.0
+	golang.org/x/sys v0.47.0
 	gonum.org/v1/gonum v0.17.0
 )
 
@@ -25,9 +25,9 @@ require (
 	github.com/dchest/jsmin v1.0.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/krolaw/zipstream v0.0.0-20180621105154-0a2661891f94 // indirect
-	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
+	github.com/randall77/makefat v0.0.0-20260406194835-1b91746796b7 // indirect
 	github.com/tdewolff/minify/v2 v2.21.3 // indirect
 	github.com/tdewolff/parse/v2 v2.7.20 // indirect
-	golang.org/x/image v0.38.0 // indirect
+	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
 )
